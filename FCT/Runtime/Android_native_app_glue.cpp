@@ -596,6 +596,7 @@ static void onWindowInsetsChanged(GameActivity* activity) {
 JNIEXPORT
 void GameActivity_onCreate(GameActivity* activity, void* savedState,
                            size_t savedStateSize) {
+    LOGV("开始");
     LOGV("Creating: %p", activity);
     activity->callbacks->onDestroy = onDestroy;
     activity->callbacks->onStart = onStart;

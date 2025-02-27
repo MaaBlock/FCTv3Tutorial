@@ -36,7 +36,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#include "game-text-input/gametextinput.h"
+#include "gametextinput.h"
 
 #ifdef __cplusplus
 extern "C" {
