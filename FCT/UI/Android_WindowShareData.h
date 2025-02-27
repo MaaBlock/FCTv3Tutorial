@@ -13,9 +13,9 @@ namespace FCT {
 		void (*func)(Android_UiTaskData*);
 		Android_UiTaskData* data;
 	};
-	class GLFW_WindowShareData {
+	class Android_WindowShareData {
 	public:
-		GLFW_WindowShareData(Runtime* runtime);
+		Android_WindowShareData(Runtime* runtime);
 		std::thread* getUiThread();
 		void init();
 		void postUiTask(UITaskFunction func, void* param = nullptr, bool waited = true);

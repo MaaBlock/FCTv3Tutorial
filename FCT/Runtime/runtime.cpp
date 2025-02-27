@@ -1,6 +1,7 @@
 #include "../headers.h"
 namespace FCT
 {
+    /*
 	Runtime *CreateRuntime()
 	{
 		Runtime *ret = new Runtime;
@@ -62,5 +63,5 @@ namespace FCT
 	{
 		PhysicsSystem* ret = new PhysicsSystem(this, g_phsyShareData);
 		return ret;
-	}
+	}*/
 }

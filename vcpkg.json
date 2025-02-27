@@ -1,0 +1,10 @@
+{
+  "name": "fct",
+  "version": "0.1.0",
+  "dependencies": [
+    "boost",
+    "freetype",
+    "harfbuzz",
+    "bullet3"
+  ]
+}

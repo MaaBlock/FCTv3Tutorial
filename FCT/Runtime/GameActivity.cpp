@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "../FCTAPI.h"
 #define LOG_TAG "GameActivity"
+const wchar_t* str = L"Hello \U0001F600";
 
 #include "GameActivity.h"
 
@@ -38,6 +40,11 @@
 #include <memory>
 #include <mutex>
 #include <string>
+
+#include <map>
+#include <unordered_map>
+
+#include "./AndroidOut.h"
 
 // TODO(b/187147166): these functions were extracted from the Game SDK
 // (gamesdk/src/common/system_utils.h). system_utils.h/cpp should be used
@@ -196,6 +203,7 @@ static struct {
     jclass clazz;
 } gWindowInsetsCompatTypeClassInfo;
 
+
 /*
  * Contains a command to be executed by the GameActivity
  * on the application main thread.
@@ -220,6 +228,8 @@ enum {
     CMD_SET_SOFT_INPUT_STATE,
     CMD_SET_IME_EDITOR_INFO
 };
+
+
 
 /*
  * Write a command to be executed by the GameActivity on the application main
@@ -284,9 +294,9 @@ struct NativeCode : public GameActivity {
             callbacks.onDestroy(this);
         }
         if (env != NULL) {
-            if (javaGameActivity != NULL) {
-                env->DeleteGlobalRef(javaGameActivity);
-            }
+            //if (javaGameActivity != NULL) {
+            //    env->DeleteGlobalRef(javaGameActivity);
+            //}
             if (javaAssetManager != NULL) {
                 env->DeleteGlobalRef(javaAssetManager);
             }
@@ -342,15 +352,508 @@ struct NativeCode : public GameActivity {
     ARect insetsState[GAMECOMMON_INSETS_TYPE_COUNT];
 };
 
-extern "C" void GameActivity_finish(GameActivity *activity) {
-    NativeCode *code = static_cast<NativeCode *>(activity);
-    write_work(code->mainWorkWrite, CMD_FINISH, 0);
+using UITaskFunction = std::function<void(void*)>;
+struct UiTaskData {
+    UITaskFunction func;
+    void* param;
+    std::shared_ptr<bool> waited;
+};
+class Android_UICommon {
+public:
+    void init(ALooper* looper) {
+        m_looper = looper;
+        // 创建管道
+        if (pipe(m_pipeFd) != 0) {
+            ALOGW("create pipe failed");
+            return;
+        }
+        // 设置为非阻塞
+        int result = fcntl(m_pipeFd[0], F_SETFL, O_NONBLOCK);
+        if (result != 0) {
+            ALOGW("Could not make main work read pipe non-blocking");
+        }
+        result = fcntl(m_pipeFd[1], F_SETFL, O_NONBLOCK);
+        if (result != 0) {
+            ALOGW("Could not make main work write pipe non-blocking");
+        }
+        // 添加到 ALooper
+        ALooper_addFd(m_looper, m_pipeFd[0], 0, ALOOPER_EVENT_INPUT, UiTaskCallback, this);
+    }
+    void postUiTask(UITaskFunction func, void* param = nullptr, bool blocked = true) {
+        std::shared_ptr<bool> waiting = std::make_shared<bool>(blocked);
+        UiTaskData *taskData = new UiTaskData;
+        taskData->waited = waiting;
+        taskData->param = param;
+        taskData->func = [taskData, func](void *param) {
+            func(taskData->param);
+            *taskData->waited = false;
+            delete taskData;
+        };
+        taskData->param = param;
+
+        write(m_pipeFd[1], &taskData, sizeof(taskData));
+
+        while (*waiting) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+    }
+    FCT::Window* createWindow();
+private:
+    static int UiTaskCallback(int fd, int events, void* data) {
+        Android_UICommon* self = static_cast<Android_UICommon*>(data);
+        UiTaskData* taskData;
+
+        if (read(self->m_pipeFd[0], &taskData, sizeof(taskData)) == sizeof(taskData)) {
+            taskData->func(taskData->param);
+        }
+
+        return 1; // Continue receiving callbacks
+    }
+    ALooper* m_looper;
+    int m_pipeFd[2];
+} g_common;
+
+
+
+/*
+ * Log the JNI exception, if any.
+ */
+static void checkAndClearException(JNIEnv *env, const char *methodName) {
+    if (env->ExceptionCheck()) {
+        ALOGE("Exception while running %s", methodName);
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
 }
+
+class JavaClass {
+public:
+    JavaClass(JavaVM* vm, const char* classPathName) {
+        m_vm = vm;
+        m_classPathName = classPathName;
+        registerClass();
+    }
+    virtual void init() = 0;
+    jmethodID func(const char* name) {
+        return m_methods[name];
+    }
+    jfieldID feild(const char* name) {
+        return m_fields[name];
+    }
+
+    template<typename Func>
+    void bindMethod(const char* methodName, const char* signature, Func func) {
+        auto env = getEnv();
+        JNINativeMethod nativeMethod;
+        nativeMethod.name = const_cast<char*>(methodName);
+        nativeMethod.signature = const_cast<char*>(signature);
+        nativeMethod.fnPtr = reinterpret_cast<void*>(func);
+
+        jint result = env->RegisterNatives(m_class, &nativeMethod, 1);
+        if (result < 0) {
+            //todo: error handling
+            aout << "Failed to register native method:" << methodName << std::endl;
+            return;
+        }
+        registerMethod(methodName,signature);
+    }
+    void bindMethod(JNINativeMethod method) {
+        auto env = getEnv();
+        env->RegisterNatives(m_class, &method, 1);
+        registerMethod(method.name, method.signature);
+    }
+    void bindMethods(const JNINativeMethod* methods, int count) {
+        auto env = getEnv();
+        env->RegisterNatives(m_class, methods, count);
+        for (int i = 0; i < count; ++i) {
+            registerMethod(methods[i].name, methods[i].signature);
+        }
+    }
+    auto getVm(){
+        return m_vm;
+    }
+    jint callStaticIntMethod(const char* methodName, ...) {
+        auto env = getEnv();
+        va_list args;
+        va_start(args, methodName);
+        auto methodId = m_methods[methodName];
+        int result = env->CallStaticIntMethodV(m_class,methodId, args);
+        va_end(args);
+        return result;
+    }
+    std::unordered_map<std::string, jmethodID> getMethods() const {
+        return m_methods;
+    }
+protected:
+    JavaVM* m_vm;
+    const char* m_classPathName;
+    jclass m_class;
+    std::unordered_map<std::string, jmethodID> m_methods;
+    std::unordered_map<std::string, jfieldID> m_fields;
+    void registerClass() {
+        JNIEnv* env = getEnv();
+        jclass localClass = env->FindClass(m_classPathName);
+        if (localClass == nullptr) {
+            //todo: error handling
+            return;
+        }
+        m_class = (jclass)env->NewGlobalRef(localClass);
+        env->DeleteLocalRef(localClass);
+        if (m_class == nullptr) {
+            //todo: error handling
+            return;
+        }
+        return;
+    }
+
+
+    JNIEnv* getEnv(){
+        JNIEnv* env = nullptr;
+        jint result = m_vm->GetEnv((void**)&env, JNI_VERSION_1_6);
+        return env;
+    }
+
+    void registerMethod(const char* methodName, const char* methodSignature) {
+        auto env = getEnv();
+        auto methodId = env->GetMethodID(m_class, methodName, methodSignature);
+        m_methods[methodName] = methodId;
+        return;
+    }
+    void registerStaticMethod(const char* methodName, const char* methodSignature) {
+        auto env = getEnv();
+        auto methodId = env->GetStaticMethodID(m_class, methodName, methodSignature);
+        m_methods[methodName] = methodId;
+        return;
+    }
+    void registerField(const char* fieldName, const char* fieldSignature) {
+        auto env = getEnv();
+        auto fieldId = env->GetFieldID(m_class, fieldName, fieldSignature);
+        m_fields[fieldName] = fieldId;
+        return;
+    }
+    /*
+    void registerStaticMethod(const char* methodName, const char* methodSignature) {
+        auto env = getEnv();
+        auto methodId = env->GetStaticMethodID(m_class, methodName, methodSignature);
+        m_methods[methodName] = methodId;
+        return;
+    }*/
+};//非java线程无法使用该类(即只有ui线程可以调用），非java线程返回nullptr
+class InsetsClass : public JavaClass {
+public:
+    InsetsClass(JavaVM* vm) : JavaClass(vm, "androidx/core/graphics/Insets") {}
+    void init() {
+        registerField("left", "I");
+        registerField("top", "I");
+        registerField("right", "I");
+        registerField("bottom", "I");
+    }
+};
+class WindowInsetsCompatTypeClass : public JavaClass {
+public:
+    WindowInsetsCompatTypeClass(JavaVM* vm) : JavaClass(vm, "androidx/core/view/WindowInsetsCompat$Type") {
+
+    }
+    void init() {
+        registerStaticMethod("captionBar","()I");
+        registerStaticMethod("displayCutout","()I");
+        registerStaticMethod("ime","()I");
+        registerStaticMethod("mandatorySystemGestures","()I");
+        registerStaticMethod("navigationBars","()I");
+        registerStaticMethod("statusBars","()I");
+        registerStaticMethod("systemBars","()I");
+        registerStaticMethod("systemGestures","()I");
+        registerStaticMethod("tappableElement","()I");
+    }
+
+};
+class GameActivityClass : public JavaClass {
+public:
+    GameActivityClass(JavaVM* vm) : JavaClass(vm, "com/google/androidgamesdk/GameActivity") {}
+    void init() {
+        registerMethod("finish","()V");
+        registerMethod("setWindowFlags", "(II)V");
+        registerMethod("getWindowInsets", "(I)Landroidx/core/graphics/Insets;");
+        registerMethod("getWaterfallInsets", "()Landroidx/core/graphics/Insets;");
+        registerMethod("setImeEditorInfoFields", "(III)V");
+
+
+    }
+
+protected:
+};
+
+class JavaObjece : public FCT::RefCount{
+public:
+    JavaObjece(JavaClass* javaClass,jobject javaObject) {
+        m_javaClass = javaClass;
+        m_vm = m_javaClass->getVm();
+        JNIEnv* env = getEnv();
+        m_javaObject = env->NewGlobalRef(javaObject);
+    }
+    ~JavaObjece() {
+        JNIEnv* env = getEnv();
+        env->DeleteGlobalRef(m_javaObject);
+    }
+    void callVoidMethod(const char* methodName,...) {
+        auto env = getEnv();
+        va_list args;
+        va_start(args, methodName);
+        jmethodID methodId = m_javaClass->func(methodName);
+        env->CallVoidMethodV(m_javaObject, methodId, args);
+        va_end(args);
+        checkAndClearException(env, methodName);
+    }
+    jobject callObjectMethod(const char* methodName,...) {
+        auto env = getEnv();
+        va_list args;
+        va_start(args, methodName);
+        jmethodID methodId = m_javaClass->func(methodName);
+        auto result = env->CallObjectMethodV(m_javaObject, methodId, args);
+        va_end(args);
+        checkAndClearException(env, methodName);
+        return result;
+    }
+    jint getIntField(const char* fieldName) {
+        auto env = getEnv();
+        jfieldID fieldId = m_javaClass->feild(fieldName);
+        auto result = env->GetIntField(m_javaObject, fieldId);
+        return result;
+    }
+    bool isnullprt() const {
+        return m_javaObject == nullptr;
+    }
+protected:
+    JNIEnv* getEnv(){
+        JNIEnv* env = nullptr;
+        jint result = m_vm->GetEnv((void**)&env, JNI_VERSION_1_6);
+        return env;
+    }
+    JavaClass* m_javaClass;
+    jobject m_javaObject;
+    JavaVM* m_vm;
+};
+class InsetsObect : public JavaObjece {
+public:
+    InsetsObect(JavaClass* javaClass,jobject javaObject) : JavaObjece(javaClass, javaObject) {
+
+    }
+    int getLeft() {
+        return getIntField("left");
+    }
+    int getTop() {
+        return getIntField("top");
+    }
+    int getRight() {
+        return getIntField("right");
+    }
+    int getBottom() {
+        return getIntField("bottom");
+    }
+    int left(){
+        return getLeft();
+    }
+    int top(){
+        return getTop();
+    }
+    int right(){
+        return getRight();
+    }
+    int bottom(){
+        return getBottom();
+    }
+protected:
+
+
+};
+class GameActivityObecct : public JavaObjece {
+public:
+    GameActivityObecct(InsetsClass* insetsClass,JavaClass* gameActivityClass,jobject javaObject) : JavaObjece(gameActivityClass, javaObject) {
+        m_insetsClass = insetsClass;
+    }
+    void finish() {
+        callVoidMethod("finish");
+    }
+    void setWindowFlags(int flags, int mask) {
+        callVoidMethod("setWindowFlags", flags, mask);
+    }
+    FCT::TlsPtr<InsetsObect> getWindowInsets(int type) {
+        auto javaObject = callObjectMethod("getWindowInsets", type);
+        auto result = new InsetsObect(m_insetsClass, javaObject);
+        return result;
+    }
+    FCT::TlsPtr<InsetsObect> getWaterfallInsets() {
+        auto javaObject = callObjectMethod("getWaterfallInsets");
+        auto result = new InsetsObect(m_insetsClass, javaObject);
+        return result;
+    }
+    void setImeEditorInfoFields(int imeOptions, int initialSelStart, int initialSelEnd) {
+        callVoidMethod("setImeEditorInfoFields", imeOptions, initialSelStart, initialSelEnd);
+    }
+protected:
+    InsetsClass* m_insetsClass;
+};
+static jlong initializeNativeCode_native(JNIEnv *env, jobject javaGameActivity,
+                                         jstring internalDataDir, jstring obbDir,
+                                         jstring externalDataDir, jobject jAssetMgr,
+                                         jbyteArray savedState);
+static jstring getDlError_native(JNIEnv *env, jobject javaGameActivity);
+static void terminateNativeCode_native(JNIEnv *env, jobject javaGameActivity,
+                                       jlong handle);
+static void onStart_native(JNIEnv *env, jobject javaGameActivity,
+                           jlong handle);
+static void onResume_native(JNIEnv *env, jobject javaGameActivity,
+                            jlong handle);
+static jbyteArray onSaveInstanceState_native(JNIEnv *env,
+                                             jobject javaGameActivity,
+                                             jlong handle);
+static void onPause_native(JNIEnv *env, jobject javaGameActivity,
+                           jlong handle);
+static void onStop_native(JNIEnv *env, jobject javaGameActivity, jlong handle);
+static void onConfigurationChanged_native(JNIEnv *env, jobject javaGameActivity,
+                                          jlong handle);
+static void onTrimMemory_native(JNIEnv *env, jobject javaGameActivity,
+                                jlong handle, jint level);
+
+static void onWindowFocusChanged_native(JNIEnv *env, jobject javaGameActivity,
+                                        jlong handle, jboolean focused);
+static void onSurfaceCreated_native(JNIEnv *env, jobject javaGameActivity,
+                                    jlong handle, jobject surface);
+static void onSurfaceChanged_native(JNIEnv *env, jobject javaGameActivity,
+                                    jlong handle, jobject surface, jint format,
+                                    jint width, jint height);
+static void onSurfaceRedrawNeeded_native(JNIEnv *env, jobject javaGameActivity,
+                                         jlong handle);
+static void onSurfaceDestroyed_native(JNIEnv *env, jobject javaGameActivity,
+                                      jlong handle);
+
+static bool onTouchEvent_native(JNIEnv *env, jobject javaGameActivity,
+                                jlong handle, jobject motionEvent);
+static bool onKeyUp_native(JNIEnv *env, jobject javaGameActivity, jlong handle,
+                           jobject keyEvent);
+static bool onKeyDown_native(JNIEnv *env, jobject javaGameActivity,
+                             jlong handle, jobject keyEvent);
+static void onTextInput_native(JNIEnv *env, jobject activity, jlong handle,
+                               jobject textInputEvent);
+static void onWindowInsetsChanged_native(JNIEnv *env, jobject activity,
+                                         jlong handle);
+static void setInputConnection_native(JNIEnv *env, jobject activity,
+                                      jlong handle, jobject inputConnection);
+static const JNINativeMethod g_methods[] = {
+        {"initializeNativeCode",
+                                         "(Ljava/lang/String;Ljava/lang/String;"
+                                         "Ljava/lang/String;Landroid/content/res/AssetManager;[B)J",
+                                                                        (void *) initializeNativeCode_native},
+        {"getDlError",                   "()Ljava/lang/String;",        (void *) getDlError_native},
+        {"terminateNativeCode",          "(J)V",                        (void *) terminateNativeCode_native},
+        {"onStartNative",                "(J)V",                        (void *) onStart_native},
+        {"onResumeNative",               "(J)V",                        (void *) onResume_native},
+        {"onSaveInstanceStateNative",    "(J)[B",                       (void *) onSaveInstanceState_native},
+        {"onPauseNative",                "(J)V",                        (void *) onPause_native},
+        {"onStopNative",                 "(J)V",                        (void *) onStop_native},
+        {"onConfigurationChangedNative", "(J)V",
+                                                                        (void *) onConfigurationChanged_native},
+        {"onTrimMemoryNative",           "(JI)V",                       (void *) onTrimMemory_native},
+        {"onWindowFocusChangedNative",   "(JZ)V",
+                                                                        (void *) onWindowFocusChanged_native},
+        {"onSurfaceCreatedNative",       "(JLandroid/view/Surface;)V",
+                                                                        (void *) onSurfaceCreated_native},
+        {"onSurfaceChangedNative",       "(JLandroid/view/Surface;III)V",
+                                                                        (void *) onSurfaceChanged_native},
+        {"onSurfaceRedrawNeededNative",  "(JLandroid/view/Surface;)V",
+                                                                        (void *) onSurfaceRedrawNeeded_native},
+        {"onSurfaceDestroyedNative",     "(J)V",                        (void *) onSurfaceDestroyed_native},
+        {"onTouchEventNative",           "(JLandroid/view/MotionEvent;)Z",
+                                                                        (void *) onTouchEvent_native},
+        {"onKeyDownNative",              "(JLandroid/view/KeyEvent;)Z",
+                                                                        (void *) onKeyDown_native},
+        {"onKeyUpNative",                "(JLandroid/view/KeyEvent;)Z", (void *) onKeyUp_native},
+        {"onTextInputEventNative",
+                                         "(JLcom/google/androidgamesdk/gametextinput/State;)V",
+                                                                        (void *) onTextInput_native},
+        {"onWindowInsetsChangedNative",  "(J)V",
+                                                                        (void *) onWindowInsetsChanged_native},
+        {"setInputConnectionNative",
+                                         "(JLcom/google/androidgamesdk/gametextinput/InputConnection;)V",
+                                                                        (void *) setInputConnection_native},
+};
+
+class Andorid_Runtime {
+public:
+    std::map<std::string,ARect> insets;
+    void init(JNIEnv* env,jobject gameActivityObject) {
+        env->GetJavaVM(&m_vm);
+        m_gameActivityClass = new GameActivityClass(m_vm);
+        m_gameActivityClass->init();
+        m_insetsClass = new InsetsClass(m_vm);
+        m_insetsClass->init();
+
+        m_windowInsetsCompatTypeClass = new WindowInsetsCompatTypeClass(m_vm);
+        m_windowInsetsCompatTypeClass->init();
+
+        m_gameActivityClass->bindMethods(g_methods, NELEM(g_methods));
+
+        m_gameActivityObject = new GameActivityObecct(m_insetsClass,m_gameActivityClass,gameActivityObject);
+
+        m_window = new FCT::Android_Window();
+    }
+    auto getVm() const {
+        return m_vm;
+    }
+    void term(){
+        delete m_gameActivityObject;
+        delete m_gameActivityClass;
+    }
+    auto getGameActivityClass() const {
+        return m_gameActivityClass;
+    }
+    auto getInsetsClass() const {
+        return m_insetsClass;
+    }
+    auto getWindowInsetsCompatTypeClass() const {
+        return m_windowInsetsCompatTypeClass;
+    }
+    GameActivityObecct* getGameActivityObject() const {
+        return m_gameActivityObject;
+    }
+    auto getWindow() const {
+        return m_window;
+    }
+private:
+    GameActivityClass* m_gameActivityClass;
+    InsetsClass* m_insetsClass;
+    WindowInsetsCompatTypeClass* m_windowInsetsCompatTypeClass;
+    JavaVM* m_vm;
+    GameActivityObecct* m_gameActivityObject;
+    FCT::Android_Window* m_window;
+} g_AndroidRuntime;
+
+
+FCT::Window* Android_UICommon::createWindow() {
+    auto wnd = g_AndroidRuntime.getWindow();
+    if (!wnd->isCreated()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    return wnd;
+}
+
+extern "C" void GameActivity_finish(GameActivity *activity) {
+
+    /*NativeCode *code = static_cast<NativeCode *>(activity);
+    write_work(code->mainWorkWrite, CMD_FINISH, 0);*/
+    g_common.postUiTask([](void*){
+        g_AndroidRuntime.getGameActivityObject()->finish();
+    }, nullptr, false);
+}
+
 
 extern "C" void GameActivity_setWindowFlags(GameActivity *activity,
                                             uint32_t values, uint32_t mask) {
-    NativeCode *code = static_cast<NativeCode *>(activity);
-    write_work(code->mainWorkWrite, CMD_SET_WINDOW_FLAGS, values, mask);
+    /*NativeCode *code = static_cast<NativeCode *>(activity);
+    write_work(code->mainWorkWrite, CMD_SET_WINDOW_FLAGS, values, mask);*/
+    g_common.postUiTask([values,mask](void*){
+        g_AndroidRuntime.getGameActivityObject()->setWindowFlags(values, mask);
+    }, nullptr, false);
 }
 
 extern "C" void GameActivity_showSoftInput(GameActivity *activity,
@@ -360,7 +863,7 @@ extern "C" void GameActivity_showSoftInput(GameActivity *activity,
 }
 
 extern "C" void GameActivity_setTextInputState(
-    GameActivity *activity, const GameTextInputState *state) {
+        GameActivity *activity, const GameTextInputState *state) {
     NativeCode *code = static_cast<NativeCode *>(activity);
     std::lock_guard<std::mutex> lock(code->gameTextInputStateMutex);
     code->gameTextInputState = *state;
@@ -368,8 +871,8 @@ extern "C" void GameActivity_setTextInputState(
 }
 
 extern "C" void GameActivity_getTextInputState(
-    GameActivity *activity, GameTextInputGetStateCallback callback,
-    void *context) {
+        GameActivity *activity, GameTextInputGetStateCallback callback,
+        void *context) {
     NativeCode *code = static_cast<NativeCode *>(activity);
     return GameTextInput_getState(code->gameTextInput, callback, context);
 }
@@ -389,20 +892,9 @@ extern "C" void GameActivity_getWindowInsets(GameActivity *activity,
 }
 
 extern "C" GameTextInput *GameActivity_getTextInput(
-    const GameActivity *activity) {
+        const GameActivity *activity) {
     const NativeCode *code = static_cast<const NativeCode *>(activity);
     return code->gameTextInput;
-}
-
-/*
- * Log the JNI exception, if any.
- */
-static void checkAndClearException(JNIEnv *env, const char *methodName) {
-    if (env->ExceptionCheck()) {
-        ALOGE("Exception while running %s", methodName);
-        env->ExceptionDescribe();
-        env->ExceptionClear();
-    }
 }
 
 /*
@@ -421,16 +913,20 @@ static int mainWorkCallback(int fd, int events, void *data) {
     }
     LOG_TRACE("mainWorkCallback: cmd=%d", work.cmd);
     switch (work.cmd) {
-        case CMD_FINISH: {
-            code->env->CallVoidMethod(code->javaGameActivity,
-                                      gGameActivityClassInfo.finish);
-            checkAndClearException(code->env, "finish");
-        } break;
+        //case CMD_FINISH: {
+        //    g_AndroidRuntime.getGameActivityObject()->finish();
+        //    /*
+        //    code->env->CallVoidMethod(code->javaGameActivity,
+        //                              gGameActivityClassInfo.finish);
+        //    checkAndClearException(code->env, "finish");*/
+        //} break;
         case CMD_SET_WINDOW_FLAGS: {
+            /*
             code->env->CallVoidMethod(code->javaGameActivity,
                                       gGameActivityClassInfo.setWindowFlags,
                                       work.arg1, work.arg2);
-            checkAndClearException(code->env, "setWindowFlags");
+            checkAndClearException(code->env, "setWindowFlags");*/
+            g_AndroidRuntime.getGameActivityObject()->setWindowFlags(work.arg1, work.arg2);
         } break;
         case CMD_SHOW_SOFT_INPUT: {
             GameTextInput_showIme(code->gameTextInput, work.arg1);
@@ -445,11 +941,14 @@ static int mainWorkCallback(int fd, int events, void *data) {
             GameTextInput_hideIme(code->gameTextInput, work.arg1);
         } break;
         case CMD_SET_IME_EDITOR_INFO: {
+            /*
             code->env->CallVoidMethod(
                 code->javaGameActivity,
                 gGameActivityClassInfo.setImeEditorInfoFields, work.arg1,
                 work.arg2, work.arg3);
             checkAndClearException(code->env, "setImeEditorInfo");
+        */
+            g_AndroidRuntime.getGameActivityObject()->setImeEditorInfoFields(work.arg1, work.arg2, work.arg3);
         } break;
         default:
             ALOGW("Unknown work command: %d", work.cmd);
@@ -458,6 +957,13 @@ static int mainWorkCallback(int fd, int events, void *data) {
 
     return 1;
 }
+class Android_Window {
+public:
+
+private:
+
+} g_andoridWindow;
+
 
 // ------------------------------------------------------------------------
 static thread_local std::string g_error_msg;
@@ -479,6 +985,8 @@ static jlong initializeNativeCode_native(JNIEnv *env, jobject javaGameActivity,
         return 0;
     }
     ALooper_acquire(code->looper);
+
+    g_common.init(code->looper);
 
     int msgpipe[2];
     if (pipe(msgpipe)) {
@@ -511,7 +1019,7 @@ static jlong initializeNativeCode_native(JNIEnv *env, jobject javaGameActivity,
         return 0;
     }
     code->env = env;
-    code->javaGameActivity = env->NewGlobalRef(javaGameActivity);
+    //code->javaGameActivity = env->NewGlobalRef(javaGameActivity);
 
     const char *dirStr =
         internalDataDir ? env->GetStringUTFChars(internalDataDir, NULL) : "";
@@ -578,6 +1086,7 @@ static void onStart_native(JNIEnv *env, jobject javaGameActivity,
             code->callbacks.onStart(code);
         }
     }
+
 }
 
 static void onResume_native(JNIEnv *env, jobject javaGameActivity,
@@ -692,6 +1201,7 @@ static void onSurfaceCreated_native(JNIEnv *env, jobject javaGameActivity,
             code->callbacks.onNativeWindowCreated(code, code->nativeWindow);
         }
     }
+    g_AndroidRuntime.getWindow()->create();
 }
 
 static void onSurfaceChanged_native(JNIEnv *env, jobject javaGameActivity,
@@ -827,9 +1337,14 @@ float GameActivityMotionEvent_getHistoricalAxisValue(
 extern "C" void GameActivity_setImeEditorInfo(GameActivity *activity,
                                               int inputType, int actionId,
                                               int imeOptions) {
-    NativeCode *code = static_cast<NativeCode *>(activity);
+
+    /*NativeCode *code = static_cast<NativeCode *>(activity);
     write_work(code->mainWorkWrite, CMD_SET_IME_EDITOR_INFO, inputType,
                actionId, imeOptions);
+               */
+    g_common.postUiTask([inputType,actionId,imeOptions](void*){
+        g_AndroidRuntime.getGameActivityObject()->setImeEditorInfoFields(inputType,actionId,imeOptions);
+    },nullptr,false);
 }
 
 static struct {
@@ -1170,38 +1685,96 @@ static void onWindowInsetsChanged_native(JNIEnv *env, jobject activity,
     if (handle == 0) return;
     NativeCode *code = (NativeCode *)handle;
     if (code->callbacks.onWindowInsetsChanged == nullptr) return;
-    for (int type = 0; type < GAMECOMMON_INSETS_TYPE_COUNT; ++type) {
-        jobject jinsets;
-        // Note that waterfall insets are handled differently on the Java side.
-        if (type == GAMECOMMON_INSETS_TYPE_WATERFALL) {
-            jinsets = env->CallObjectMethod(
-                code->javaGameActivity,
-                gGameActivityClassInfo.getWaterfallInsets);
-        } else {
-            jint jtype = env->CallStaticIntMethod(
-                gWindowInsetsCompatTypeClassInfo.clazz,
-                gWindowInsetsCompatTypeClassInfo.methods[type]);
-            jinsets = env->CallObjectMethod(
-                code->javaGameActivity, gGameActivityClassInfo.getWindowInsets,
-                jtype);
+
+//    for (int type = 0; type < GAMECOMMON_INSETS_TYPE_COUNT; ++type) {
+//        //jobject jinsets;
+//        // Note that waterfall insets are handled differently on the Java side.
+//        FCT::TlsPtr<InsetsObect> insetsObject = nullptr;
+//        if (type == GAMECOMMON_INSETS_TYPE_WATERFALL) {
+//            insetsObject = g_AndroidRuntime.getGameActivityObject()->getWaterfallInsets();
+///*
+//            jinsets = env->CallObjectMethod(
+//                code->javaGameActivity,
+//                gGameActivityClassInfo.getWaterfallInsets);*/
+//        } else {
+//            jint jtype = env->CallStaticIntMethod(
+//                gWindowInsetsCompatTypeClassInfo.clazz,
+//                gWindowInsetsCompatTypeClassInfo.methods[type]);
+//            insetsObject = g_AndroidRuntime.getGameActivityObject()->getWindowInsets(jtype);
+//            /*jinsets = env->CallObjectMethod(
+//                code->javaGameActivity, gGameActivityClassInfo.getWindowInsets,
+//                jtype);
+//                */
+//        }
+//        ARect &insets = code->insetsState[type];
+//        if (insetsObject->isnullprt()) {
+//            insets.left = 0;
+//            insets.right = 0;
+//            insets.top = 0;
+//            insets.bottom = 0;
+//        } else {
+//            insets.left = insetsObject->left();
+//            insets.right = insetsObject->right();
+//            insets.top = insetsObject->top();
+//            insets.bottom = insetsObject->bottom();
+//        }
+//        /*
+//        if (jinsets == nullptr) {
+//            insets.left = 0;
+//            insets.right = 0;
+//            insets.top = 0;
+//            insets.bottom = 0;
+//        } else {
+//            insets.left = env->GetIntField(jinsets, gInsetsClassInfo.left);
+//            insets.right = env->GetIntField(jinsets, gInsetsClassInfo.right);
+//            insets.top = env->GetIntField(jinsets, gInsetsClassInfo.top);
+//            insets.bottom = env->GetIntField(jinsets, gInsetsClassInfo.bottom);
+//        }*/
+//    }
+    auto& insets = g_AndroidRuntime.insets;
+    auto WaterfallObject = g_AndroidRuntime.getGameActivityObject()->getWaterfallInsets();
+
+    if (WaterfallObject->isnullprt())
+    {
+        insets["Waterfall"].left = 0;
+        insets["Waterfall"].right = 0;
+        insets["Waterfall"].top = 0;
+        insets["Waterfall"].bottom = 0;
+    }
+    else {
+        insets["Waterfall"].left = WaterfallObject->left();
+        insets["Waterfall"].right = WaterfallObject->right();
+        insets["Waterfall"].top = WaterfallObject->top();
+        insets["Waterfall"].bottom = WaterfallObject->bottom();
+    }
+    auto TypeClass = g_AndroidRuntime.getWindowInsetsCompatTypeClass();
+
+    for (auto it : TypeClass->getMethods()) {
+        auto type = TypeClass->callStaticIntMethod(it.first.c_str());
+        auto object = g_AndroidRuntime.getGameActivityObject()->getWindowInsets(type);
+
+        if (WaterfallObject->isnullprt())
+        {
+            insets["Waterfall"].left = 0;
+            insets["Waterfall"].right = 0;
+            insets["Waterfall"].top = 0;
+            insets["Waterfall"].bottom = 0;
         }
-        ARect &insets = code->insetsState[type];
-        if (jinsets == nullptr) {
-            insets.left = 0;
-            insets.right = 0;
-            insets.top = 0;
-            insets.bottom = 0;
-        } else {
-            insets.left = env->GetIntField(jinsets, gInsetsClassInfo.left);
-            insets.right = env->GetIntField(jinsets, gInsetsClassInfo.right);
-            insets.top = env->GetIntField(jinsets, gInsetsClassInfo.top);
-            insets.bottom = env->GetIntField(jinsets, gInsetsClassInfo.bottom);
+        else
+        {
+            insets[it.first].left = object->left();
+            insets[it.first].right = object->right();
+            insets[it.first].top = object->top();
+            insets[it.first].bottom = object->bottom();
         }
     }
+
+
     GameTextInput_processImeInsets(
-        code->gameTextInput, &code->insetsState[GAMECOMMON_INSETS_TYPE_IME]);
+        code->gameTextInput, &insets["ime"]);
     code->callbacks.onWindowInsetsChanged(code);
 }
+
 
 static void setInputConnection_native(JNIEnv *env, jobject activity,
                                       jlong handle, jobject inputConnection) {
@@ -1209,46 +1782,9 @@ static void setInputConnection_native(JNIEnv *env, jobject activity,
     GameTextInput_setInputConnection(code->gameTextInput, inputConnection);
 }
 
-static const JNINativeMethod g_methods[] = {
-    {"initializeNativeCode",
-     "(Ljava/lang/String;Ljava/lang/String;"
-     "Ljava/lang/String;Landroid/content/res/AssetManager;[B)J",
-     (void *)initializeNativeCode_native},
-    {"getDlError", "()Ljava/lang/String;", (void *)getDlError_native},
-    {"terminateNativeCode", "(J)V", (void *)terminateNativeCode_native},
-    {"onStartNative", "(J)V", (void *)onStart_native},
-    {"onResumeNative", "(J)V", (void *)onResume_native},
-    {"onSaveInstanceStateNative", "(J)[B", (void *)onSaveInstanceState_native},
-    {"onPauseNative", "(J)V", (void *)onPause_native},
-    {"onStopNative", "(J)V", (void *)onStop_native},
-    {"onConfigurationChangedNative", "(J)V",
-     (void *)onConfigurationChanged_native},
-    {"onTrimMemoryNative", "(JI)V", (void *)onTrimMemory_native},
-    {"onWindowFocusChangedNative", "(JZ)V",
-     (void *)onWindowFocusChanged_native},
-    {"onSurfaceCreatedNative", "(JLandroid/view/Surface;)V",
-     (void *)onSurfaceCreated_native},
-    {"onSurfaceChangedNative", "(JLandroid/view/Surface;III)V",
-     (void *)onSurfaceChanged_native},
-    {"onSurfaceRedrawNeededNative", "(JLandroid/view/Surface;)V",
-     (void *)onSurfaceRedrawNeeded_native},
-    {"onSurfaceDestroyedNative", "(J)V", (void *)onSurfaceDestroyed_native},
-    {"onTouchEventNative", "(JLandroid/view/MotionEvent;)Z",
-     (void *)onTouchEvent_native},
-    {"onKeyDownNative", "(JLandroid/view/KeyEvent;)Z",
-     (void *)onKeyDown_native},
-    {"onKeyUpNative", "(JLandroid/view/KeyEvent;)Z", (void *)onKeyUp_native},
-    {"onTextInputEventNative",
-     "(JLcom/google/androidgamesdk/gametextinput/State;)V",
-     (void *)onTextInput_native},
-    {"onWindowInsetsChangedNative", "(J)V",
-     (void *)onWindowInsetsChanged_native},
-    {"setInputConnectionNative",
-     "(JLcom/google/androidgamesdk/gametextinput/InputConnection;)V",
-     (void *)setInputConnection_native},
-};
 
-static const char *const kGameActivityPathName =
+
+static const char *const GameActivityPathName =
     "com/google/androidgamesdk/GameActivity";
 
 static const char *const kInsetsPathName = "androidx/core/graphics/Insets";
@@ -1299,7 +1835,7 @@ static int jniRegisterNativeMethods(JNIEnv *env, const char *className,
 extern "C" int GameActivity_register(JNIEnv *env) {
     ALOGD("GameActivity_register");
     jclass activity_class;
-    FIND_CLASS(activity_class, kGameActivityPathName);
+    FIND_CLASS(activity_class, GameActivityPathName);
     GET_METHOD_ID(gGameActivityClassInfo.finish, activity_class, "finish",
                   "()V");
     GET_METHOD_ID(gGameActivityClassInfo.setWindowFlags, activity_class,
@@ -1338,16 +1874,22 @@ extern "C" int GameActivity_register(JNIEnv *env) {
                              windowInsetsCompatType_class, methodNames[i],
                              "()I");
     }
-    return jniRegisterNativeMethods(env, kGameActivityPathName, g_methods,
+    return 0;
+    return jniRegisterNativeMethods(env, GameActivityPathName, g_methods,
                                     NELEM(g_methods));
+
 }
+
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_google_androidgamesdk_GameActivity_initializeNativeCode(
     JNIEnv *env, jobject javaGameActivity,
     jstring internalDataDir, jstring obbDir, jstring externalDataDir,
     jobject jAssetMgr, jbyteArray savedState) {
-    GameActivity_register(env);
+
+    ALOGD("Java_com_google_androidgamesdk_GameActivity_initializeNativeCode");
+    g_AndroidRuntime.init(env,javaGameActivity);
+    //GameActivity_register(env);
     jlong nativeCode = initializeNativeCode_native(
         env, javaGameActivity,internalDataDir, obbDir,
         externalDataDir, jAssetMgr, savedState);

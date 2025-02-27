@@ -1,12 +1,12 @@
 #include "Renderer.h"
 
-#include <game-activity/native_app_glue/android_native_app_glue.h>
+#include "FCT/Runtime/Android_native_app_glue.h"
 #include <GLES3/gl3.h>
 #include <memory>
 #include <vector>
 #include <android/imagedecoder.h>
 
-#include "AndroidOut.h"
+#include "FCT/Runtime/AndroidOut.h"
 #include "Shader.h"
 #include "Utility.h"
 #include "TextureAsset.h"

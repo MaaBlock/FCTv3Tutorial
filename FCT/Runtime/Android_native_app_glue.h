@@ -28,7 +28,7 @@
 #include <pthread.h>
 #include <sched.h>
 
-#include "./GameActivity.h"
+#include "GameActivity.h"
 
 #ifdef __cplusplus
 extern "C" {

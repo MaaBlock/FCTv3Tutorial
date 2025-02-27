@@ -1,14 +1,12 @@
 #include <jni.h>
 
-#include "AndroidOut.h"
+#include "FCT/Runtime/AndroidOut.h"
 #include "Renderer.h"
+#include "FCT/Runtime/Android_native_app_glue.h"
+//#include "FCT/Runtime/gametextinput.cpp"
 
-#include <game-activity/GameActivity.cpp>
-#include <game-text-input/gametextinput.cpp>
 
-extern "C" {
-
-#include <game-activity/native_app_glue/android_native_app_glue.c>
+//#include "FCT/Runtime/Android_native_app_glue.cpp"
 
 /*!
  * Handles commands sent to this Android application
@@ -22,7 +20,7 @@ void handle_cmd(android_app *pApp, int32_t cmd) {
             // "game" class if that suits your needs. Remember to change all instances of userData
             // if you change the class here as a reinterpret_cast is dangerous this in the
             // android_main function and the APP_CMD_TERM_WINDOW handler case.
-            pApp->userData = new Renderer(pApp);
+            //pApp->userData = new Renderer(pApp);
             break;
         case APP_CMD_TERM_WINDOW:
             // The window is being destroyed. Use this to clean up your userData to avoid leaking
@@ -62,7 +60,7 @@ bool motion_event_filter_func(const GameActivityMotionEvent *motionEvent) {
 void android_main(struct android_app *pApp) {
     // Can be removed, useful to ensure your code is running
     aout << "Welcome to android_main" << std::endl;
-
+    aerr << "test" << std::endl;
     // Register an event handler for Android events
     pApp->onAppCmd = handle_cmd;
 
@@ -105,14 +103,13 @@ void android_main(struct android_app *pApp) {
         if (pApp->userData) {
             // We know that our user data is a Renderer, so reinterpret cast it. If you change your
             // user data remember to change it here
-            auto *pRenderer = reinterpret_cast<Renderer *>(pApp->userData);
+            //auto *pRenderer = reinterpret_cast<Renderer *>(pApp->userData);
 
             // Process game input
-            pRenderer->handleInput();
+            //pRenderer->handleInput();
 
             // Render a frame
-            pRenderer->render();
+            //pRenderer->render();
         }
     } while (!pApp->destroyRequested);
-}
 }

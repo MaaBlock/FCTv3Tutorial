@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "android_native_app_glue.h"
+#include "Android_native_app_glue.h"
 
 #include <android/log.h>
 #include <errno.h>
@@ -592,12 +592,13 @@ static void onWindowInsetsChanged(GameActivity* activity) {
     LOGV("WindowInsetsChanged: %p", activity);
     android_app_write_cmd(ToApp(activity), APP_CMD_WINDOW_INSETS_CHANGED);
 }
-
+int GameActivity_onCreateCount = 0;
 JNIEXPORT
 void GameActivity_onCreate(GameActivity* activity, void* savedState,
                            size_t savedStateSize) {
     LOGV("开始");
     LOGV("Creating: %p", activity);
+    LOGV("GameActivity_onCreateCount: %d", GameActivity_onCreateCount);
     activity->callbacks->onDestroy = onDestroy;
     activity->callbacks->onStart = onStart;
     activity->callbacks->onResume = onResume;
