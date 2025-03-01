@@ -5,6 +5,7 @@
 #ifndef FCT_HEADER_H
 #define FCT_HEADER_H
 #include "ThirdParty.h"
+#include "Runtime/Runtime.h"
 #include "MutilThreadBase/RefCount.h"
 #include "MutilThreadBase/TlsPtr.h"
 #include "Context/Context.h"

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include "../FCTAPI.h"
 #include "Android_native_app_glue.h"
 
 #include <android/log.h>
@@ -122,11 +122,11 @@ void android_app_pre_exec_cmd(struct android_app* android_app, int8_t cmd) {
         case APP_CMD_START:
         case APP_CMD_PAUSE:
         case APP_CMD_STOP:
-            LOGV("activityState=%d", cmd);
-            pthread_mutex_lock(&android_app->mutex);
-            android_app->activityState = cmd;
-            pthread_cond_broadcast(&android_app->cond);
-            pthread_mutex_unlock(&android_app->mutex);
+           //LOGV("activityState=%d", cmd);
+           //pthread_mutex_lock(&android_app->mutex);
+           //android_app->activityState = cmd;
+           //pthread_cond_broadcast(&android_app->cond);
+           //pthread_mutex_unlock(&android_app->mutex);
             break;
 
         case APP_CMD_CONFIG_CHANGED:
@@ -192,7 +192,8 @@ static void process_cmd(struct android_app* app,
 // This is run on a separate thread (i.e: not the main thread).
 static void* android_app_entry(void* param) {
     struct android_app* android_app = (struct android_app*)param;
-    int input_buf_idx = 0;
+
+    /*int input_buf_idx = 0;
 
     LOGV("android_app_entry called");
     android_app->config = AConfiguration_new();
@@ -203,9 +204,9 @@ static void* android_app_entry(void* param) {
     AConfiguration_fromAssetManager(android_app->config,
                                     android_app->activity->assetManager);
 
-    print_cur_config(android_app);
+    print_cur_config(android_app);*/
 
-    /* initialize event buffers */
+    /* initialize event buffers *//*
     for (input_buf_idx = 0; input_buf_idx < NATIVE_APP_GLUE_MAX_INPUT_BUFFERS; input_buf_idx++) {
         struct android_input_buffer *buf = &android_app->inputBuffers[input_buf_idx];
 
@@ -225,7 +226,7 @@ static void* android_app_entry(void* param) {
     ALooper* looper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
     ALooper_addFd(looper, android_app->msgread, LOOPER_ID_MAIN,
                   ALOOPER_EVENT_INPUT, NULL, &android_app->cmdPollSource);
-    android_app->looper = looper;
+    android_app->looper = looper;*/
 
     pthread_mutex_lock(&android_app->mutex);
     android_app->running = 1;
@@ -274,7 +275,7 @@ static struct android_app* android_app_create(GameActivity* activity,
                                               void* savedState,
                                               size_t savedStateSize) {
     //  struct android_app* android_app = calloc(1, sizeof(struct android_app));
-    struct android_app* android_app =
+    /*struct android_app* android_app =
         (struct android_app*)malloc(sizeof(struct android_app));
     memset(android_app, 0, sizeof(struct android_app));
     android_app->activity = activity;
@@ -311,8 +312,9 @@ static struct android_app* android_app_create(GameActivity* activity,
         pthread_cond_wait(&android_app->cond, &android_app->mutex);
     }
     pthread_mutex_unlock(&android_app->mutex);
+*/
 
-    return android_app;
+    return nullptr;
 }
 
 static void android_app_write_cmd(struct android_app* android_app, int8_t cmd) {
@@ -332,20 +334,20 @@ static void android_app_set_window(struct android_app* android_app,
     if (window != NULL) {
         android_app_write_cmd(android_app, APP_CMD_INIT_WINDOW);
     }
-    while (android_app->window != android_app->pendingWindow) {
-        pthread_cond_wait(&android_app->cond, &android_app->mutex);
-    }
-    pthread_mutex_unlock(&android_app->mutex);
+    //while (android_app->window != android_app->pendingWindow) {
+    //    pthread_cond_wait(&android_app->cond, &android_app->mutex);
+    //}
+    //pthread_mutex_unlock(&android_app->mutex);
 }
 
 static void android_app_set_activity_state(struct android_app* android_app,
                                            int8_t cmd) {
-    pthread_mutex_lock(&android_app->mutex);
-    android_app_write_cmd(android_app, cmd);
-    while (android_app->activityState != cmd) {
-        pthread_cond_wait(&android_app->cond, &android_app->mutex);
-    }
-    pthread_mutex_unlock(&android_app->mutex);
+    //pthread_mutex_lock(&android_app->mutex);
+    //android_app_write_cmd(android_app, cmd);
+    //while (android_app->activityState != cmd) {
+    //    pthread_cond_wait(&android_app->cond, &android_app->mutex);
+    //}
+    //pthread_mutex_unlock(&android_app->mutex);
 }
 
 static void android_app_free(struct android_app* android_app) {
@@ -378,17 +380,18 @@ static inline struct android_app* ToApp(GameActivity* activity) {
 
 static void onDestroy(GameActivity* activity) {
     LOGV("Destroy: %p", activity);
-    android_app_free(ToApp(activity));
+    FCT::g_AndroidRuntime.getWindow()->destroy();
+    //android_app_free(ToApp(activity));
 }
 
 static void onStart(GameActivity* activity) {
     LOGV("Start: %p", activity);
-    android_app_set_activity_state(ToApp(activity), APP_CMD_START);
+    //android_app_set_activity_state(ToApp(activity), APP_CMD_START);
 }
 
 static void onResume(GameActivity* activity) {
     LOGV("Resume: %p", activity);
-    android_app_set_activity_state(ToApp(activity), APP_CMD_RESUME);
+    //android_app_set_activity_state(ToApp(activity), APP_CMD_RESUME);
 }
 
 static void onSaveInstanceState(GameActivity* activity,
@@ -396,15 +399,16 @@ static void onSaveInstanceState(GameActivity* activity,
                                 void* context) {
     LOGV("SaveInstanceState: %p", activity);
 
-    struct android_app* android_app = ToApp(activity);
+    //struct android_app* android_app = ToApp(activity);
     void* savedState = NULL;
-    pthread_mutex_lock(&android_app->mutex);
+    /*pthread_mutex_lock(&android_app->mutex);
     android_app->stateSaved = 0;
     android_app_write_cmd(android_app, APP_CMD_SAVE_STATE);
     while (!android_app->stateSaved) {
         pthread_cond_wait(&android_app->cond, &android_app->mutex);
     }
 
+    LOGV("save size: %d", android_app->savedStateSize);
     if (android_app->savedState != NULL) {
         // Tell the Java side about our state.
         recallback((const char*)android_app->savedState,
@@ -415,58 +419,58 @@ static void onSaveInstanceState(GameActivity* activity,
         android_app->savedStateSize = 0;
     }
 
-    pthread_mutex_unlock(&android_app->mutex);
+    pthread_mutex_unlock(&android_app->mutex);*/
 }
 
 static void onPause(GameActivity* activity) {
     LOGV("Pause: %p", activity);
-    android_app_set_activity_state(ToApp(activity), APP_CMD_PAUSE);
+    //android_app_set_activity_state(ToApp(activity), APP_CMD_PAUSE);
 }
 
 static void onStop(GameActivity* activity) {
     LOGV("Stop: %p", activity);
-    android_app_set_activity_state(ToApp(activity), APP_CMD_STOP);
+    //android_app_set_activity_state(ToApp(activity), APP_CMD_STOP);
 }
 
 static void onConfigurationChanged(GameActivity* activity) {
     LOGV("ConfigurationChanged: %p", activity);
-    android_app_write_cmd(ToApp(activity), APP_CMD_CONFIG_CHANGED);
+    //android_app_write_cmd(ToApp(activity), APP_CMD_CONFIG_CHANGED);
 }
 
 static void onTrimMemory(GameActivity* activity, int level) {
     LOGV("TrimMemory: %p %d", activity, level);
-    android_app_write_cmd(ToApp(activity), APP_CMD_LOW_MEMORY);
+    //android_app_write_cmd(ToApp(activity), APP_CMD_LOW_MEMORY);
 }
 
 static void onWindowFocusChanged(GameActivity* activity, bool focused) {
     LOGV("WindowFocusChanged: %p -- %d", activity, focused);
-    android_app_write_cmd(ToApp(activity),
+    /*android_app_write_cmd(ToApp(activity),
                           focused ? APP_CMD_GAINED_FOCUS : APP_CMD_LOST_FOCUS);
-}
+*/}
 
 static void onNativeWindowCreated(GameActivity* activity,
                                   ANativeWindow* window) {
     LOGV("NativeWindowCreated: %p -- %p", activity, window);
-    android_app_set_window(ToApp(activity), window);
+    //android_app_set_window(ToApp(activity), window);
 }
 
 static void onNativeWindowDestroyed(GameActivity* activity,
                                     ANativeWindow* window) {
     LOGV("NativeWindowDestroyed: %p -- %p", activity, window);
-    android_app_set_window(ToApp(activity), NULL);
+    //android_app_set_window(ToApp(activity), NULL);
 }
 
 static void onNativeWindowRedrawNeeded(GameActivity* activity,
                                        ANativeWindow* window) {
     LOGV("NativeWindowRedrawNeeded: %p -- %p", activity, window);
-    android_app_write_cmd(ToApp(activity), APP_CMD_WINDOW_REDRAW_NEEDED);
+    //android_app_write_cmd(ToApp(activity), APP_CMD_WINDOW_REDRAW_NEEDED);
 }
 
 static void onNativeWindowResized(GameActivity* activity, ANativeWindow* window,
                                   int32_t width, int32_t height) {
     LOGV("NativeWindowResized: %p -- %p ( %d x %d )", activity, window, width,
          height);
-    android_app_write_cmd(ToApp(activity), APP_CMD_WINDOW_RESIZED);
+    //android_app_write_cmd(ToApp(activity), APP_CMD_WINDOW_RESIZED);
 }
 
 void android_app_set_motion_event_filter(struct android_app* app,
@@ -478,7 +482,7 @@ void android_app_set_motion_event_filter(struct android_app* app,
 
 static bool onTouchEvent(GameActivity* activity,
                          const GameActivityMotionEvent* event) {
-    struct android_app* android_app = ToApp(activity);
+    /*struct android_app* android_app = ToApp(activity);
     pthread_mutex_lock(&android_app->mutex);
 
     if (android_app->motionEventFilter != NULL &&
@@ -506,7 +510,7 @@ static bool onTouchEvent(GameActivity* activity,
     memcpy(&inputBuffer->motionEvents[new_ix], event, sizeof(GameActivityMotionEvent));
     ++inputBuffer->motionEventsCount;
 
-    pthread_mutex_unlock(&android_app->mutex);
+    pthread_mutex_unlock(&android_app->mutex);*/
     return true;
 }
 
@@ -543,7 +547,7 @@ void android_app_set_key_event_filter(struct android_app* app,
 }
 
 static bool onKey(GameActivity* activity, const GameActivityKeyEvent* event) {
-    struct android_app* android_app = ToApp(activity);
+    /*struct android_app* android_app = ToApp(activity);
     pthread_mutex_lock(&android_app->mutex);
 
     if (android_app->keyEventFilter != NULL &&
@@ -571,7 +575,7 @@ static bool onKey(GameActivity* activity, const GameActivityKeyEvent* event) {
     memcpy(&inputBuffer->keyEvents[new_ix], event, sizeof(GameActivityKeyEvent));
     ++inputBuffer->keyEventsCount;
 
-    pthread_mutex_unlock(&android_app->mutex);
+    pthread_mutex_unlock(&android_app->mutex);*/
     return true;
 }
 
@@ -581,16 +585,16 @@ void android_app_clear_key_events(struct android_input_buffer* inputBuffer) {
 
 static void onTextInputEvent(GameActivity* activity,
                              const GameTextInputState* state) {
-    struct android_app* android_app = ToApp(activity);
+    /*struct android_app* android_app = ToApp(activity);
     pthread_mutex_lock(&android_app->mutex);
 
     android_app->textInputState = 1;
-    pthread_mutex_unlock(&android_app->mutex);
+    pthread_mutex_unlock(&android_app->mutex);*/
 }
 
 static void onWindowInsetsChanged(GameActivity* activity) {
     LOGV("WindowInsetsChanged: %p", activity);
-    android_app_write_cmd(ToApp(activity), APP_CMD_WINDOW_INSETS_CHANGED);
+    //android_app_write_cmd(ToApp(activity), APP_CMD_WINDOW_INSETS_CHANGED);
 }
 int GameActivity_onCreateCount = 0;
 JNIEXPORT
@@ -619,7 +623,9 @@ void GameActivity_onCreate(GameActivity* activity, void* savedState,
     activity->callbacks->onNativeWindowResized = onNativeWindowResized;
     activity->callbacks->onWindowInsetsChanged = onWindowInsetsChanged;
     LOGV("Callbacks set: %p", activity->callbacks);
-
+    /*
     activity->instance =
         android_app_create(activity, savedState, savedStateSize);
+*/
+    FCT::g_AndroidRuntime.createUserThread();
 }

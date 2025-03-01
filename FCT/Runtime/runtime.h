@@ -4,6 +4,28 @@
 #include "../ImageLoader/ImageLoader.h"
 namespace FCT
 {
+    struct RuntimeCommon {
+
+    };
+    class Runtime {
+    public:
+        Runtime()
+        {
+            init();
+        }
+        ~Runtime()
+        {
+            term();
+        }
+        Window *createWindow(int w, int h, const char *title);
+    private:
+        RuntimeCommon* m_commmon;
+        bool m_isTerm;
+        bool m_isRelease;
+        void init();
+        void term();
+    };
+#ifdef FCT_DEPRECATED
 	class Android_WindowShareData;
 	class GL_ContextShareData;
 	class FreeType_FontShareData;
@@ -45,4 +67,5 @@ namespace FCT
 		PX_PhysicsShareData* g_phsyShareData;
 	*/};
 	Runtime *CreateRuntime();
+#endif
 }

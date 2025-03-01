@@ -1,4 +1,6 @@
 #include "../headers.h"
+
+#ifdef FCT_DEPRECATED
 #include "Android_WindowShareData.h"
 namespace FCT {
 	Android_WindowShareData::Android_WindowShareData(Runtime* runtime) : g_taskQueue(1024)
@@ -67,3 +69,4 @@ namespace FCT {
 		 //return window;
 	}
 }
+#endif

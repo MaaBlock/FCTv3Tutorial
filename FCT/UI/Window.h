@@ -19,6 +19,11 @@ namespace FCT {
 		virtual void swapBuffers() = 0;
 		virtual int getWidth() = 0;
 		virtual int getHeight() = 0;
+        //virtual float getViewWidth() const = 0;
+        //virtual float getViewHeight() const = 0;
+        //virtual int getWindowWidth() const = 0;
+        //virtual int getWindowHeight() const = 0;
+        virtual void viewport(Vec2 lt, Vec2 rb) = 0;
 		virtual void setCursorPos(int x, int y) = 0;
 		void registerHandler(EventHandler* handler);
 		void unregisterHandler(EventHandler* handler);

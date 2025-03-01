@@ -4,8 +4,8 @@
 #include "Renderer.h"
 #include "FCT/Runtime/Android_native_app_glue.h"
 //#include "FCT/Runtime/gametextinput.cpp"
-
-
+#include "./FCT/headers.h"
+using namespace FCT;
 //#include "FCT/Runtime/Android_native_app_glue.cpp"
 
 /*!
@@ -57,8 +57,22 @@ bool motion_event_filter_func(const GameActivityMotionEvent *motionEvent) {
 /*!
  * This the main entry point for a native activity
  */
+int main() {
+    Runtime rt;
+    auto wnd = rt.createWindow(800,600,"null");
+    while(wnd->isRunning()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+}
+
 void android_main(struct android_app *pApp) {
     // Can be removed, useful to ensure your code is running
+    Runtime rt;
+    auto wnd = rt.createWindow(800,600,"null");
+    while(wnd->isRunning()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+/*
     aout << "Welcome to android_main" << std::endl;
     aerr << "test" << std::endl;
     // Register an event handler for Android events
@@ -70,6 +84,7 @@ void android_main(struct android_app *pApp) {
     android_app_set_motion_event_filter(pApp, motion_event_filter_func);
 
     // This sets up a typical game/event loop. It will run until the app is destroyed.
+
     do {
         // Process all pending events before running game logic.
         bool done = false;
@@ -112,4 +127,5 @@ void android_main(struct android_app *pApp) {
             //pRenderer->render();
         }
     } while (!pApp->destroyRequested);
+*/
 }

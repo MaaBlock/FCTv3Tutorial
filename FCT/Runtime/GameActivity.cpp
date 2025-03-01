@@ -352,66 +352,58 @@ struct NativeCode : public GameActivity {
     ARect insetsState[GAMECOMMON_INSETS_TYPE_COUNT];
 };
 
-using UITaskFunction = std::function<void(void*)>;
-struct UiTaskData {
-    UITaskFunction func;
-    void* param;
-    std::shared_ptr<bool> waited;
-};
-class Android_UICommon {
-public:
-    void init(ALooper* looper) {
-        m_looper = looper;
-        // 创建管道
-        if (pipe(m_pipeFd) != 0) {
-            ALOGW("create pipe failed");
-            return;
-        }
-        // 设置为非阻塞
-        int result = fcntl(m_pipeFd[0], F_SETFL, O_NONBLOCK);
-        if (result != 0) {
-            ALOGW("Could not make main work read pipe non-blocking");
-        }
-        result = fcntl(m_pipeFd[1], F_SETFL, O_NONBLOCK);
-        if (result != 0) {
-            ALOGW("Could not make main work write pipe non-blocking");
-        }
-        // 添加到 ALooper
-        ALooper_addFd(m_looper, m_pipeFd[0], 0, ALOOPER_EVENT_INPUT, UiTaskCallback, this);
+
+
+void Android_UICommon::init(ALooper* looper) {
+    m_looper = looper;
+    // 创建管道
+    if (pipe(m_pipeFd) != 0) {
+        ALOGW("create pipe failed");
+        return;
     }
-    void postUiTask(UITaskFunction func, void* param = nullptr, bool blocked = true) {
-        std::shared_ptr<bool> waiting = std::make_shared<bool>(blocked);
-        UiTaskData *taskData = new UiTaskData;
-        taskData->waited = waiting;
-        taskData->param = param;
-        taskData->func = [taskData, func](void *param) {
-            func(taskData->param);
-            *taskData->waited = false;
-            delete taskData;
-        };
-        taskData->param = param;
-
-        write(m_pipeFd[1], &taskData, sizeof(taskData));
-
-        while (*waiting) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
+    // 设置为非阻塞
+    int result = fcntl(m_pipeFd[0], F_SETFL, O_NONBLOCK);
+    if (result != 0) {
+        ALOGW("Could not make main work read pipe non-blocking");
     }
-    FCT::Window* createWindow();
-private:
-    static int UiTaskCallback(int fd, int events, void* data) {
-        Android_UICommon* self = static_cast<Android_UICommon*>(data);
-        UiTaskData* taskData;
-
-        if (read(self->m_pipeFd[0], &taskData, sizeof(taskData)) == sizeof(taskData)) {
-            taskData->func(taskData->param);
-        }
-
-        return 1; // Continue receiving callbacks
+    result = fcntl(m_pipeFd[1], F_SETFL, O_NONBLOCK);
+    if (result != 0) {
+        ALOGW("Could not make main work write pipe non-blocking");
     }
-    ALooper* m_looper;
-    int m_pipeFd[2];
-} g_common;
+    // 添加到 ALooper
+    ALooper_addFd(m_looper, m_pipeFd[0], 0, ALOOPER_EVENT_INPUT, UiTaskCallback, this);
+}
+
+void Android_UICommon::postUiTask(UITaskFunction func, void* param, bool blocked) {
+    std::shared_ptr<bool> waiting = std::make_shared<bool>(blocked);
+    UiTaskData *taskData = new UiTaskData;
+    taskData->waited = waiting;
+    taskData->param = param;
+    taskData->func = [taskData, func](void *param) {
+        func(taskData->param);
+        *taskData->waited = false;
+        delete taskData;
+    };
+    taskData->param = param;
+
+    write(m_pipeFd[1], &taskData, sizeof(taskData));
+
+    while (*waiting) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+}
+
+int Android_UICommon::UiTaskCallback(int fd, int events, void* data) {
+    Android_UICommon* self = static_cast<Android_UICommon*>(data);
+    UiTaskData* taskData;
+
+    if (read(self->m_pipeFd[0], &taskData, sizeof(taskData)) == sizeof(taskData)) {
+        taskData->func(taskData->param);
+    }
+
+    return 1; // Continue receiving callbacks
+}
+Android_UICommon g_AndroidUiCommon;
 
 
 
@@ -777,11 +769,10 @@ static const JNINativeMethod g_methods[] = {
                                          "(JLcom/google/androidgamesdk/gametextinput/InputConnection;)V",
                                                                         (void *) setInputConnection_native},
 };
+namespace FCT {
+    Android_Runtime g_AndroidRuntime;
 
-class Andorid_Runtime {
-public:
-    std::map<std::string,ARect> insets;
-    void init(JNIEnv* env,jobject gameActivityObject) {
+    void Android_Runtime::init(JNIEnv *env, jobject gameActivityObject) {
         env->GetJavaVM(&m_vm);
         m_gameActivityClass = new GameActivityClass(m_vm);
         m_gameActivityClass->init();
@@ -793,56 +784,83 @@ public:
 
         m_gameActivityClass->bindMethods(g_methods, NELEM(g_methods));
 
-        m_gameActivityObject = new GameActivityObecct(m_insetsClass,m_gameActivityClass,gameActivityObject);
+        m_gameActivityObject = new GameActivityObecct(m_insetsClass, m_gameActivityClass,
+                                                      gameActivityObject);
 
         m_window = new FCT::Android_Window();
     }
-    auto getVm() const {
+
+    JavaVM *Android_Runtime::getVm() const {
         return m_vm;
     }
-    void term(){
+
+    void Android_Runtime::term() {
         delete m_gameActivityObject;
         delete m_gameActivityClass;
     }
-    auto getGameActivityClass() const {
+
+    GameActivityClass *Android_Runtime::getGameActivityClass() const {
         return m_gameActivityClass;
     }
-    auto getInsetsClass() const {
+
+    InsetsClass *Android_Runtime::getInsetsClass() const {
         return m_insetsClass;
     }
-    auto getWindowInsetsCompatTypeClass() const {
+
+    WindowInsetsCompatTypeClass *Android_Runtime::getWindowInsetsCompatTypeClass() const {
         return m_windowInsetsCompatTypeClass;
     }
-    GameActivityObecct* getGameActivityObject() const {
+
+    GameActivityObecct *Android_Runtime::getGameActivityObject() const {
         return m_gameActivityObject;
     }
-    auto getWindow() const {
+
+    FCT::Android_Window *Android_Runtime::getWindow() const {
         return m_window;
     }
-private:
-    GameActivityClass* m_gameActivityClass;
-    InsetsClass* m_insetsClass;
-    WindowInsetsCompatTypeClass* m_windowInsetsCompatTypeClass;
-    JavaVM* m_vm;
-    GameActivityObecct* m_gameActivityObject;
-    FCT::Android_Window* m_window;
-} g_AndroidRuntime;
 
+/*
+void Android_Window::init(JNIEnv* env,jobject gameActivityObject) {
+    env->GetJavaVM(&m_vm);
+    m_gameActivityClass = new GameActivityClass(m_vm);
+    m_gameActivityClass->init();
+    m_insetsClass = new InsetsClass(m_vm);
+    m_insetsClass->init();
 
-FCT::Window* Android_UICommon::createWindow() {
-    auto wnd = g_AndroidRuntime.getWindow();
+    m_windowInsetsCompatTypeClass = new WindowInsetsCompatTypeClass(m_vm);
+    m_windowInsetsCompatTypeClass->init();
+
+    m_gameActivityClass->bindMethods(g_methods, NELEM(g_methods));
+
+    m_gameActivityObject = new GameActivityObecct(m_insetsClass, m_gameActivityClass,
+                                                  gameActivityObject);
+
+    m_window = new FCT::Android_Window();
+}
+ */
+}
+FCT::Window *Android_UICommon::createWindow() {
+    auto wnd = FCT::g_AndroidRuntime.getWindow();
+    if (!wnd->isCreated()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    return wnd;
+}
+FCT::Window *Android_UICommon::createWindow(int w, int h, const char *title) {
+    auto wnd = FCT::g_AndroidRuntime.getWindow();
     if (!wnd->isCreated()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     return wnd;
 }
 
+
 extern "C" void GameActivity_finish(GameActivity *activity) {
 
     /*NativeCode *code = static_cast<NativeCode *>(activity);
     write_work(code->mainWorkWrite, CMD_FINISH, 0);*/
-    g_common.postUiTask([](void*){
-        g_AndroidRuntime.getGameActivityObject()->finish();
+    g_AndroidUiCommon.postUiTask([](void*){
+        FCT::g_AndroidRuntime.getGameActivityObject()->finish();
     }, nullptr, false);
 }
 
@@ -851,8 +869,8 @@ extern "C" void GameActivity_setWindowFlags(GameActivity *activity,
                                             uint32_t values, uint32_t mask) {
     /*NativeCode *code = static_cast<NativeCode *>(activity);
     write_work(code->mainWorkWrite, CMD_SET_WINDOW_FLAGS, values, mask);*/
-    g_common.postUiTask([values,mask](void*){
-        g_AndroidRuntime.getGameActivityObject()->setWindowFlags(values, mask);
+    g_AndroidUiCommon.postUiTask([values,mask](void*){
+        FCT::g_AndroidRuntime.getGameActivityObject()->setWindowFlags(values, mask);
     }, nullptr, false);
 }
 
@@ -880,9 +898,10 @@ extern "C" void GameActivity_getTextInputState(
 extern "C" void GameActivity_hideSoftInput(GameActivity *activity,
                                            uint32_t flags) {
     NativeCode *code = static_cast<NativeCode *>(activity);
-    write_work(code->mainWorkWrite, CMD_HIDE_SOFT_INPUT, flags);
+    //write_work(code->mainWorkWrite, CMD_HIDE_SOFT_INPUT, flags);
 }
 
+/*
 extern "C" void GameActivity_getWindowInsets(GameActivity *activity,
                                              GameCommonInsetsType type,
                                              ARect *insets) {
@@ -890,7 +909,7 @@ extern "C" void GameActivity_getWindowInsets(GameActivity *activity,
     NativeCode *code = static_cast<NativeCode *>(activity);
     *insets = code->insetsState[type];
 }
-
+*/
 extern "C" GameTextInput *GameActivity_getTextInput(
         const GameActivity *activity) {
     const NativeCode *code = static_cast<const NativeCode *>(activity);
@@ -926,7 +945,7 @@ static int mainWorkCallback(int fd, int events, void *data) {
                                       gGameActivityClassInfo.setWindowFlags,
                                       work.arg1, work.arg2);
             checkAndClearException(code->env, "setWindowFlags");*/
-            g_AndroidRuntime.getGameActivityObject()->setWindowFlags(work.arg1, work.arg2);
+            FCT::g_AndroidRuntime.getGameActivityObject()->setWindowFlags(work.arg1, work.arg2);
         } break;
         case CMD_SHOW_SOFT_INPUT: {
             GameTextInput_showIme(code->gameTextInput, work.arg1);
@@ -948,7 +967,7 @@ static int mainWorkCallback(int fd, int events, void *data) {
                 work.arg2, work.arg3);
             checkAndClearException(code->env, "setImeEditorInfo");
         */
-            g_AndroidRuntime.getGameActivityObject()->setImeEditorInfoFields(work.arg1, work.arg2, work.arg3);
+            FCT::g_AndroidRuntime.getGameActivityObject()->setImeEditorInfoFields(work.arg1, work.arg2, work.arg3);
         } break;
         default:
             ALOGW("Unknown work command: %d", work.cmd);
@@ -986,7 +1005,7 @@ static jlong initializeNativeCode_native(JNIEnv *env, jobject javaGameActivity,
     }
     ALooper_acquire(code->looper);
 
-    g_common.init(code->looper);
+    g_AndroidUiCommon.init(code->looper);
 
     int msgpipe[2];
     if (pipe(msgpipe)) {
@@ -1105,6 +1124,50 @@ struct SaveInstanceLocals {
     jbyteArray array;
 };
 
+class Android_SaveState {
+public:
+    void* data(){
+        return m_data.data();
+    }
+    size_t size(){
+        return m_data.size();
+    }
+    void clear(){
+        m_data.clear();
+    }
+    void resize(size_t newSize){
+        m_data.resize(newSize);
+    }
+private:
+    std::vector<unsigned char*> m_data;
+} g_saveState;
+
+static jbyteArray onSaveInstanceState_native(JNIEnv *env,
+                                             jobject javaGameActivity,
+                                             jlong handle) {
+    LOG_TRACE("onSaveInstanceState_native");
+
+    jbyteArray result = NULL;
+
+    if (handle != 0) {
+        NativeCode *code = (NativeCode *)handle;
+
+        void* saveData = g_saveState.data();
+        size_t saveSize = g_saveState.size();
+
+        if (saveData != NULL && saveSize > 0) {
+            result = env->NewByteArray(saveSize);
+            if (result != NULL) {
+                env->SetByteArrayRegion(result, 0, saveSize,
+                                        reinterpret_cast<const jbyte*>(saveData));
+            }
+        }
+    }
+
+    return result;
+}
+
+/*
 static jbyteArray onSaveInstanceState_native(JNIEnv *env,
                                              jobject javaGameActivity,
                                              jlong handle) {
@@ -1133,6 +1196,7 @@ static jbyteArray onSaveInstanceState_native(JNIEnv *env,
     }
     return locals.array;
 }
+ */
 
 static void onPause_native(JNIEnv *env, jobject javaGameActivity,
                            jlong handle) {
@@ -1201,7 +1265,7 @@ static void onSurfaceCreated_native(JNIEnv *env, jobject javaGameActivity,
             code->callbacks.onNativeWindowCreated(code, code->nativeWindow);
         }
     }
-    g_AndroidRuntime.getWindow()->create();
+    FCT::g_AndroidRuntime.getWindow()->createSurface();
 }
 
 static void onSurfaceChanged_native(JNIEnv *env, jobject javaGameActivity,
@@ -1342,9 +1406,9 @@ extern "C" void GameActivity_setImeEditorInfo(GameActivity *activity,
     write_work(code->mainWorkWrite, CMD_SET_IME_EDITOR_INFO, inputType,
                actionId, imeOptions);
                */
-    g_common.postUiTask([inputType,actionId,imeOptions](void*){
-        g_AndroidRuntime.getGameActivityObject()->setImeEditorInfoFields(inputType,actionId,imeOptions);
-    },nullptr,false);
+    g_AndroidUiCommon.postUiTask([inputType,actionId,imeOptions](void*){
+        FCT::g_AndroidRuntime.getGameActivityObject()->setImeEditorInfoFields(inputType,actionId,imeOptions);
+    }, nullptr, false);
 }
 
 static struct {
@@ -1731,8 +1795,8 @@ static void onWindowInsetsChanged_native(JNIEnv *env, jobject activity,
 //            insets.bottom = env->GetIntField(jinsets, gInsetsClassInfo.bottom);
 //        }*/
 //    }
-    auto& insets = g_AndroidRuntime.insets;
-    auto WaterfallObject = g_AndroidRuntime.getGameActivityObject()->getWaterfallInsets();
+    auto& insets = FCT::g_AndroidRuntime.insets;
+    auto WaterfallObject = FCT::g_AndroidRuntime.getGameActivityObject()->getWaterfallInsets();
 
     if (WaterfallObject->isnullprt())
     {
@@ -1747,11 +1811,11 @@ static void onWindowInsetsChanged_native(JNIEnv *env, jobject activity,
         insets["Waterfall"].top = WaterfallObject->top();
         insets["Waterfall"].bottom = WaterfallObject->bottom();
     }
-    auto TypeClass = g_AndroidRuntime.getWindowInsetsCompatTypeClass();
+    auto TypeClass = FCT::g_AndroidRuntime.getWindowInsetsCompatTypeClass();
 
     for (auto it : TypeClass->getMethods()) {
         auto type = TypeClass->callStaticIntMethod(it.first.c_str());
-        auto object = g_AndroidRuntime.getGameActivityObject()->getWindowInsets(type);
+        auto object = FCT::g_AndroidRuntime.getGameActivityObject()->getWindowInsets(type);
 
         if (WaterfallObject->isnullprt())
         {
@@ -1880,7 +1944,19 @@ extern "C" int GameActivity_register(JNIEnv *env) {
 
 }
 
+void loadSavedState(JNIEnv *env, jbyteArray savedState) {
+    if (savedState != NULL) {
+        jsize length = env->GetArrayLength(savedState);
+        jbyte* byteArray = env->GetByteArrayElements(savedState, NULL);
 
+        g_saveState.resize(length);
+        memcpy(g_saveState.data(), byteArray, length);
+
+        env->ReleaseByteArrayElements(savedState, byteArray, JNI_ABORT);
+    } else {
+        g_saveState.clear();
+    }
+}
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_google_androidgamesdk_GameActivity_initializeNativeCode(
     JNIEnv *env, jobject javaGameActivity,
@@ -1888,7 +1964,8 @@ Java_com_google_androidgamesdk_GameActivity_initializeNativeCode(
     jobject jAssetMgr, jbyteArray savedState) {
 
     ALOGD("Java_com_google_androidgamesdk_GameActivity_initializeNativeCode");
-    g_AndroidRuntime.init(env,javaGameActivity);
+    FCT::g_AndroidRuntime.init(env,javaGameActivity);
+    loadSavedState(env,savedState);
     //GameActivity_register(env);
     jlong nativeCode = initializeNativeCode_native(
         env, javaGameActivity,internalDataDir, obbDir,

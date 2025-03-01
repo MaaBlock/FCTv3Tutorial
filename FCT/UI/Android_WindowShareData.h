@@ -2,7 +2,10 @@
 #include "../ThirdParty.h"
 #include "./Window.h"
 #include "../Runtime/runtime.h"
+
 namespace FCT {
+
+#ifdef FCT_DEPRECATED
 	using UITaskFunction = std::function<void(void*)>;
 	struct Android_UiTaskData {
 		UITaskFunction func;
@@ -27,4 +30,5 @@ namespace FCT {
 		bool g_inited;
 		bool g_runing;
 	};
+#endif
 }

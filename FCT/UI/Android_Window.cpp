@@ -47,4 +47,14 @@ namespace FCT{
     void Android_Window::destroySurface() {
         m_hasSurface = false;
     }
+
+    void Android_Window::viewport(Vec2 lt, Vec2 rb) {
+        m_lt = lt;
+        m_rb = rb;
+    }
+
+    void Android_Window::create(float w, float h, const char *title) {
+        viewport(Vec2(0, 0), Vec2(w, h));
+        m_title = title;;
+    }
 }

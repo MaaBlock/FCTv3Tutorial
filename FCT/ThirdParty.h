@@ -47,12 +47,16 @@
 
 #include <boost/lockfree/queue.hpp>
 #include <thread>
+#include <map>
+#include <functional>
+#include <memory>
 
 #ifdef FCT_ANDROID
 #include <android/asset_manager.h>
 #include <android/input.h>
 #include <android/native_window.h>
 #include <android/rect.h>
+#include <android/looper.h>
 #include <jni.h>
 #include <sys/types.h>
 #endif
