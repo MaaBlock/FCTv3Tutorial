@@ -26,4 +26,9 @@ namespace FCT {
         RuntimeBegin();
         return common->androidUICommon->createWindow(w,h,title);
     }
+    Context* Runtime::createContext(){
+        RuntimeBegin();
+        Context* ctx = new VK_Context();
+        return ctx;
+    }
 }

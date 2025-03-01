@@ -45,6 +45,17 @@ file(GLOB RUNTIME_ANDROID_MODULE_HEADERS
         "./Runtime/Android_*.h"
 )
 
+file(GLOB CONTEXT_VULKAN_MODULE_SOURCES
+        LIST_DIRECTORIES false
+        CONFIGURE_DEPENDS
+        "./Context/VK_*.cpp"
+)
+file(GLOB CONTEXT_VULKAN_MODULE_HEADERS
+        LIST_DIRECTORIES false
+        CONFIGURE_DEPENDS
+        "./Context/VK_*.h"
+)
+
 find_package(Boost REQUIRED COMPONENTS system thread locale)
 find_package(harfbuzz CONFIG REQUIRED)
 find_package(Freetype REQUIRED)
@@ -55,6 +66,7 @@ add_library(FCT STATIC
     ${UI_MODULE_SOURCES}
     ${UI_ANDROID_MODULE_SOURCES}
     ${RUNTIME_MODULE_SOURCES}
+    ${CONTEXT_VULKAN_MODULE_SOURCES}
     headers.cpp
 )
 

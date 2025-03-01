@@ -18,6 +18,7 @@ namespace FCT
             term();
         }
         Window *createWindow(int w, int h, const char *title);
+        Context* createContext();
     private:
         RuntimeCommon* m_commmon;
         bool m_isTerm;
