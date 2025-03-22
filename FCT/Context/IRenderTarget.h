@@ -1,6 +1,6 @@
 #pragma once
-#include "./Context.h"
 namespace FCT {
+    class Context;
 	class IRenderTarget {
 	public:
 		virtual void bind(Context* ctx) = 0;

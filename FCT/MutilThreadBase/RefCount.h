@@ -23,7 +23,8 @@ namespace FCT {
 	inline void safeAddRef(RefCount* obj) {
 		if (obj) obj->addRef();
 	}
-	inline void safeRelease(RefCount* obj) {
+	inline void safeRelease(RefCount*& obj) {
 		if (obj) obj->release();
+        obj = nullptr;
 	}
 }

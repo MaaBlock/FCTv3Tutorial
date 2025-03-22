@@ -6,7 +6,7 @@
 #include <vector>
 #include <android/imagedecoder.h>
 
-#include "FCT/Runtime/AndroidOut.h"
+#include "FCT/DebugTools/Android_Out.h"
 #include "Shader.h"
 #include "Utility.h"
 #include "TextureAsset.h"

@@ -1,6 +1,6 @@
 #include <android/imagedecoder.h>
 #include "TextureAsset.h"
-#include "FCT/Runtime/AndroidOut.h"
+#include "FCT/DebugTools/Android_Out.h"
 #include "Utility.h"
 
 std::shared_ptr<TextureAsset>

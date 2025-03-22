@@ -1,9 +1,54 @@
 #pragma once
+#include "../ThirdParty.h"
 #include "../UI/Window.h"
 #include "../UI/Android_WindowShareData.h"
 #include "../ImageLoader/ImageLoader.h"
+#include "../Context/VK_ContextCommon.h"
 namespace FCT
 {
+    struct RuntimeCommon {
+#ifdef FCT_USE_VULKAN
+        VK_ContextCommon* vkContextCommon;
+#endif
+    };
+    class Runtime {
+    public:
+        Runtime(){
+            init();
+#ifdef  FCT_USE_VULKAN
+            g_common->vkContextCommon = new VK_ContextCommon();
+            g_common->vkContextCommon->init();
+#endif
+        }
+        ~Runtime() {
+#ifdef  FCT_USE_VULKAN
+            g_common->vkContextCommon->term();
+#endif
+            term();
+        }
+        void init();
+        void term();
+        int getDeviceWidth();
+        int getDeviceHeight();
+        Window* createWindow();
+        Window* createWindow(int w,int h,const char* title = "") {
+            Window* window = createWindow();
+            window->size(w,h);
+            window->create();
+            return window;
+        }
+        Window* createWindow(int x,int y,int w,int h,const char* title = "") {
+            Window* window = createWindow();
+            window->pos(x,y);
+            window->size(w,h);
+            window->create();
+            return window;
+        }
+        Context* createContext();
+    private:
+        RuntimeCommon* g_common;
+    };
+#ifdef FCT_DEPRECATED
     struct RuntimeCommon {
 
     };
@@ -20,13 +65,12 @@ namespace FCT
         Window *createWindow(int w, int h, const char *title);
         Context* createContext();
     private:
-        RuntimeCommon* m_commmon;
+        RuntimeCommon* m_common;
         bool m_isTerm;
         bool m_isRelease;
         void init();
         void term();
     };
-#ifdef FCT_DEPRECATED
 	class Android_WindowShareData;
 	class GL_ContextShareData;
 	class FreeType_FontShareData;

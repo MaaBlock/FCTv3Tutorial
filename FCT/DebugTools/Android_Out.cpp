@@ -1,6 +1,6 @@
-#include "AndroidOut.h"
+#include "Android_Out.h"
 
-AndroidOut androidOut("AO");
+Android_Out androidOut("AO");
 AndroidErr androidErr("AE");
 std::ostream aout(&androidOut);
 std::ostream aerr(&androidErr);

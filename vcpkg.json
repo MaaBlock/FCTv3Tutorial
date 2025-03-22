@@ -2,9 +2,25 @@
   "name": "fct",
   "version": "0.1.0",
   "dependencies": [
-    "boost",
     "freetype",
     "harfbuzz",
-    "bullet3"
+    "boost",
+    "bullet3",
+    {
+      "name": "vulkan",
+      "platform": "windows"
+    },
+    {
+      "name": "physx",
+      "platform": "windows"
+    },
+    {
+      "name": "glfw3",
+      "platform": "windows"
+    },
+    {
+      "name": "vulkan-headers",
+      "platform": "android"
+    }
   ]
 }

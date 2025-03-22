@@ -1,7 +1,7 @@
 #pragma once
-#include "./Matrix.h"
 #include <string>
 #include "../ThirdParty.h"
+#include "./Matrix.h"
 namespace FCT
 {
 
@@ -113,6 +113,10 @@ namespace FCT
     struct Vec2
     {
         float x, y;
+        Vec2(int x, int y) {
+            this->x = static_cast<float>(x);
+            this->y = static_cast<float>(y);
+        }
         Vec2(float x = 0.0f, float y = 0.0f) : x(x), y(y) {}
         Vec2 &operator+=(const Vec2 &rhs)
         {

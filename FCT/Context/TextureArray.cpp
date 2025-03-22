@@ -1,5 +1,5 @@
 #include "../headers.h"
-
+#ifdef FCT_DEPRECATED
 void FCT::TextureArray::loadFromFile(const std::vector<std::string>& filepaths, ImageLoader* imageLoader) {
     if (filepaths.size() != getLayers()) {
         std::cerr << "Error: Number of images does not match the array size." << std::endl;
@@ -20,3 +20,4 @@ void FCT::TextureArray::loadFromFile(const std::vector<std::string>& filepaths, 
     }
     GL_Check("FCT::TextureArray::loadFromFile");
 }
+#endif

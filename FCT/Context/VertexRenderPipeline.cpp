@@ -2,7 +2,7 @@
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include <cmath>
-#include <corecrt_math_defines.h>
+#ifdef FCT_DEPRECATED
 namespace FCT
 {
 	FCT::VertexRenderScreen::VertexRenderScreen(VertexRenderPipeline *pl) : Object(pl)
@@ -69,7 +69,7 @@ VertexOutput main(VertexInput vs_input)
 	return vs_output;
 })"))
 		{
-			std::cout << "vs±¨´í:" << std::endl;
+			std::cout << "vsï¿½ï¿½ï¿½ï¿½:" << std::endl;
 			std::cout << m_vrvs->getCompileError() << std::endl;
 		}
 		m_vrps = ctx->createPixelShader(m_vrvs->getOutput());
@@ -229,7 +229,7 @@ PixelOutput main(PixelInput ps_input) {
 	bool isPathStarted = false;
 	vec2 pathCrossings = vec2(0.0);
 
-	float pathOperation = 0.0; // 0: Ä¬ÈÏ 1:²¢ 2:½» 3:²¹
+	float pathOperation = 0.0; // 0: Ä¬ï¿½ï¿½ 1:ï¿½ï¿½ 2:ï¿½ï¿½ 3:ï¿½ï¿½
     while(true) {
         float command = texelFetch(commandQueue, ivec2(i, 0), 0).x;
         i++;
@@ -358,7 +358,7 @@ PixelOutput main(PixelInput ps_input) {
 }
 )"))
 		{
-			std::cout << "ps±¨´í:" << std::endl;
+			std::cout << "psï¿½ï¿½ï¿½ï¿½:" << std::endl;
 			std::cout << m_vrps->getCompileError() << std::endl;
 			std::cout << m_vrps->getSource() << std::endl;
 		}
@@ -530,7 +530,7 @@ PixelOutput main(PixelInput ps_input) {
 		r = std::min(r, std::min(size.x / 2, size.y / 2));
 		float halfWidth = width / 2;
 
-		// ÍâÂÖÀª£¨Ë³Ê±Õë£©
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë³Ê±ï¿½ë£©
 		moveTo(Vec2(pos.x + r, pos.y));
 		lineTo(Vec2(pos.x + size.x - r, pos.y));
 		arcTo(Vec2(pos.x + size.x - r, pos.y + r), -M_PI_2, 0);
@@ -541,7 +541,7 @@ PixelOutput main(PixelInput ps_input) {
 		lineTo(Vec2(pos.x, pos.y + r));
 		arcTo(Vec2(pos.x + r, pos.y + r), M_PI, 3 * M_PI_2);
 
-		// ÄÚÂÖÀª£¨ÄæÊ±Õë£©
+		// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ë£©
 		moveTo(Vec2(pos.x + r + width, pos.y + width));
 		arcTo(Vec2(pos.x + r + width, pos.y + r + width), 3 * M_PI_2, M_PI);
 		lineTo(Vec2(pos.x + width, pos.y + size.y - r - width));
@@ -641,3 +641,4 @@ PixelOutput main(PixelInput ps_input) {
 		m_commandQueue.push_back(Command_EndPath);
 	}
 }
+#endif

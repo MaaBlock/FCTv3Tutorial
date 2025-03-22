@@ -1,14 +1,17 @@
 //
 // Created by Administrator on 2025/3/1.
 //
+#include "../ThirdParty.h"
 #include "./Context.h"
 #ifndef VK_CONTEXT_H
 #define VK_CONTEXT_H
 
 namespace FCT {
+    class VK_ContextCommon;
     class VK_Context : public Context {
     public:
-        VK_Context();
+        VK_Context(VK_ContextCommon* common);
+        ~VK_Context() override;
         TextureArray *createTextureArray() override;
 
         void clear(float r, float g, float b) override;
@@ -31,8 +34,31 @@ namespace FCT {
         ConstBuffer *createConstBuffer() override;
 
         Texture *createTexture() override;
+        Image *createImage() override;
+        void create(IRenderTarget* target) override;
+        void create(){
 
+        }
+        auto getDevice() const {
+            return m_device;
+        }
+        auto getPhysicalDevice() const {
+            return m_phyDevice;
+        }
+        vk::Instance getVkInstance();
+
+        void compilePasses();
+        void submitPasses();
+        void clear(Vec4 color,float depth = 1.0,float stencil = 0.0){
+
+        }
+        uint32_t getGraphicsQueueFamily() const;
     private:
+        VK_ContextCommon* m_common;
+        size_t m_graphicsQueueFamilyIndex;
+        vk::Device m_device;
+        vk::PhysicalDevice m_phyDevice;
+        vk::Queue m_graphicsQueue;
 
     };
 }

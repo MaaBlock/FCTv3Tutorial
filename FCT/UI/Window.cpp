@@ -22,3 +22,5 @@ void FCT::Window::clearHandler()
 	}
 	m_handlers.clear();
 }
+
+

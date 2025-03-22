@@ -1,6 +1,6 @@
 #include "../headers.h"
 #include <iostream>
-
+#ifdef FCT_DEPRECATED
 namespace FCT {
 
     Pipeline::Pipeline(Context* context, VertexFactory* defaultFactory)
@@ -127,3 +127,4 @@ namespace FCT {
     }
 
 } // namespace FCT
+#endif

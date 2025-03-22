@@ -3,30 +3,29 @@
 //
 #pragma once
 #include "../ThirdParty.h"
-#include "./Window.h"
 
 #ifndef ANDROID_UICOMMON_H
 #define ANDROID_UICOMMON_H
-using UITaskFunction = std::function<void(void*)>;
+namespace FCT {
+    using UITaskFunction = std::function<void(void *)>;
 
-struct UiTaskData {
-    UITaskFunction func;
-    void* param;
-    std::shared_ptr<bool> waited;
-};
+    struct UiTaskData {
+        UITaskFunction task;
+        void *param;
+        std::shared_ptr<bool> waiting;
+    };
 
-class Android_UICommon {
-public:
-    void init(ALooper* looper);
-    void postUiTask(UITaskFunction func, void* param = nullptr, bool blocked = true);
-    FCT::Window* createWindow();
-    FCT::Window* createWindow(int w, int h, const char *title);
-private:
-    static int UiTaskCallback(int fd, int events, void* data);
+    class Android_UICommon {
+    public:
 
-    ALooper* m_looper;
-    int m_pipeFd[2];
-};
-
-extern Android_UICommon g_AndroidUiCommon;
+        void preinit();
+        void cleanup();
+        void postUiTask(UITaskFunction task,void* param = nullptr,bool waited = true);
+    private:
+        void processUiTask(int fd);
+        ALooper* m_uiLooper;
+        int m_messagePipe[2];
+        static int looperWork(int fd, int events, void *data);
+    };
+}
 #endif //ANDROID_UICOMMON_H

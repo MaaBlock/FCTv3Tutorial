@@ -7,9 +7,9 @@
 extern std::ostream aout;
 extern std::ostream aerr;
 
-class AndroidOut: public std::stringbuf {
+class Android_Out: public std::stringbuf {
 public:
-    AndroidOut(const char* logTag) : m_logTag(logTag){
+    Android_Out(const char* logTag) : m_logTag(logTag){
 
     }
 protected:
