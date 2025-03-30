@@ -17,17 +17,44 @@ namespace FCT {
     void Context::swapQueue() {
         std::swap(m_pushQueue,m_submitQueue);
     }
-
+    namespace test
+    {
+        struct TestState
+        {
+            bool isInited = false;
+            Context* ctx;
+            Window* wnd;
+            RHI::Pass* pass;
+            RHI::PassGroup* passGroup;
+            void init(Context* ctx)
+            {
+                thio->ctx = ctx;
+                isInited = true;
+                wnd = ctx->flushWindow();
+                pass = ctx->createPass();
+                passGroup = ctx->createPassGroup();
+            }
+            void tick(Context* ctx)
+            {
+                if (!isInited) {
+                    init(ctx);
+                }
+            }
+        } state;
+    }
     void Context::submitThread() {
         while (m_ctxRunning) {
+            FCT_WAIT_FOR(m_nextFrame);
+            test::state.tick(this);
             compilePasses();
             submitPasses();
             if (m_flushWnd){
                 m_flushWnd->swapBuffers();
             }
-            FCT_WAIT_FOR(m_nextFrame);
+            currentFlush();
         }
     }
+
 
     void Context::flush() {
         FCT_WAIT_FOR(m_currentFlush);

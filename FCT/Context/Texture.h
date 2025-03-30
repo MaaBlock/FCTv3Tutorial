@@ -1,5 +1,5 @@
 #pragma once
-#include "IPipelineResource.h"
+#include "../RHI/IPipelineResource.h"
 #include "../ImageLoader/ImageLoader.h"
 namespace FCT {
 	class Texture : public IPipelineResource {

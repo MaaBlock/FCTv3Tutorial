@@ -1,6 +1,6 @@
 #pragma once
-#include "VertexShader.h"
-#include "PixelShader.h"
+#include "../RHI/VertexShader.h"
+#include "../RHI/PixelShader.h"
 
 namespace FCT {
 

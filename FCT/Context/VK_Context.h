@@ -35,9 +35,17 @@ namespace FCT {
 
         Texture *createTexture() override;
         Image *createImage() override;
+        RHI::Swapchain* createSwapchain() override;
+        RHI::RenderTargetView* createRenderTargetView() override;
+        RHI::Pass* createPass() override;
+        RHI::PassGroup* createPassGroup() override;
         void create(IRenderTarget* target) override;
         void create(){
 
+        }
+        auto device()
+        {
+            return m_device;
         }
         auto getDevice() const {
             return m_device;
@@ -47,19 +55,25 @@ namespace FCT {
         }
         vk::Instance getVkInstance();
 
-        void compilePasses();
-        void submitPasses();
+        void compilePasses() override;
+        void submitPasses() override;
+        void beginCommandBuffer(int index);
+        void endCommandBuffer(int index);
+        void submitCommandBuffer();
+
         void clear(Vec4 color,float depth = 1.0,float stencil = 0.0){
 
         }
         uint32_t getGraphicsQueueFamily() const;
     private:
+        void createCommandPoolAndBuffers();
         VK_ContextCommon* m_common;
         size_t m_graphicsQueueFamilyIndex;
         vk::Device m_device;
         vk::PhysicalDevice m_phyDevice;
         vk::Queue m_graphicsQueue;
-
+        vk::CommandPool m_commandPool;
+        std::vector<vk::CommandBuffer> m_commandBuffers;
     };
 }
 

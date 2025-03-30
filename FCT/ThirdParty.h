@@ -1,3 +1,5 @@
+#ifndef FCT_THRIDPARTY_HEADER
+#define FCT_THIRDPARTY_HEADER
 //#define FCT_USE_GLAD
 #define FCT_USE_GLFW
 #define FCT_USE_PHYSX
@@ -6,6 +8,7 @@
 #define FCT_USE_BULLET
 #define FCT_USE_VULKAN
 #ifdef _WIN32
+	#define FCT_WIN32
 	#define NOMINMAX
 	#include <Windows.h>
 #endif
@@ -24,6 +27,9 @@
 #endif
 
 #ifdef FCT_USE_GLFW
+#ifdef FCT_USE_VULKAN
+#define GLFW_INCLUDE_VULKAN
+#endif
 	#include <glfw/glfw3.h>
 #endif
 
@@ -69,6 +75,9 @@
 
 #ifdef FCT_USE_VULKAN
 #include <vulkan/vulkan.h>
+#ifdef FCT_WIN32
+#include <vulkan/vulkan_win32.h>
+#endif
 #ifdef FCT_ANDROID
 extern int main();
 #include <vulkan/vulkan_android.h>
@@ -91,3 +100,4 @@ extern int main();
 #include <memory>
 #include <string>
 #include <vector>
+#endif // FCT_THIRDPARTY_HEADER

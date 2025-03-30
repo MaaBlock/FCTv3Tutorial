@@ -1,3 +1,5 @@
+
+#ifdef FCT_DEPRECATED
 #include "VertexShader.h"
 #include <sstream>
 #include "DataTypes.h"
@@ -216,4 +218,6 @@ std::string VertexShader::getPositionType() const {
     return "vec3"; 
 }
 
+
 } // namespace FCT
+#endif

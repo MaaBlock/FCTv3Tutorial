@@ -3,6 +3,7 @@
 
 namespace FCT {
 
+#ifdef FCT_DEPRECATED
     PixelShader::PixelShader(const ShaderOutput& vertexOutput)
         : m_isCompiled(false), m_vertexOutput(vertexOutput)
     {
@@ -180,5 +181,5 @@ namespace FCT {
         }
         return "color";
     }
-
+#endif
 } // namespace FCT

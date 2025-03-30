@@ -1,10 +1,16 @@
 #pragma once
+
 #include "./VertexShader.h"
 #include "./PixelShader.h"
+
+#ifdef FCT_DEPRECATED
 #include "./VertexFactory.h"
 #include "../Shapes/Shape.h"
 #include "../Object/Object.h"
+#endif
 namespace FCT {
+
+#ifdef FCT_DEPRECATED
 
     class Context;
 
@@ -39,5 +45,6 @@ namespace FCT {
         void updateProjectionMatrix();
         void updateViewMatrix();
     };
+    #endif // FCT_DEPRECATED
 
 } // namespace FCT

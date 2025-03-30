@@ -46,6 +46,9 @@ namespace FCT {
 #ifdef FCT_ANDROID
                 VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
 #endif
+#ifdef FCT_WIN32
+                VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+#endif
                 VK_KHR_SURFACE_EXTENSION_NAME,
                 //VK_KHR_SWAPCHAIN_EXTENSION_NAME
             };

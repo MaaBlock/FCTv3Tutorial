@@ -7,12 +7,15 @@ namespace FCT {
         IndexBuffer,
         InputLayout,
         DepthStencilState,
-        RasterizerState,
+        //RasterizerState,
+        RasterizationState,
         BlendState,
         Texture,
         DrawCall,
         ConstBuffer,
-        TextureArray
+        TextureArray,
+        RootSign,
+        ViewportState
     };
     class IPipelineResource : public RefCount {
     public:

@@ -1,5 +1,5 @@
 #pragma once
-#include "IPipelineResource.h"
+#include "../RHI/IPipelineResource.h"
 
 namespace FCT {
 

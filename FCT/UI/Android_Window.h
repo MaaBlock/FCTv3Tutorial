@@ -54,7 +54,7 @@ namespace FCT {
         void destroySurface();
         void create(float w,float h,const char* title);
 
-        void viewport(Vec2 lt, Vec2 rb) override;
+        void viewport(Vec2 lt, Vec2 rb);
         void sizeParam(int w,int h);
         void resize(int w,int h);
         void onSurfaceCreate(jobject surface);

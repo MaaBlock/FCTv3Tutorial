@@ -4,11 +4,15 @@
 #include "../UI/Android_WindowShareData.h"
 #include "../ImageLoader/ImageLoader.h"
 #include "../Context/VK_ContextCommon.h"
+#include "../UI/GLFW_UICommon.h"
 namespace FCT
 {
     struct RuntimeCommon {
 #ifdef FCT_USE_VULKAN
         VK_ContextCommon* vkContextCommon;
+#endif
+#ifdef FCT_USE_GLFW
+    	GLFW_UICommon* glfwUICommon;
 #endif
     };
     class Runtime {
@@ -19,12 +23,18 @@ namespace FCT
             g_common->vkContextCommon = new VK_ContextCommon();
             g_common->vkContextCommon->init();
 #endif
+#ifdef  FCT_USE_GLFW
+        	g_common->glfwUICommon = new GLFW_UICommon();
+#endif
         }
         ~Runtime() {
 #ifdef  FCT_USE_VULKAN
             g_common->vkContextCommon->term();
 #endif
-            term();
+        	term();
+#ifdef  FCT_USE_GLFW
+        	delete g_common->glfwUICommon;
+#endif
         }
         void init();
         void term();

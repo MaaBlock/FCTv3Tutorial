@@ -3,7 +3,6 @@
 //
 
 #include "../FCTAPI.h"
-#include "VK_Context.h"
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 namespace FCT {
     FCT::TextureArray *FCT::VK_Context::createTextureArray() {
@@ -52,7 +51,11 @@ namespace FCT {
 
 
     VK_Context::~VK_Context() {
-
+        if (m_device) {
+            m_device.freeCommandBuffers(m_commandPool, m_commandBuffers);
+            m_device.destroyCommandPool(m_commandPool);
+            m_device.destroy();
+        }
     }
 
     VK_Context::VK_Context(VK_ContextCommon *common) {
@@ -92,6 +95,21 @@ namespace FCT {
         return m_graphicsQueueFamilyIndex;
     }
 
+    void VK_Context::createCommandPoolAndBuffers() {
+        vk::CommandPoolCreateInfo poolInfo;
+        poolInfo.setQueueFamilyIndex(m_graphicsQueueFamilyIndex)
+                 .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
+
+        m_commandPool = m_device.createCommandPool(poolInfo);
+
+        vk::CommandBufferAllocateInfo allocInfo;
+        allocInfo.setCommandPool(m_commandPool)
+                  .setLevel(vk::CommandBufferLevel::ePrimary)
+                  .setCommandBufferCount(1);
+
+        m_commandBuffers = m_device.allocateCommandBuffers(allocInfo);
+    }
+
     void VK_Context::create(IRenderTarget *target) {
         target->bind(this);
     }
@@ -100,6 +118,26 @@ namespace FCT {
 
     Image *VK_Context::createImage() {
         return nullptr;
+    }
+
+    RHI::Swapchain* VK_Context::createSwapchain()
+    {
+        return new RHI::VK_Swapchain(this);
+    }
+
+    RHI::RenderTargetView* VK_Context::createRenderTargetView()
+    {
+        return new RHI::VK_RenderTargetView(this);
+    }
+
+    RHI::Pass* VK_Context::createPass()
+    {
+        return new RHI::VK_Pass(this);
+    }
+
+    RHI::PassGroup* VK_Context::createPassGroup()
+    {
+        return new RHI::VK_PassGroup(this);
     }
 
     vk::Instance VK_Context::getVkInstance() {
@@ -112,5 +150,23 @@ namespace FCT {
 
     void VK_Context::submitPasses() {
 
+    }
+
+    void VK_Context::beginCommandBuffer(int index) {
+        vk::CommandBufferBeginInfo beginInfo;
+        beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+
+        m_commandBuffers[index].begin(beginInfo);
+    }
+
+    void VK_Context::endCommandBuffer(int index) {
+        m_commandBuffers[index].end();
+    }
+    void VK_Context::submitCommandBuffer() {
+        vk::SubmitInfo submitInfo;
+        submitInfo.setCommandBuffers(m_commandBuffers[0]);
+
+        m_graphicsQueue.submit(submitInfo);
+        m_graphicsQueue.waitIdle();
     }
 }

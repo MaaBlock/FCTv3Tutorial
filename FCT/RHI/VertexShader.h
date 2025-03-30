@@ -6,7 +6,27 @@
 #include "./IPipelineResource.h"
 
 namespace FCT {
-
+    class VertexShader : public IPipelineResource
+    {
+    public:
+        PipelineResourceType getType() const override
+        {
+            return PipelineResourceType::VertexShader;
+        }
+        virtual ~VertexShader() {}
+        virtual void code(const std::vector<char> code)
+        {
+            m_code = code;
+        }
+        virtual void code(std::vector<char>&& code)
+        {
+            m_code = std::move(code);
+        }
+        virtual void create() = 0;
+    protected:
+        std::vector<char> m_code;
+    };
+#ifdef FCT_DEPRECATED
     class VertexShader : public IPipelineResource {
     public:
         VertexShader(VertexFactory* factory);
@@ -33,4 +53,5 @@ namespace FCT {
         bool isPositionAttribute(PipelineAttributeType type) const;
 		bool hasBatchId() const;
     };
+#endif
 } // namespace FCT

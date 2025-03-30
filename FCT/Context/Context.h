@@ -3,8 +3,9 @@
 #include "../MutilThreadBase/RefCount.h"
 #include "../MutilThreadBase/Computation.h"
 #include "./VertexFactory.h"
-#include "./VertexShader.h"
-#include "./PixelShader.h"
+#include "../RHI/VertexShader.h"
+#include "../RHI/PixelShader.h"
+#include "../RHI/Swapcain.h"
 #include "./VertexBuffer.h"
 #include "./Material.h"
 #include "./DrawCall.h"
@@ -14,6 +15,8 @@
 #include "./Format.h"
 #include "./Image.h"
 #include "./Pass.h"
+#include "../RHI/Pass.h"
+#include "../RHI/PassGroup.h"
 namespace FCT {
 	class VertexBuffer;
 	class InputLayout;
@@ -35,7 +38,10 @@ namespace FCT {
 		virtual Texture* createTexture() = 0;
 		virtual TextureArray* createTextureArray() = 0;
         virtual Image* createImage() = 0;
-        virtual void create(IRenderTarget* renderTarget) = 0;
+		virtual RHI::Swapchain* createSwapchain() = 0;
+		virtual RHI::PassGroup* createPassGroup() = 0;
+		virtual RHI::Pass* createPass() = 0;
+		virtual void create(IRenderTarget* renderTarget) = 0;
         virtual void setFlushWindow(Window* wnd) {
             m_flushWnd = wnd;
         }
@@ -44,7 +50,12 @@ namespace FCT {
         virtual void flush();
         virtual void swapQueue();
         virtual void submitThread();
-    protected:
+		virtual RHI::RenderTargetView* createRenderTargetView() = 0;
+		Window* flushWindow() const
+		{
+			return m_flushWnd;
+		}
+	protected:
         Window* m_flushWnd;
         bool m_nextFrame;
         bool m_currentFlush;

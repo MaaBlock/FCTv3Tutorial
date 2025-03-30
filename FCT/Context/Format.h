@@ -33,7 +33,55 @@ namespace FCT {
         D32_SFLOAT,
         D32_SFLOAT_S8_UINT
     };
+    enum class Samples
+    {
+        sample_1,
+        sample_2,
+        sample_4,
+        sample_8,
+        sample_16,
+        sample_32,
+    };
+#ifdef FCT_USE_VULKAN
+    inline vk::SampleCountFlagBits ToVkSampleCount(Samples samples) {
+        switch (samples) {
+        case Samples::sample_1:
+            return vk::SampleCountFlagBits::e1;
+        case Samples::sample_2:
+            return vk::SampleCountFlagBits::e2;
+        case Samples::sample_4:
+            return vk::SampleCountFlagBits::e4;
+        case Samples::sample_8:
+            return vk::SampleCountFlagBits::e8;
+        case Samples::sample_16:
+            return vk::SampleCountFlagBits::e16;
+        case Samples::sample_32:
+            return vk::SampleCountFlagBits::e32;
+        default:
+            return vk::SampleCountFlagBits::e1;
+        }
+    }
 
+    inline Samples FromVkSampleCount(vk::SampleCountFlagBits sampleCount) {
+        switch (sampleCount) {
+        case vk::SampleCountFlagBits::e1:
+            return Samples::sample_1;
+        case vk::SampleCountFlagBits::e2:
+            return Samples::sample_2;
+        case vk::SampleCountFlagBits::e4:
+            return Samples::sample_4;
+        case vk::SampleCountFlagBits::e8:
+            return Samples::sample_8;
+        case vk::SampleCountFlagBits::e16:
+            return Samples::sample_16;
+        case vk::SampleCountFlagBits::e32:
+            return Samples::sample_32;
+        default:
+            return Samples::sample_1;
+        }
+    }
+#endif
+#ifdef FCT_USE_VULKAN
     inline vk::Format ToVkFormat(Format format) {
         switch (format) {
             case Format::UNDEFINED:
@@ -78,6 +126,51 @@ namespace FCT {
                 return vk::Format::eUndefined;
         }
     }
+    inline Format FromVkFormat(vk::Format format) {
+        switch (format) {
+        case vk::Format::eUndefined:
+            return Format::UNDEFINED;
+        case vk::Format::eR8Unorm:
+            return Format::R8_UNORM;
+        case vk::Format::eR8G8Unorm:
+            return Format::R8G8_UNORM;
+        case vk::Format::eR8G8B8Unorm:
+            return Format::R8G8B8_UNORM;
+        case vk::Format::eR8G8B8A8Unorm:
+            return Format::R8G8B8A8_UNORM;
+        case vk::Format::eB8G8R8A8Unorm:
+            return Format::B8G8R8A8_UNORM;
+        case vk::Format::eR8G8B8A8Srgb:
+            return Format::R8G8B8A8_SRGB;
+        case vk::Format::eB8G8R8A8Srgb:
+            return Format::B8G8R8A8_SRGB;
+        case vk::Format::eR16Sfloat:
+            return Format::R16_SFLOAT;
+        case vk::Format::eR16G16Sfloat:
+            return Format::R16G16_SFLOAT;
+        case vk::Format::eR16G16B16A16Sfloat:
+            return Format::R16G16B16A16_SFLOAT;
+        case vk::Format::eR32Sfloat:
+            return Format::R32_SFLOAT;
+        case vk::Format::eR32G32Sfloat:
+            return Format::R32G32_SFLOAT;
+        case vk::Format::eR32G32B32Sfloat:
+            return Format::R32G32B32_SFLOAT;
+        case vk::Format::eR32G32B32A32Sfloat:
+            return Format::R32G32B32A32_SFLOAT;
+        case vk::Format::eD16Unorm:
+            return Format::D16_UNORM;
+        case vk::Format::eD24UnormS8Uint:
+            return Format::D24_UNORM_S8_UINT;
+        case vk::Format::eD32Sfloat:
+            return Format::D32_SFLOAT;
+        case vk::Format::eD32SfloatS8Uint:
+            return Format::D32_SFLOAT_S8_UINT;
+        default:
+            return Format::UNDEFINED;
+        }
+    }
+#endif
 }
 
 

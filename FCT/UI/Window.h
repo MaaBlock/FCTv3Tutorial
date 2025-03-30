@@ -20,6 +20,7 @@ namespace FCT {
         WindowBehavior* m_behavior;
     public:
         friend class SetParamWindowBehavior;
+		RenderTargetType getType() const override { return RenderTargetType::WindowTarget; }
 		Window();
 		virtual ~Window() {
 			clearHandler();
@@ -36,7 +37,7 @@ namespace FCT {
 		virtual void swapBuffers() = 0;
 		virtual int getWidth() = 0;
 		virtual int getHeight() = 0;
-        virtual void viewport(Vec2 lt, Vec2 rb) = 0;
+        //virtual void viewport(Vec2 lt, Vec2 rb) = 0;
 		virtual void setCursorPos(int x, int y) = 0;
 		void registerHandler(EventHandler* handler);
 		void unregisterHandler(EventHandler* handler);
@@ -49,6 +50,7 @@ namespace FCT {
 		CallBackEventHandler* m_callbackHandler;
 		std::vector<EventHandler*> m_handlers;
         int m_x,m_y, m_width, m_height;
+		std::string m_title;
 	private:
 
 	};
