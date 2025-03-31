@@ -15,6 +15,7 @@ namespace FCT
         void bind() override;
         void unbind() override;
         void create() override;
+        vk::PipelineViewportStateCreateInfo& viewportStateCreateInfo() { return m_createInfo; }
     private:
         vk::Rect2D m_scissor;
         vk::Viewport m_viewport;

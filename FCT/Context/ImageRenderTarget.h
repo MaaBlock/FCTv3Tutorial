@@ -19,20 +19,38 @@ namespace FCT
         int height() const { return m_height; }
         void witdh(int width) { m_width = width; }
         int height(int height) { m_height = height; }
-        void addRenderTarget(RHI::Image* image);
+        void bindTarget(RHI::Image* image);
+        void bindTarget(Image* image);
+        Image* targetImage() const { return m_target; }
+/*
+        void bindRenderTarget(uint32_t index, Image* image);
+        void bindRenderTarget(uint32_t index, RHI::Image* image);*/
+        /*void addRenderTarget(Image* image);
+        void addRenderTarget(RHI::Image* image);*/
+        /*void addRenderTargets(std::vector<RHI::Image*> images)
+        {
+            for (auto& image : images)
+            {
+                addRenderTarget(image);
+            }
+        }
+        void addRenderTarget(std::vector<RHI::Image*> images);*/
         void bind(Context* ctx){};
-        std::vector<Image*> getTargetImages() override;
+        //std::vector<Image*> getTargetImages() override;
         Image* getImage() const override
         {
             return nullptr;
         }
         void renderTargetType(RenderTargetType type) { m_renderTargetType = type; }
+        //std::map<uint32_t, RHI::Image*> getTarget override;
     private:
         RenderTargetType m_renderTargetType;
         int m_width;
         int m_height;
         Context* m_ctx;
-        std::vector<Image*> m_renderTargetImages;
+        Image* m_target;
+        //std::map<uint32_t,Image*> m_renderTargetImages;
+        //std::vector<Image*> m_renderTargetImages;
     };
 }
 

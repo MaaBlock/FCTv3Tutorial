@@ -32,5 +32,4 @@ namespace FCT {
         std::vector<VertexInputElement> m_elements;
         uint32_t m_stride = 0;
     };
-
 } // namespace FCT

@@ -214,9 +214,15 @@ FCT::Image* FCT::GLFW_Window::getImage() const
     return nullptr;
 }
 
+/*
 std::vector<FCT::Image*> FCT::GLFW_Window::getTargetImages()
 {
     return std::vector<FCT::Image*>();
+}
+*/
+FCT::ImageRenderTarget* FCT::GLFW_Window::getCurrentTarget()
+{
+    return m_swapchain->getCurrentTarget();
 }
 
 void FCT::GLFW_Window::recreateSwapchain(int width, int height)

@@ -20,17 +20,27 @@ namespace FCT {
         return nullptr;
     }
 
-    VertexShader *VK_Context::createVertexShader(VertexFactory *factory) {
+    RHI::VertexShader *VK_Context::createVertexShader(VertexFactory *factory) {
         return nullptr;
     }
 
-    PixelShader *VK_Context::createPixelShader(const ShaderOutput &output) {
+    RHI::VertexShader* VK_Context::createVertexShader()
+    {
+        return new RHI::VK_VertexShader(this);
+    }
+
+    RHI::PixelShader* VK_Context::createPixelShader()
+    {
+        return new RHI::VK_PixelShader(this);
+    }
+
+    RHI::PixelShader *VK_Context::createPixelShader(const ShaderOutput &output) {
         return nullptr;
     }
 
-    Material *VK_Context::createMaterial(VertexShader *vertexShader, PixelShader *pixelShader) {
+    /*Material *VK_Context::createMaterial(VertexShader *vertexShader, PixelShader *pixelShader) {
         return nullptr;
-    }
+    }*/
 
     InputLayout *VK_Context::createInputLayout(VertexFactory *factory) {
         return nullptr;
@@ -43,6 +53,11 @@ namespace FCT {
 
     ConstBuffer *VK_Context::createConstBuffer() {
         return nullptr;
+    }
+
+    RHI::RasterizationPipeline* VK_Context::createTraditionPipeline()
+    {
+        return new RHI::VK_TraditionalPipeline(this);
     }
 
     Texture *VK_Context::createTexture() {
@@ -138,6 +153,11 @@ namespace FCT {
     RHI::PassGroup* VK_Context::createPassGroup()
     {
         return new RHI::VK_PassGroup(this);
+    }
+
+    RHI::CommandPool* VK_Context::createCommandPool()
+    {
+        return new RHI::VK_CommandPool(this);
     }
 
     vk::Instance VK_Context::getVkInstance() {

@@ -10,21 +10,38 @@ namespace FCT
         VK_Pass::VK_Pass(VK_Context* ctx)
         {
             m_ctx = ctx;
+            m_group = nullptr;
         }
 
         void VK_Pass::create(PassGroup* srcGroup)
         {
-            auto groutp = static_cast<VK_PassGroup*>(srcGroup);
+            auto group = static_cast<VK_PassGroup*>(srcGroup);
             m_desc.pipelineBindPoint = vk::PipelineBindPoint::eGraphics;
-            m_desc.colorAttachmentCount= m_renderTargets.size();
-            for (auto target : m_renderTargets)
-            {
-                vk::AttachmentReference ref;
-                ref.layout = vk::ImageLayout::eColorAttachmentOptimal;
-                ref.attachment = groutp->getImageIndex(target);
-                m_renderTargetRefs.push_back(ref);
+
+            if (!m_renderTargets.empty()) {
+                uint32_t maxSlot = m_renderTargets.rbegin()->first;
+
+                m_renderTargetRefs.resize(maxSlot + 1);
+
+                for (auto& ref : m_renderTargetRefs) {
+                    ref.attachment = VK_ATTACHMENT_UNUSED;
+                    ref.layout = vk::ImageLayout::eUndefined;
+                }
+
+                for (const auto& [slot, target] : m_renderTargets) {
+                    vk::AttachmentReference& ref = m_renderTargetRefs[slot];
+                    ref.attachment = m_targetAttachmentIndices[slot];
+                    ref.layout = vk::ImageLayout::eColorAttachmentOptimal;
+                }
+
+                m_desc.colorAttachmentCount = maxSlot + 1;
+                m_desc.pColorAttachments = m_renderTargetRefs.data();
+            } else {
+                m_desc.colorAttachmentCount = 0;
+                m_desc.pColorAttachments = nullptr;
             }
-            m_desc.pColorAttachments = m_renderTargetRefs.data();
+
+            m_group = group;
         }
     }
 }

@@ -19,6 +19,22 @@ namespace FCT {
     }
     namespace test
     {
+        std::vector<char> readFile(const std::string& filename) {
+            std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+            if (!file.is_open()) {
+                throw std::runtime_error("failed to open file!");
+            }
+
+            size_t fileSize = (size_t) file.tellg();
+            std::vector<char> buffer(fileSize);
+
+            file.seekg(0);
+            file.read(buffer.data(), fileSize);
+
+            file.close();
+            return buffer;
+        }
         struct TestState
         {
             bool isInited = false;
@@ -26,19 +42,45 @@ namespace FCT {
             Window* wnd;
             RHI::Pass* pass;
             RHI::PassGroup* passGroup;
+            RHI::PixelShader* ps;
+            RHI::VertexShader* vs;
+            RHI::RasterizationPipeline* pipeline;
+            RHI::CommandPool* cmdPool;
+            RHI::CommandBuffer* cmdBuf;
             void init(Context* ctx)
             {
-                thio->ctx = ctx;
+                this->ctx = ctx;
                 isInited = true;
                 wnd = ctx->flushWindow();
                 pass = ctx->createPass();
+                pass->bindTarget(0,wnd->getCurrentTarget()->targetImage());
+                //pass->addTargets(wnd->getCurrentTarget()->getTargetImages());
                 passGroup = ctx->createPassGroup();
+                passGroup->addPass(pass);
+                passGroup->create();
+                ps = ctx->createPixelShader();
+                vs = ctx->createVertexShader();
+                fout << std::filesystem::current_path().string() << std::endl;
+                vs->code(readFile("../FCT/Shader/tmpVert.spv"));
+                ps->code(readFile("../FCT/Shader/tmpFrag.spv"));
+                vs->create();
+                ps->create();
+                pipeline = ctx->createTraditionPipeline();
+                pipeline->addResources(vs);
+                pipeline->addResources(ps);
+                pipeline->bindPass(pass);
+                pipeline->create();
+                cmdPool = ctx->createCommandPool();
+                cmdPool->create();
+                cmdBuf = cmdPool->createCommandBuffer();
+                cmdBuf->create();
             }
             void tick(Context* ctx)
             {
                 if (!isInited) {
                     init(ctx);
                 }
+
             }
         } state;
     }

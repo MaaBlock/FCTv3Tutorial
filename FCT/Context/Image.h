@@ -45,7 +45,6 @@ namespace FCT {
     class ImageBehavior
     {
     public:
-
         virtual Format format() const = 0;
         virtual Samples samples() const = 0;
     protected:
@@ -60,14 +59,7 @@ namespace FCT {
     private:
 
     };
-    class AfterCreateImageBehavior : public ImageBehavior
-    {
-    public:
-        AfterCreateImageBehavior(Image* image);
-        Format format() const;
-        Samples samples() const;
-
-    };
+#ifdef FCT_DEPRECATED
     class Image : public RefCount, public IRenderTarget {
     public:
         friend class BeforeCreateImageBehavior;
@@ -123,7 +115,37 @@ namespace FCT {
         RenderTargetType m_renderTargetType;
     };
 
+#endif // FCT_DEPRECATED
+    class Image : public RefCount, public IRenderTarget {
+    public:
+        friend class BeforeCreateImageBehavior;
+        //friend class AfterCreateImageBehavior;
 
+        Image(Context* ctx);
+        virtual ~Image();
+
+        RenderTargetType getType() const override { return m_renderTargetType; }
+        void renderTargetType(RenderTargetType type) { m_renderTargetType = type; }
+
+        virtual void create() = 0;
+        virtual void as(ImageUsageFlags usage) = 0;
+        virtual void bind(Context* ctx) {}
+
+        Format format() const { return m_behavior->format(); }
+        Samples samples() const { return m_behavior->samples(); }
+
+        virtual Image* getImage() const { return nullptr; }
+        virtual std::vector<Image*> getTargetImages() = 0;
+        virtual RHI::RenderTargetView* currentTargetView() = 0;
+    protected:
+        ImageBehavior* m_behavior;
+        Context* m_ctx;
+        int m_width;
+        int m_height;
+        Format m_format;
+        Samples m_samples;
+        RenderTargetType m_renderTargetType;
+    };
 } // namespace FCT
 
 #endif //FCT_IMAGE_H

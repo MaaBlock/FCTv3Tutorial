@@ -14,6 +14,8 @@ namespace FCT
         void bind() override;
         void unbind() override;
         void create() override;
+        vk::PipelineRasterizationStateCreateInfo& rasterizationStateCreateInfo() { return m_rasterizationStateCreateInfo; }
+        vk::PipelineMultisampleStateCreateInfo& multisampleStateCreateInfo() { return m_multisampleStateCreateInfo; }
     private:
         VK_Context* m_ctx;
         vk::PipelineRasterizationStateCreateInfo m_rasterizationStateCreateInfo;

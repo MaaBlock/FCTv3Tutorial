@@ -21,11 +21,13 @@ namespace FCT
             {
 
             }
+            virtual void beginSubmit() = 0;
+
             virtual void create() = 0;
-            virtual void addTarget(IRenderTarget* target)
+            /*virtual void addTarget(IRenderTarget* target)
             {
                 m_targets.push_back(target);
-            }
+            }*/
             void addPass(Pass* pass)
             {
                 m_passes.push_back(pass);
@@ -33,7 +35,7 @@ namespace FCT
         protected:
             std::vector<PassGroup*> m_prevPassGroup;
             std::vector<PassGroup*> m_nextPassGroup;
-            std::vector<IRenderTarget*> m_targets;
+            //std::vector<IRenderTarget*> m_targets;
             std::vector<Pass*> m_passes;
         };
     }

@@ -27,6 +27,7 @@ namespace FCT
             }
             void samples(Samples samples)
             {
+                m_samples = samples;
             }
             void width(uint32_t width)
             {

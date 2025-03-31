@@ -3,7 +3,7 @@
 #include "../RHI/PixelShader.h"
 
 namespace FCT {
-
+#ifdef FCT_DEPRECATED
 class Material {
 public:
     virtual ~Material() = default;
@@ -22,5 +22,5 @@ protected:
     VertexShader* m_vertexShader;
     PixelShader* m_pixelShader;
 };
-
+#endif
 } // namespace FCT

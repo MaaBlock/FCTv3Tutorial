@@ -20,11 +20,12 @@ namespace FCT {
 
         VertexBuffer *createVertexBuffer(VertexArray *array) override;
 
-        VertexShader *createVertexShader(VertexFactory *factory) override;
+        RHI::VertexShader *createVertexShader(VertexFactory *factory) override;
+        RHI::VertexShader* createVertexShader() override;
+        RHI::PixelShader* createPixelShader() override;
+        RHI::PixelShader *createPixelShader(const ShaderOutput &output) override;
 
-        PixelShader *createPixelShader(const ShaderOutput &output) override;
-
-        Material *createMaterial(VertexShader *vertexShader, PixelShader *pixelShader) override;
+        //Material *createMaterial(VertexShader *vertexShader, PixelShader *pixelShader) override;
 
         InputLayout *createInputLayout(VertexFactory *factory) override;
 
@@ -32,7 +33,7 @@ namespace FCT {
                                  uint32_t vertexCount) override;
 
         ConstBuffer *createConstBuffer() override;
-
+        RHI::RasterizationPipeline* createTraditionPipeline() override;
         Texture *createTexture() override;
         Image *createImage() override;
         RHI::Swapchain* createSwapchain() override;
@@ -53,8 +54,8 @@ namespace FCT {
         auto getPhysicalDevice() const {
             return m_phyDevice;
         }
+        RHI::CommandPool* createCommandPool() override;
         vk::Instance getVkInstance();
-
         void compilePasses() override;
         void submitPasses() override;
         void beginCommandBuffer(int index);

@@ -6,6 +6,7 @@
 #include "./Swapcain.h"
 #include "./VK_Image.h"
 #include "../Context/ImageRenderTarget.h"
+#include "../Context/MutilBufferImage.h"
 #ifndef FCT_VK_SWAPCHAIN_H
 #define FCT_VK_SWAPCHAIN_H
 namespace FCT{
@@ -29,8 +30,11 @@ namespace FCT{
             vk::Extent2D getExtent() const;
             Format getFormat() const override;
             Samples getSamples() const override;
+            ImageRenderTarget* getCurrentTarget() override;
         private:
-            std::vector<Image*> m_fctImages;
+            MutilBufferImage* m_fctImage;
+            std::vector<RHI::Image*> m_fctImages;
+            ImageRenderTarget* m_target;
             vk::Format m_imageFormat;
             vk::Queue m_presentQueue;
             uint32_t m_presentQueueFamilyIndex;
@@ -41,7 +45,7 @@ namespace FCT{
             vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
             std::vector<vk::Image> m_images;
             std::vector<vk::ImageView> m_imageViews;
-            std::vector<ImageRenderTarget*> m_targets;
+            //std::vector<ImageRenderTarget*> m_targets;
             static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
             std::vector<vk::Semaphore> m_imageAvailableSemaphores;
             std::vector<vk::Semaphore> m_renderFinishedSemaphores;

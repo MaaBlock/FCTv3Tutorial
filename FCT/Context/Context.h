@@ -15,8 +15,10 @@
 #include "./Format.h"
 #include "./Image.h"
 #include "./Pass.h"
+#include "../RHI/CommandPool.h"
 #include "../RHI/Pass.h"
 #include "../RHI/PassGroup.h"
+#include "../RHI/RasterizationPipeline.h"
 namespace FCT {
 	class VertexBuffer;
 	class InputLayout;
@@ -29,9 +31,11 @@ namespace FCT {
 		virtual void clear(float r, float g, float b) = 0;
 		virtual void viewport(int x, int y, int width, int height) = 0;
 		virtual VertexBuffer* createVertexBuffer(VertexArray* array) = 0;
-		virtual VertexShader* createVertexShader(VertexFactory* factory) = 0;
-		virtual PixelShader* createPixelShader(const ShaderOutput& output) = 0;
-		virtual Material* createMaterial(VertexShader* vertexShader, PixelShader* pixelShader) = 0;
+		virtual RHI::VertexShader* createVertexShader(VertexFactory* factory) = 0;
+		virtual RHI::VertexShader* createVertexShader() = 0;
+		virtual RHI::PixelShader* createPixelShader(const ShaderOutput& output) = 0;
+		virtual RHI::PixelShader* createPixelShader() = 0;
+		//virtual Material* createMaterial(VertexShader* vertexShader, PixelShader* pixelShader) = 0;
 		virtual InputLayout* createInputLayout(VertexFactory* factory) = 0;
 		virtual DrawCall* createDrawCall(PrimitiveType primitiveType, uint32_t startVertex, uint32_t vertexCount) = 0;
 		virtual ConstBuffer* createConstBuffer() = 0;
@@ -41,10 +45,12 @@ namespace FCT {
 		virtual RHI::Swapchain* createSwapchain() = 0;
 		virtual RHI::PassGroup* createPassGroup() = 0;
 		virtual RHI::Pass* createPass() = 0;
+		virtual RHI::RasterizationPipeline* createTraditionPipeline() = 0;
 		virtual void create(IRenderTarget* renderTarget) = 0;
         virtual void setFlushWindow(Window* wnd) {
             m_flushWnd = wnd;
         }
+		virtual RHI::CommandPool* createCommandPool() = 0;
         virtual void compilePasses() = 0;
         virtual void submitPasses() = 0;
         virtual void flush();

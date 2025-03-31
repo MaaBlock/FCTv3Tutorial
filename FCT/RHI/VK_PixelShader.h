@@ -9,25 +9,27 @@
 namespace FCT
 {
     class VK_Context;
-
-    class VK_PixelShader : public PixelShader
+    namespace RHI
     {
-    public:
-        explicit VK_PixelShader(VK_Context* ctx);
-        ~VK_PixelShader() override;
+        class VK_PixelShader : public PixelShader
+        {
+        public:
+            explicit VK_PixelShader(VK_Context* ctx);
+            ~VK_PixelShader() override;
 
-        void create() override;
-        void bind() override;
-        void unbind() override;
-    private:
-        void createShaderModule();
-        void createPipelineStage();
+            void create() override;
+            void bind() override;
+            void unbind() override;
+            vk::PipelineShaderStageCreateInfo getStageInfo() const { return m_stageInfo; }
+        private:
+            void createShaderModule();
+            void createPipelineStage();
 
-        VK_Context* m_ctx;
-        vk::ShaderModule m_module;
-        std::vector<char> m_code;
-        vk::PipelineShaderStageCreateInfo m_stageInfo;
-    };
+            VK_Context* m_ctx;
+            vk::ShaderModule m_module;
+            vk::PipelineShaderStageCreateInfo m_stageInfo;
+        };
+    }
 }
 
 #endif //FCT_VK_PIXELSHADER_H

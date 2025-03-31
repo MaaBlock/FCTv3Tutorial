@@ -52,6 +52,49 @@ namespace FCT::RHI
     void VK_RasterizationPipeline::create()
     {
         generateDefaultResources();
+
+        //fill resource
+        std::vector<vk::DynamicState> dynamicStates = {
+            vk::DynamicState::eViewport,
+            vk::DynamicState::eScissor
+        };
+        vk::PipelineDynamicStateCreateInfo dynamicState{};
+        dynamicState.pDynamicStates = dynamicStates.data();
+        m_createInfo.pDynamicState = &dynamicState;
+        vk::PipelineLayoutCreateInfo pipelineLayoutInfo{};
+        pipelineLayoutInfo.setLayoutCount = 0;
+        pipelineLayoutInfo.pSetLayouts = nullptr;
+        pipelineLayoutInfo.pushConstantRangeCount = 0;
+        pipelineLayoutInfo.pPushConstantRanges = nullptr;
+        auto pipelineLayout = m_ctx->getDevice().createPipelineLayout(pipelineLayoutInfo);
+        m_createInfo.renderPass = static_cast<VK_PassGroup*>(m_pass->passGroup())->getRenderPass();
+        m_createInfo.subpass = static_cast<VK_PassGroup*>(m_pass->passGroup())->getPassIndex(m_pass);
+        m_createInfo.layout = pipelineLayout;
+        vk::PipelineVertexInputStateCreateInfo vertexInputState{};
+        vertexInputState.vertexBindingDescriptionCount = 0;
+        vertexInputState.pVertexBindingDescriptions = nullptr;
+        vertexInputState.vertexAttributeDescriptionCount = m_inputLayout->attributeDescriptions().size();
+        vertexInputState.pVertexAttributeDescriptions = m_inputLayout->attributeDescriptions().data();
+        m_createInfo.pVertexInputState = &vertexInputState;
+        m_createInfo.pRasterizationState = &m_rasterizationState->rasterizationStateCreateInfo();
+        m_createInfo.pMultisampleState = &m_rasterizationState->multisampleStateCreateInfo();
+        vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState{};
+        inputAssemblyState.topology = vk::PrimitiveTopology::eTriangleList;
+        inputAssemblyState.primitiveRestartEnable = VK_FALSE;
+        m_createInfo.pInputAssemblyState = &inputAssemblyState;
+        m_createInfo.pViewportState = &m_viewportState->viewportStateCreateInfo();
+        m_createInfo.pDepthStencilState = nullptr;
+        m_createInfo.pColorBlendState = &m_blendState->colorBlendStateCreateInfo();
+        m_createInfo.pDynamicState = nullptr;
+
+        m_createInfo.stageCount = m_shaderStages.size();
+        m_createInfo.pStages = m_shaderStages.data();
+        m_pipeline = m_ctx->getDevice().createGraphicsPipeline(nullptr,m_createInfo).value;
+    }
+
+    void VK_RasterizationPipeline::bindPass(Pass* pass)
+    {
+        m_pass = static_cast<VK_Pass*>(pass);
     }
 
     void VK_RasterizationPipeline::generateDefaultResources()

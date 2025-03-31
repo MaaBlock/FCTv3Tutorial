@@ -7,6 +7,8 @@ namespace FCT {
         VK_Swapchain::VK_Swapchain(VK_Context *ctx) {
             m_ctx = ctx;
             m_swapchain = nullptr;
+            m_fctImage = nullptr;
+            m_target = nullptr;
         }
 
         VK_Swapchain::~VK_Swapchain() {
@@ -21,12 +23,14 @@ namespace FCT {
                     image->release();
                 }
                 m_fctImages.clear();
-                for (auto target : m_targets)
+                /*for (auto target : m_targets)
                 {
                     target->release();
                 }
-                m_targets.clear();
+                m_targets.clear();*/
             }
+            FCT_SAFE_RELEASE(m_target);
+            FCT_SAFE_RELEASE(m_fctImage);
 
             auto phyDc = m_ctx->getPhysicalDevice();
             auto dc = m_ctx->getDevice();
@@ -109,13 +113,20 @@ namespace FCT {
                         ret->width(m_width);
                         ret->height(m_height);
                         ret->create(image);
+                        /*
                         auto target = new ImageRenderTarget(m_ctx);
                         target->renderTargetType(RenderTargetType::WindowTarget);
                         target->addRenderTarget(ret);
-                        m_targets.push_back(target);
+                        m_targets.push_back(target);*/
                         return ret;
                     }).operator()());
             }
+            m_fctImage = new MutilBufferImage(m_ctx);
+            m_fctImage->create(m_fctImages);
+            m_target = new ImageRenderTarget(m_ctx);
+            m_target->renderTargetType(RenderTargetType::WindowTarget);
+            m_target->bindTarget(m_fctImage);
+            //m_target->addRenderTarget(m_fctImage);
 
             createImageViews();
 
@@ -345,6 +356,11 @@ namespace FCT {
         Samples VK_Swapchain::getSamples() const
         {
             return Samples::sample_1;
+        }
+
+        ImageRenderTarget* VK_Swapchain::getCurrentTarget()
+        {
+            return m_target;
         }
     }
 }

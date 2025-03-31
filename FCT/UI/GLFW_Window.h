@@ -25,7 +25,8 @@ namespace FCT {
         int getHeight() override;
         void setCursorPos(int x, int y) override;
         Image* getImage() const override;
-        std::vector<Image*> getTargetImages() override;
+        //std::vector<Image*> getTargetImages() override;
+        ImageRenderTarget* getCurrentTarget() override;
     private:
         GLFWwindow* m_window;
         Runtime* m_rt;

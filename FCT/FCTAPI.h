@@ -27,7 +27,11 @@
 #include "./RHI/VK_Image.h"
 #include "./RHI/VK_RenderTargetView.h"
 #include "./RHI/VK_Pass.h"
-
+#include "./RHI/VK_PixelShader.h"
+#include "./RHI/VK_VertexShader.h"
+#include "./RHI/VK_TraditionalPipeline.h"
+#include "./RHI/VK_CommandPool.h"
+#include "./RHI/VK_CommandBuffer.h"
 //#include "./Context/VK_Image.h"
 #endif
 //#include "./Runtime/FCT_Runtime.h"

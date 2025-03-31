@@ -16,6 +16,7 @@ namespace FCT
         void bind() override;
         void unbind() override;
         void create() override;
+        std::vector<vk::VertexInputAttributeDescription>& attributeDescriptions() { return m_attributeDescriptions; }
     private:
         VK_Context* m_ctx;
         std::vector<vk::VertexInputAttributeDescription> m_attributeDescriptions;

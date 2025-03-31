@@ -18,8 +18,8 @@ namespace FCT
             void create() override;
         private:
             void generateDefaultResources();
-            VertexShader* m_vertexShader;
-            PixelShader* m_pixelShader;
+            VK_VertexShader* m_vertexShader;
+            VK_PixelShader* m_pixelShader;
         };
 
     }

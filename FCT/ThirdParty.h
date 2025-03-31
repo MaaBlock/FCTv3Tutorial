@@ -100,4 +100,6 @@ extern int main();
 #include <memory>
 #include <string>
 #include <vector>
+#include <fstream>
+#include <filesystem>
 #endif // FCT_THIRDPARTY_HEADER

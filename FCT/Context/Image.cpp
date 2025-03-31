@@ -21,6 +21,8 @@ namespace FCT
         return m_image->m_samples;
     }
 
+#ifdef FCT_DEPRECATED
+
     AfterCreateImageBehavior::AfterCreateImageBehavior(Image* image)
     {
         m_image = image;
@@ -35,7 +37,8 @@ namespace FCT
     {
         return m_image->m_image->samples();
     }
-
+#endif
+#ifdef FCT_DEPRECATED
     Image::Image(Context* ctx)
     {
         m_renderTargetType = RenderTargetType::ImageTarget;
@@ -71,4 +74,16 @@ namespace FCT
             m_rtv->create();
         }
     }
+#endif
+    Image::Image(Context* ctx) : m_ctx(ctx), m_behavior(nullptr), m_renderTargetType(RenderTargetType::ImageTarget),
+    m_width(0), m_height(0) {}
+
+    Image::~Image() {
+        if (m_behavior)
+        {
+            delete m_behavior;
+            m_behavior = nullptr;
+        }
+    }
+
 }

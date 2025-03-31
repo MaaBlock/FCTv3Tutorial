@@ -4,6 +4,8 @@
 #include "../Context/IRenderTarget.h"
 #include "./EventHandler.h"
 #include "./CallBackHandler.h"
+#include "../Context/ImageRenderTarget.h"
+
 namespace FCT {
     class WindowBehavior {
     public:
@@ -45,6 +47,7 @@ namespace FCT {
 		CallBackEventHandler* getCallBack() const {
 			return m_callbackHandler;
 		}
+		virtual ImageRenderTarget* getCurrentTarget() = 0;
 	private:
 	protected:
 		CallBackEventHandler* m_callbackHandler;

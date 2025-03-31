@@ -12,7 +12,7 @@ namespace FCT {
 		virtual RenderTargetType getType() const = 0;
 		virtual void bind(Context* ctx) = 0;
 		virtual Image* getImage() const = 0;
-		virtual std::vector<Image*> getTargetImages() = 0;
+		//virtual std::vector<Image*> getTargetImages() = 0;
 	private:
 
 	};

@@ -15,10 +15,12 @@ namespace FCT
             VK_Pass(VK_Context* ctx);
             void create(PassGroup* group) override;
             vk::SubpassDescription getDescription() { return m_desc; }
+            std::map<uint32_t,uint32_t>& targetAttachmentIndices() { return m_targetAttachmentIndices; }
         protected:
             VK_Context* m_ctx;
             vk::SubpassDescription m_desc;
             std::vector<vk::AttachmentReference> m_renderTargetRefs;
+            std::map<uint32_t,uint32_t> m_targetAttachmentIndices;//key is slot,value is attachment index
         };
     }
 }

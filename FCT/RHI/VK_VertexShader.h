@@ -8,20 +8,24 @@
 namespace FCT
 {
     class VK_Context;
-    class VK_VertexShader : public VertexShader{
-    public:
-        VK_VertexShader(VK_Context* ctx);
-        ~VK_VertexShader();
-        void create() override;
-        void bind() override;
-        void unbind() override;
-    private:
-        void createShaderModule();
-        void createPipelineStage();
-        VK_Context* m_ctx;
-        VkShaderModule m_module;
-        vk::PipelineShaderStageCreateInfo m_stageInfo;
-    };
+    namespace RHI
+    {
+        class VK_VertexShader : public VertexShader{
+        public:
+            VK_VertexShader(VK_Context* ctx);
+            ~VK_VertexShader();
+            void create() override;
+            void bind() override;
+            void unbind() override;
+            vk::PipelineShaderStageCreateInfo getStageInfo();
+        private:
+            void createShaderModule();
+            void createPipelineStage();
+            VK_Context* m_ctx;
+            vk::ShaderModule m_module;
+            vk::PipelineShaderStageCreateInfo m_stageInfo;
+        };
+    }
 
 }
 

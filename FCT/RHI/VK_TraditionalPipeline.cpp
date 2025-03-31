@@ -33,6 +33,8 @@ namespace FCT
         void VK_TraditionalPipeline::create()
         {
             generateDefaultResources();
+            m_shaderStages.push_back(m_vertexShader->getStageInfo());
+            m_shaderStages.push_back(m_pixelShader->getStageInfo());
             VK_RasterizationPipeline::create();
         }
 
