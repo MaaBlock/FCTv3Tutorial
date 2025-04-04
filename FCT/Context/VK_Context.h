@@ -40,6 +40,8 @@ namespace FCT {
         RHI::RenderTargetView* createRenderTargetView() override;
         RHI::Pass* createPass() override;
         RHI::PassGroup* createPassGroup() override;
+        RHI::Semaphore* createSemaphore() override;
+        RHI::Fence* createFence() override;
         void create(IRenderTarget* target) override;
         void create(){
 
@@ -66,6 +68,10 @@ namespace FCT {
 
         }
         uint32_t getGraphicsQueueFamily() const;
+        vk::Queue getGraphicsQueue()
+        {
+            return m_graphicsQueue;
+        }
     private:
         void createCommandPoolAndBuffers();
         VK_ContextCommon* m_common;

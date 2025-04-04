@@ -47,6 +47,8 @@ namespace FCT {
             RHI::RasterizationPipeline* pipeline;
             RHI::CommandPool* cmdPool;
             RHI::CommandBuffer* cmdBuf;
+            RHI::Fence* fence;
+            RHI::Semaphore* semaphore;
             void init(Context* ctx)
             {
                 this->ctx = ctx;
@@ -74,13 +76,23 @@ namespace FCT {
                 cmdPool->create();
                 cmdBuf = cmdPool->createCommandBuffer();
                 cmdBuf->create();
+                fence = ctx->createFence();
+                semaphore = ctx->createSemaphore();
+                fence->createSignaled();
+                semaphore->create();
             }
             void tick(Context* ctx)
             {
                 if (!isInited) {
                     init(ctx);
                 }
-
+                cmdBuf->begin();
+                passGroup->beginSubmit(cmdBuf);
+                cmdBuf->bindPipieline(pipeline);
+                cmdBuf->draw(0,0,3,1);
+                passGroup->endSubmit(cmdBuf);
+                cmdBuf->end();
+                cmdBuf->submit();
             }
         } state;
     }

@@ -10,6 +10,8 @@ namespace FCT
 {
     namespace RHI
     {
+        class Pass;
+
         class RasterizationPipeline : public Pipeline
         {
         public:
@@ -17,7 +19,7 @@ namespace FCT
             virtual ~RasterizationPipeline() {}
             virtual void addResources(IPipelineResource* resource) = 0;
             virtual void create() = 0;
-            virtual void bindPass(Pass* pass) = 0;
+            virtual void bindPass(FCT::RHI::Pass* pass) = 0;
         protected:
 
         };

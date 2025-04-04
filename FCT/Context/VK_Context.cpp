@@ -155,6 +155,16 @@ namespace FCT {
         return new RHI::VK_PassGroup(this);
     }
 
+    RHI::Semaphore* VK_Context::createSemaphore()
+    {
+        return new RHI::VK_Semaphore(this);
+    }
+
+    RHI::Fence* VK_Context::createFence()
+    {
+        return new RHI::VK_Fence(this);
+    }
+
     RHI::CommandPool* VK_Context::createCommandPool()
     {
         return new RHI::VK_CommandPool(this);

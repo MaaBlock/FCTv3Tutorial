@@ -40,13 +40,15 @@ namespace FCT
         {
             FCT_SAFE_ADDREF(img);
         }
+        m_width = images[0]->width();
+        m_height = images[0]->height();
         delete m_behavior;
         m_behavior = new MutilBufferAffterCreateImageBehavior(this);
     }
 
     void MutilBufferImage::as(ImageUsageFlags usage)
     {
-        if (usage & ImageUsage::RenderTarget && m_rtvs.size())
+        if (usage & ImageUsage::RenderTarget && m_rtvs.empty())
         {
             for (auto img : m_images)
             {

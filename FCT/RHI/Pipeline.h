@@ -6,11 +6,18 @@
 #define FCT_PIPELINE_H
 namespace FCT
 {
+    enum PipelineType
+    {
+        Traditional,
+        RayTracing,
+        MeshShader,
+    };
     namespace RHI
     {
         class Pipeline : public RefCount
         {
         public:
+            virtual PipelineType getType() const = 0;
             virtual void create() = 0;
         protected:
 

@@ -6,6 +6,7 @@
 #define FCT_HEADER_H
 #include "ThirdParty.h"
 #include "ToolDefine.h"
+#include "./Base/Flags.h"
 #include "Runtime/Runtime.h"
 #include "./Context/ImageRenderTarget.h"
 #include "./Context/Image.h"
@@ -26,6 +27,8 @@
 #include "./RHI/PixelShader.h"
 #include "./RHI/CommandBuffer.h"
 #include "./RHI/CommandPool.h"
+#include "./RHI/Semaphore.h"
+#include "./RHI/Fence.h"
 //#include "MutilThreadBase/RefCount.h"
 //#include "MutilThreadBase/TlsPtr.h"
 //#include "Context/Context.h"

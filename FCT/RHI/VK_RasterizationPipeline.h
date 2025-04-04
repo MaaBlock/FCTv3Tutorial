@@ -25,6 +25,10 @@ namespace FCT
             virtual void addResources(IPipelineResource* resource);
             void create() override;
             void bindPass(Pass* pass) override;
+            vk::Pipeline pipeline()
+            {
+                return m_pipeline;
+            }
         protected:
             void generateDefaultResources();
             std::vector<vk::PipelineShaderStageCreateInfo> m_shaderStages;

@@ -25,14 +25,15 @@ namespace FCT
             void create();
             vk::RenderPass getRenderPass() const { return m_renderPass; }
             uint32_t getPassIndex(Pass* pass);
-
-            void beginSubmit() override;
+            void beginSubmit(CommandBuffer* cmdBuf) override;
+            void endSubmit(CommandBuffer* cmdBuf) override;
         private:
             void collectSubpasses();
             void collectAttachments();
             void collectImageViews();
             //std::map<FCT::Image*,uint32_t> m_imageIndices;
-            std::map<uint32_t,AttachmentSlot> m_attachmentSlots;
+            //std::map<uint32_t,AttachmentSlot> m_attachmentSlots;
+            std::map<uint32_t,AttachmentSlot> m_targetAttachments;
             std::map<Pass*,uint32_t> m_passIndices;
             std::vector<vk::AttachmentDescription> m_attachments;
             std::vector<vk::SubpassDescription> m_subpasses;

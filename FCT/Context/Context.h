@@ -17,6 +17,8 @@
 #include "./Pass.h"
 #include "../RHI/CommandPool.h"
 #include "../RHI/Pass.h"
+#include "../RHI/Fence.h"
+#include "../RHI/Semaphore.h"
 #include "../RHI/PassGroup.h"
 #include "../RHI/RasterizationPipeline.h"
 namespace FCT {
@@ -46,6 +48,8 @@ namespace FCT {
 		virtual RHI::PassGroup* createPassGroup() = 0;
 		virtual RHI::Pass* createPass() = 0;
 		virtual RHI::RasterizationPipeline* createTraditionPipeline() = 0;
+		virtual RHI::Fence* createFence() = 0;
+		virtual RHI::Semaphore* createSemaphore() = 0;
 		virtual void create(IRenderTarget* renderTarget) = 0;
         virtual void setFlushWindow(Window* wnd) {
             m_flushWnd = wnd;

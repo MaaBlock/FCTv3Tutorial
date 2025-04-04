@@ -123,6 +123,7 @@ namespace FCT {
             }
             m_fctImage = new MutilBufferImage(m_ctx);
             m_fctImage->create(m_fctImages);
+            m_fctImage->as(ImageUsage::RenderTarget);
             m_target = new ImageRenderTarget(m_ctx);
             m_target->renderTargetType(RenderTargetType::WindowTarget);
             m_target->bindTarget(m_fctImage);
@@ -297,6 +298,8 @@ namespace FCT {
                         &m_currentImageIndex
                 );
 
+                m_fctImage->changeCurrentIndex(m_currentImageIndex);
+
                 if (m_imagesInFlight[m_currentImageIndex]) {
                     dc.waitForFences(1, m_imagesInFlight[m_currentImageIndex], VK_TRUE, UINT64_MAX);
                 }
@@ -319,6 +322,7 @@ namespace FCT {
                         nullptr,
                         &m_currentImageIndex
                 );
+                m_fctImage->changeCurrentIndex(m_currentImageIndex);
 
                 if (m_imagesInFlight[m_currentImageIndex]) {
                     dc.waitForFences(1, m_imagesInFlight[m_currentImageIndex], VK_TRUE, UINT64_MAX);

@@ -8,7 +8,7 @@ namespace FCT
 {
     namespace RHI
     {
-        VK_PassGroup::VK_PassGroup(VK_Context* ctx) : m_createInfo{},m_beginInfo{},m_framebufferInfo{}
+        VK_PassGroup::VK_PassGroup(VK_Context* ctx) : m_createInfo{},m_beginInfo{},m_framebufferInfo{} , m_framebuffer()
         {
             m_ctx = ctx;
         }
@@ -34,6 +34,7 @@ namespace FCT
             m_createInfo.subpassCount = m_subpasses.size();
             m_renderPass = m_ctx->device().createRenderPass(m_createInfo);
             m_beginInfo.renderPass = m_renderPass;
+            m_framebufferInfo.renderPass = m_renderPass;
         }
 
         uint32_t VK_PassGroup::getPassIndex(Pass* pass)
@@ -41,12 +42,37 @@ namespace FCT
             return m_passIndices[pass];
         }
 
-        void VK_PassGroup::beginSubmit()
+        void VK_PassGroup::beginSubmit(CommandBuffer* cmdBuf)
         {
             collectImageViews();
-            m_framebufferInfo.attachmentCount = m_framebufferViews.size();
-            m_framebufferInfo.pAttachments = m_framebufferViews.data();
-            //m_framebufferInfo.width =
+            if (!m_framebuffer)
+            {
+                m_framebufferInfo.attachmentCount = m_framebufferViews.size();
+                m_framebufferInfo.pAttachments = m_framebufferViews.data();
+                m_framebufferInfo.width = m_targetAttachments.rbegin()->second.image->width();
+                m_framebufferInfo.height = m_targetAttachments.rbegin()->second.image->height();
+                m_framebufferInfo.layers = 1;
+                m_framebuffer = m_ctx->device().createFramebuffer(m_framebufferInfo);
+            }
+            m_beginInfo.framebuffer = m_framebuffer;
+            m_beginInfo.renderArea.offset.setX(0).setY(0);
+            m_beginInfo.renderArea.extent.width =
+                m_targetAttachments.rbegin()->second.image->width();
+            m_beginInfo.renderArea.extent.height =
+            m_targetAttachments.rbegin()->second.image->height();
+
+            vk::ClearValue clearValue;
+            clearValue.setColor({0.0f,0.0f,0.0f,1.0f});
+            m_beginInfo.clearValueCount = 1;
+            m_beginInfo.pClearValues = &clearValue;
+            auto vkCmdBuf = static_cast<VK_CommandBuffer*>(cmdBuf);
+            vkCmdBuf->commandBuffer().beginRenderPass(m_beginInfo,vk::SubpassContents::eInline);
+        }
+
+        void VK_PassGroup::endSubmit(CommandBuffer* cmdBuf)
+        {
+            auto vkCmdBuf = static_cast<VK_CommandBuffer*>(cmdBuf);
+            vkCmdBuf->commandBuffer().endRenderPass();
         }
 
         void VK_PassGroup::collectSubpasses()
@@ -84,7 +110,11 @@ namespace FCT
                     desc.stencilLoadOp = vk::AttachmentLoadOp::eDontCare;
                     desc.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
                     //m_imageIndices[image] = m_attachments.size();
-                    m_attachmentSlots[m_attachments.size()] = AttachmentSlot(
+                    /*m_attachmentSlots[m_attachments.size()] = AttachmentSlot(
+                        image,
+                        ImageUsage::RenderTarget,
+                        targetPair.first);*/
+                    m_targetAttachments[m_attachments.size()] = AttachmentSlot(
                         image,
                         ImageUsage::RenderTarget,
                         targetPair.first);

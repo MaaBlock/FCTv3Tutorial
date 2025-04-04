@@ -28,6 +28,10 @@ namespace FCT
         Image* getImage() const override { return const_cast<MutilBufferImage*>(this); }
         std::vector<Image*> getTargetImages() override;
         RHI::RenderTargetView* currentTargetView() override;
+        void changeCurrentIndex(int index)
+        {
+            m_currentIndex = index % m_images.size();
+        }
     private:
         size_t m_currentIndex = 0;
         std::vector<RHI::Image*> m_images;

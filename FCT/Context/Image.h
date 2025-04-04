@@ -137,6 +137,8 @@ namespace FCT {
         virtual Image* getImage() const { return nullptr; }
         virtual std::vector<Image*> getTargetImages() = 0;
         virtual RHI::RenderTargetView* currentTargetView() = 0;
+        int width() const { return m_width; }
+        int height() const { return m_height; }
     protected:
         ImageBehavior* m_behavior;
         Context* m_ctx;

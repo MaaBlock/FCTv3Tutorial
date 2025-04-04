@@ -25,7 +25,29 @@ namespace FCT
             }
             m_allocateInfo.commandPool = m_pool->pool();
             m_allocateInfo.commandBufferCount = 1;
-            m_commandBuffers = m_pool->context()->device().allocateCommandBuffers(m_allocateInfo);
+            m_commandBuffer = m_pool->context()->device().allocateCommandBuffers(m_allocateInfo)[0];
+        }
+
+        void VK_CommandBuffer::submit()
+        {
+            vk::SubmitInfo submitInfo{};
+            submitInfo.setCommandBuffers(m_commandBuffer);
+            std::vector<vk::Semaphore> waitSemaphores;
+            std::vector<vk::PipelineStageFlags> waitStages;
+            for (auto& desc : m_waitSemaphores)
+            {
+                waitSemaphores.push_back(static_cast<VK_Semaphore*>(desc.semaphore)->semaphore());
+                waitStages.push_back(static_cast<vk::PipelineStageFlags>(static_cast<size_t>(desc.stages)));
+            }
+            submitInfo.setWaitSemaphores(waitSemaphores);
+            submitInfo.setWaitDstStageMask(waitStages);
+            std::vector<vk::Semaphore> signalSemaphores;
+            for (auto& signalSemaphore : m_signalSemaphores)
+            {
+                signalSemaphores.push_back(static_cast<VK_Semaphore*>(signalSemaphore)->semaphore());
+            }
+            submitInfo.setSignalSemaphores(signalSemaphores);
+            m_pool->context()->getGraphicsQueue().submit(submitInfo);
         }
     }
 }

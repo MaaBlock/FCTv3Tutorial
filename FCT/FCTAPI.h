@@ -32,6 +32,8 @@
 #include "./RHI/VK_TraditionalPipeline.h"
 #include "./RHI/VK_CommandPool.h"
 #include "./RHI/VK_CommandBuffer.h"
+#include "./RHI/VK_Semaphore.h"
+#include "./RHI/VK_Fence.h"
 //#include "./Context/VK_Image.h"
 #endif
 //#include "./Runtime/FCT_Runtime.h"

@@ -6,6 +6,11 @@ namespace FCT
 {
     namespace RHI
     {
+        PipelineType VK_TraditionalPipeline::getType() const
+        {
+            return PipelineType::Traditional;
+        }
+
         VK_TraditionalPipeline::VK_TraditionalPipeline(VK_Context* ctx) : VK_RasterizationPipeline(ctx)
         {
             m_pixelShader = nullptr;

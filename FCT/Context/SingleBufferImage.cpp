@@ -39,6 +39,8 @@ namespace FCT
         FCT_SAFE_RELEASE(m_image);
         m_image = image;
         m_image->addRef();
+        m_width = image->width();
+        m_height = image->height();
         delete m_behavior;
         m_behavior = new SingleBufferAfterCreateImageBehavior(this);
     }

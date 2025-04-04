@@ -3,6 +3,7 @@
 //
 #include "../MutilThreadBase/RefCount.h"
 #include "../Context/IRenderTarget.h"
+#include "./CommandBuffer.h"
 #include "./Pass.h"
 #ifndef FCT_RHI_PASSGROUP_H
 #define FCT_RHI_PASSGROUP_H
@@ -21,8 +22,8 @@ namespace FCT
             {
 
             }
-            virtual void beginSubmit() = 0;
-
+            virtual void beginSubmit(CommandBuffer* cmdBuf) = 0;
+            virtual void endSubmit(CommandBuffer* cmdBuf) = 0;
             virtual void create() = 0;
             /*virtual void addTarget(IRenderTarget* target)
             {
