@@ -47,7 +47,8 @@ namespace FCT
                 signalSemaphores.push_back(static_cast<VK_Semaphore*>(signalSemaphore)->semaphore());
             }
             submitInfo.setSignalSemaphores(signalSemaphores);
-            m_pool->context()->getGraphicsQueue().submit(submitInfo);
+            m_pool->context()->getGraphicsQueue().submit(submitInfo,
+                static_cast<VK_Fence*>(m_fence)->fence());
         }
     }
 }

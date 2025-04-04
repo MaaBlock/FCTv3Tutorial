@@ -20,6 +20,10 @@ namespace FCT
             void reset() override;
             void create() override;
             void waitFor() override;
+            vk::Fence fence()
+            {
+                return m_fence;
+            }
         private:
             VK_Context* m_ctx;
             vk::Fence m_fence;

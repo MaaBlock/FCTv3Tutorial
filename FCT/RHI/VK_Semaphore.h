@@ -17,6 +17,10 @@ namespace FCT
             {
                 return m_semaphore;
             }
+            vk::Semaphore* semaphorePtr()
+            {
+                return &m_semaphore;
+            }
         private:
             VK_Context* m_ctx;
             vk::Semaphore m_semaphore;

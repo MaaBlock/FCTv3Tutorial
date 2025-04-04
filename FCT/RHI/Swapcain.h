@@ -4,6 +4,7 @@
 #include "../MutilThreadBase/RefCount.h"
 #include "../Context/Format.h"
 #include "../Context/ImageRenderTarget.h"
+#include "../RHI/Semaphore.h"
 #ifndef FCT_SWAPCAIN_H
 #define FCT_SWAPCAIN_H
 namespace FCT
@@ -34,6 +35,8 @@ namespace FCT
             virtual Format getFormat() const = 0;
             virtual Samples getSamples() const = 0;
             virtual ImageRenderTarget* getCurrentTarget() = 0;
+            virtual RHI::Semaphore* getImageAvailableSemaphore() = 0;
+            virtual void addRenderFinshSemaphore(RHI::Semaphore* semaphore) = 0;
         protected:
             void* m_nativeHandle;
             uint32_t m_width;

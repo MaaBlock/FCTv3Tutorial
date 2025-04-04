@@ -18,6 +18,10 @@ namespace FCT
             {
                 return m_commandBuffer;
             }
+            void reset() override
+            {
+                m_commandBuffer.reset();
+            }
             void begin() override
             {
                 vk::CommandBufferBeginInfo beginInfo{};
@@ -32,7 +36,7 @@ namespace FCT
                 viewport.height = static_cast<float>(rb.y - lt.y);
                 viewport.minDepth = 0.0f;
                 viewport.maxDepth = 1.0f;
-                m_commandBuffer.setViewport(0, viewport);
+                m_commandBuffer.setViewport(0,1, &viewport);
             }
             void scissor(Vec2 lt, Vec2 rb) override
             {
@@ -41,7 +45,7 @@ namespace FCT
                 scissor.offset.y = static_cast<int32_t>(lt.y);
                 scissor.extent.width = static_cast<uint32_t>(rb.x - lt.x);
                 scissor.extent.height = static_cast<uint32_t>(rb.y - lt.y);
-                m_commandBuffer.setScissor(0, scissor);
+                m_commandBuffer.setScissor(0,1, &scissor);
             }
             void bindPipieline(RasterizationPipeline* pipeline) override
             {
@@ -57,7 +61,7 @@ namespace FCT
             }
             void draw(size_t vertexBegin, size_t instanceBegin, size_t vertexSize, size_t instanceSize) override
             {
-                m_commandBuffer.draw(static_cast<uint32_t>(vertexBegin), static_cast<uint32_t>(vertexSize), static_cast<uint32_t>(instanceBegin), static_cast<uint32_t>(instanceSize));
+                m_commandBuffer.draw(static_cast<uint32_t>(vertexSize),static_cast<uint32_t>(instanceSize) ,static_cast<uint32_t>(vertexBegin), static_cast<uint32_t>(instanceBegin));
             }
             void end() override
             {

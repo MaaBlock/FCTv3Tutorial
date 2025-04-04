@@ -40,6 +40,9 @@ namespace FCT
             vk::GraphicsPipelineCreateInfo m_createInfo;
             VK_Pass* m_pass;
             vk::Pipeline m_pipeline;
+            vk::PipelineDynamicStateCreateInfo m_dynamicState{};
+            vk::PipelineVertexInputStateCreateInfo m_vertexInputState{};
+            vk::PipelineInputAssemblyStateCreateInfo m_inputAssemblyState{};
         };
     }
 }

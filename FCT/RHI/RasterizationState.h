@@ -83,7 +83,7 @@ namespace FCT
 
     protected:
         PolygonMode m_polygonMode = PolygonMode::Fill;
-        CullMode m_cullMode = CullMode::Back;
+        CullMode m_cullMode = CullMode::None;
         FrontFace m_frontFace = FrontFace::CounterClockwise;
         float m_lineWidth = 1.0f;
         bool m_depthClampEnable = false;

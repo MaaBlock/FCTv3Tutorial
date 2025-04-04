@@ -48,6 +48,9 @@ namespace FCT
         {
             m_behaviour = new SetParamViewportStateBehaviour(this);
             depthRange(0.0f, 1.0f);
+            scissor(Vec2(0.0f, 0.0f), Vec2(800.0f, 600.0f));
+            m_viewportPosition = Vec2(0.0f, 0.0f);
+            m_viewportSize = Vec2(800.0f, 600.0f);
         }
         virtual ~ViewportState()
         {

@@ -45,6 +45,8 @@ namespace FCT
             vk::RenderPassBeginInfo m_beginInfo;
             vk::FramebufferCreateInfo m_framebufferInfo;
             vk::Framebuffer m_framebuffer;
+            std::vector<vk::ClearValue> m_clearValues;
+
             //std::vector<FCT::Image*> m_targets;
         };
     }

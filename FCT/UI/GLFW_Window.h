@@ -27,6 +27,8 @@ namespace FCT {
         Image* getImage() const override;
         //std::vector<Image*> getTargetImages() override;
         ImageRenderTarget* getCurrentTarget() override;
+        RHI::Semaphore* getImageAvailableSemaphore() override;
+        void addRenderFinshSemaphore(RHI::Semaphore* semaphore) override;
     private:
         GLFWwindow* m_window;
         Runtime* m_rt;

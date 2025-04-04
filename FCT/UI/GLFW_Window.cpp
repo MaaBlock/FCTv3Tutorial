@@ -186,7 +186,7 @@ void FCT::GLFW_Window::bind(Context* srcCtx)
 void FCT::GLFW_Window::swapBuffers()
 {
     m_swapchain->present();
-	glfwSwapBuffers(m_window);
+	//glfwSwapBuffers(m_window);
 }
 
 int FCT::GLFW_Window::getWidth()
@@ -223,6 +223,16 @@ std::vector<FCT::Image*> FCT::GLFW_Window::getTargetImages()
 FCT::ImageRenderTarget* FCT::GLFW_Window::getCurrentTarget()
 {
     return m_swapchain->getCurrentTarget();
+}
+
+FCT::RHI::Semaphore* FCT::GLFW_Window::getImageAvailableSemaphore()
+{
+    return m_swapchain->getImageAvailableSemaphore();
+}
+
+void FCT::GLFW_Window::addRenderFinshSemaphore(RHI::Semaphore* semaphore)
+{
+    m_swapchain->addRenderFinshSemaphore(semaphore);
 }
 
 void FCT::GLFW_Window::recreateSwapchain(int width, int height)

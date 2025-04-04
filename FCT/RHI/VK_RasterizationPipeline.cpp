@@ -58,9 +58,9 @@ namespace FCT::RHI
             vk::DynamicState::eViewport,
             vk::DynamicState::eScissor
         };
-        vk::PipelineDynamicStateCreateInfo dynamicState{};
-        dynamicState.pDynamicStates = dynamicStates.data();
-        m_createInfo.pDynamicState = &dynamicState;
+        m_dynamicState = vk::PipelineDynamicStateCreateInfo();
+        m_dynamicState.setDynamicStates(dynamicStates);
+        m_createInfo.pDynamicState = &m_dynamicState;
         vk::PipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.setLayoutCount = 0;
         pipelineLayoutInfo.pSetLayouts = nullptr;
@@ -70,22 +70,21 @@ namespace FCT::RHI
         m_createInfo.renderPass = static_cast<VK_PassGroup*>(m_pass->passGroup())->getRenderPass();
         m_createInfo.subpass = static_cast<VK_PassGroup*>(m_pass->passGroup())->getPassIndex(m_pass);
         m_createInfo.layout = pipelineLayout;
-        vk::PipelineVertexInputStateCreateInfo vertexInputState{};
-        vertexInputState.vertexBindingDescriptionCount = 0;
-        vertexInputState.pVertexBindingDescriptions = nullptr;
-        vertexInputState.vertexAttributeDescriptionCount = m_inputLayout->attributeDescriptions().size();
-        vertexInputState.pVertexAttributeDescriptions = m_inputLayout->attributeDescriptions().data();
-        m_createInfo.pVertexInputState = &vertexInputState;
+        m_vertexInputState = vk::PipelineVertexInputStateCreateInfo{};
+        m_vertexInputState.vertexBindingDescriptionCount = 0;
+        m_vertexInputState.pVertexBindingDescriptions = nullptr;
+        m_vertexInputState.vertexAttributeDescriptionCount = m_inputLayout->attributeDescriptions().size();
+        m_vertexInputState.pVertexAttributeDescriptions = m_inputLayout->attributeDescriptions().data();
+        m_createInfo.pVertexInputState = &m_vertexInputState;
         m_createInfo.pRasterizationState = &m_rasterizationState->rasterizationStateCreateInfo();
         m_createInfo.pMultisampleState = &m_rasterizationState->multisampleStateCreateInfo();
-        vk::PipelineInputAssemblyStateCreateInfo inputAssemblyState{};
-        inputAssemblyState.topology = vk::PrimitiveTopology::eTriangleList;
-        inputAssemblyState.primitiveRestartEnable = VK_FALSE;
-        m_createInfo.pInputAssemblyState = &inputAssemblyState;
+        m_inputAssemblyState = vk::PipelineInputAssemblyStateCreateInfo{};
+        m_inputAssemblyState.topology = vk::PrimitiveTopology::eTriangleList;
+        m_inputAssemblyState.primitiveRestartEnable = VK_FALSE;
+        m_createInfo.pInputAssemblyState = &m_inputAssemblyState;
         m_createInfo.pViewportState = &m_viewportState->viewportStateCreateInfo();
         m_createInfo.pDepthStencilState = nullptr;
         m_createInfo.pColorBlendState = &m_blendState->colorBlendStateCreateInfo();
-        m_createInfo.pDynamicState = nullptr;
 
         m_createInfo.stageCount = m_shaderStages.size();
         m_createInfo.pStages = m_shaderStages.data();

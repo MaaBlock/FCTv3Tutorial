@@ -78,21 +78,30 @@ namespace FCT {
                 cmdBuf->create();
                 fence = ctx->createFence();
                 semaphore = ctx->createSemaphore();
-                fence->createSignaled();
+                fence->create();
                 semaphore->create();
+                cmdBuf->addWaitSemaphore(wnd->getImageAvailableSemaphore());
+                cmdBuf->addSignalSemaphore(semaphore);
+                wnd->addRenderFinshSemaphore(semaphore);
+                cmdBuf->fence(fence);
             }
             void tick(Context* ctx)
             {
                 if (!isInited) {
                     init(ctx);
                 }
+                cmdBuf->reset();
                 cmdBuf->begin();
-                passGroup->beginSubmit(cmdBuf);
+                cmdBuf->viewport(Vec2(0,0),Vec2(800,600));
+                cmdBuf->scissor(Vec2(0,0),Vec2(800,600));
                 cmdBuf->bindPipieline(pipeline);
+                passGroup->beginSubmit(cmdBuf);
                 cmdBuf->draw(0,0,3,1);
                 passGroup->endSubmit(cmdBuf);
                 cmdBuf->end();
                 cmdBuf->submit();
+                fence->waitFor();
+                fence->reset();
             }
         } state;
     }

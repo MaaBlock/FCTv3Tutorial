@@ -28,7 +28,29 @@ namespace FCT
             m_createInfo.attachmentCount = m_attachments.size();
             m_createInfo.dependencyCount = 0;
             m_createInfo.pAttachments = m_attachments.data();
-            m_createInfo.pDependencies = nullptr;
+
+            std::vector<vk::SubpassDependency> dependencies;
+
+            vk::SubpassDependency dependency{};
+            dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+            dependency.dstSubpass = 0;
+            dependency.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+            dependency.srcAccessMask = vk::AccessFlags();
+            dependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;;
+            dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+            dependencies.push_back(dependency);
+
+            vk::SubpassDependency outDependency{};
+            outDependency.srcSubpass = 0;
+            outDependency.dstSubpass = VK_SUBPASS_EXTERNAL;
+            outDependency.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+            outDependency.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+            outDependency.dstStageMask = vk::PipelineStageFlagBits::eBottomOfPipe;
+            outDependency.dstAccessMask = vk::AccessFlagBits::eMemoryRead;
+            dependencies.push_back(outDependency);
+
+            m_createInfo.setDependencies(dependencies);
+
             collectSubpasses();
             m_createInfo.pSubpasses = m_subpasses.data();
             m_createInfo.subpassCount = m_subpasses.size();
@@ -45,26 +67,34 @@ namespace FCT
         void VK_PassGroup::beginSubmit(CommandBuffer* cmdBuf)
         {
             collectImageViews();
-            if (!m_framebuffer)
+            if (m_framebuffer)
             {
-                m_framebufferInfo.attachmentCount = m_framebufferViews.size();
-                m_framebufferInfo.pAttachments = m_framebufferViews.data();
-                m_framebufferInfo.width = m_targetAttachments.rbegin()->second.image->width();
-                m_framebufferInfo.height = m_targetAttachments.rbegin()->second.image->height();
-                m_framebufferInfo.layers = 1;
-                m_framebuffer = m_ctx->device().createFramebuffer(m_framebufferInfo);
+                m_ctx->device().destroyFramebuffer(m_framebuffer);
+                m_framebuffer = nullptr;
             }
+
+            m_framebufferInfo.attachmentCount = m_framebufferViews.size();
+            m_framebufferInfo.pAttachments = m_framebufferViews.data();
+            m_framebufferInfo.width = m_targetAttachments.rbegin()->second.image->width();
+            m_framebufferInfo.height = m_targetAttachments.rbegin()->second.image->height();
+            m_framebufferInfo.layers = 1;
+            m_framebufferInfo.renderPass = m_renderPass;
+            m_framebuffer = m_ctx->device().createFramebuffer(m_framebufferInfo);
+
             m_beginInfo.framebuffer = m_framebuffer;
             m_beginInfo.renderArea.offset.setX(0).setY(0);
             m_beginInfo.renderArea.extent.width =
                 m_targetAttachments.rbegin()->second.image->width();
             m_beginInfo.renderArea.extent.height =
-            m_targetAttachments.rbegin()->second.image->height();
+                m_targetAttachments.rbegin()->second.image->height();
 
-            vk::ClearValue clearValue;
-            clearValue.setColor({0.0f,0.0f,0.0f,1.0f});
-            m_beginInfo.clearValueCount = 1;
-            m_beginInfo.pClearValues = &clearValue;
+            m_clearValues =  std::vector<vk::ClearValue>(m_attachments.size());
+            for (size_t i = 0; i < m_clearValues.size(); i++) {
+                m_clearValues[i].setColor(vk::ClearColorValue(std::array<float, 4>{1.0f, 1.0f, 0.0f, 1.0f}));
+            }
+
+            m_beginInfo.setClearValues(m_clearValues);
+
             auto vkCmdBuf = static_cast<VK_CommandBuffer*>(cmdBuf);
             vkCmdBuf->commandBuffer().beginRenderPass(m_beginInfo,vk::SubpassContents::eInline);
         }
@@ -95,7 +125,7 @@ namespace FCT
                     vk::AttachmentDescription desc;
                     desc.format = ToVkFormat(image->format());
                     desc.samples = ToVkSampleCount(image->samples());
-                    desc.loadOp = vk::AttachmentLoadOp::eDontCare;
+                    desc.loadOp = vk::AttachmentLoadOp::eClear;
                     desc.storeOp = vk::AttachmentStoreOp::eStore;
                     desc.initialLayout = vk::ImageLayout::eUndefined;
                     //todo:优化initialLayout
@@ -127,7 +157,7 @@ namespace FCT
 
         void VK_PassGroup::collectImageViews() // 注意，顺序要保持和collectAttachments一样
         {
-
+            m_framebufferViews.clear();
             for (auto& pass : m_passes)
             {
                 for (auto& targetPair : pass->renderTargets())

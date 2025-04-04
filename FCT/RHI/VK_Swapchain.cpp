@@ -9,6 +9,7 @@ namespace FCT {
             m_swapchain = nullptr;
             m_fctImage = nullptr;
             m_target = nullptr;
+            m_imageAvailable = nullptr;
         }
 
         VK_Swapchain::~VK_Swapchain() {
@@ -23,11 +24,6 @@ namespace FCT {
                     image->release();
                 }
                 m_fctImages.clear();
-                /*for (auto target : m_targets)
-                {
-                    target->release();
-                }
-                m_targets.clear();*/
             }
             FCT_SAFE_RELEASE(m_target);
             FCT_SAFE_RELEASE(m_fctImage);
@@ -95,7 +91,6 @@ namespace FCT {
 
             if (oldSwapchain) {
                 createInfo.setOldSwapchain(oldSwapchain);
-                destoryImageViews();
             }
 
             m_swapchain = dc.createSwapchainKHR(createInfo);
@@ -113,26 +108,23 @@ namespace FCT {
                         ret->width(m_width);
                         ret->height(m_height);
                         ret->create(image);
-                        /*
-                        auto target = new ImageRenderTarget(m_ctx);
-                        target->renderTargetType(RenderTargetType::WindowTarget);
-                        target->addRenderTarget(ret);
-                        m_targets.push_back(target);*/
                         return ret;
                     }).operator()());
             }
             m_fctImage = new MutilBufferImage(m_ctx);
+            m_fctImage->renderTargetType(RenderTargetType::WindowTarget);
             m_fctImage->create(m_fctImages);
             m_fctImage->as(ImageUsage::RenderTarget);
             m_target = new ImageRenderTarget(m_ctx);
             m_target->renderTargetType(RenderTargetType::WindowTarget);
             m_target->bindTarget(m_fctImage);
-            //m_target->addRenderTarget(m_fctImage);
 
-            createImageViews();
+            //createImageViews();
 
-            if (m_imageAvailableSemaphores.empty()) {
-                createSyncObjects();
+            if (!m_imageAvailable)
+            {
+                m_imageAvailable = static_cast<VK_Semaphore*>(m_ctx->createSemaphore());
+                m_imageAvailable->create();
             }
 
             if (oldSwapchain) {
@@ -173,179 +165,46 @@ namespace FCT {
         }
 
 
-        void VK_Swapchain::createImageViews() {
-            auto dc = m_ctx->getDevice();
-            m_imageViews.resize(m_images.size());
-
-            for (size_t i = 0; i < m_images.size(); i++) {
-                vk::ImageViewCreateInfo createInfo{};
-                createInfo.setImage(m_images[i])
-                        .setViewType(vk::ImageViewType::e2D)
-                        .setFormat(m_imageFormat)
-                        .setComponents(vk::ComponentMapping(
-                                vk::ComponentSwizzle::eIdentity,
-                                vk::ComponentSwizzle::eIdentity,
-                                vk::ComponentSwizzle::eIdentity,
-                                vk::ComponentSwizzle::eIdentity
-                        ))
-                        .setSubresourceRange(vk::ImageSubresourceRange(
-                                vk::ImageAspectFlagBits::eColor,
-                                0, 1, 0, 1
-                        ));
-
-                try {
-                    m_imageViews[i] = dc.createImageView(createInfo);
-                } catch (const vk::SystemError& e) {
-                    for (size_t j = 0; j < i; j++) {
-                        dc.destroyImageView(m_imageViews[j]);
-                    }
-                    throw std::runtime_error("Failed to create image views: " + std::string(e.what()));
-                }
-            }
-        }
-
-        void VK_Swapchain::destoryImageViews() {
-            auto dc = m_ctx->getDevice();
-            for (auto imageView : m_imageViews) {
-                if (imageView) {
-                    dc.destroyImageView(imageView);
-                }
-            }
-            m_imageViews.clear();
-        }
-
-        void VK_Swapchain::createSyncObjects() {
-            auto dc = m_ctx->getDevice();
-
-            m_imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-            m_renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-            m_inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-            m_imagesInFlight.resize(m_images.size(), nullptr);
-
-            vk::SemaphoreCreateInfo semaphoreInfo{};
-            vk::FenceCreateInfo fenceInfo{};
-            fenceInfo.setFlags(vk::FenceCreateFlagBits::eSignaled);
-
-            for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-                try {
-                    m_imageAvailableSemaphores[i] = dc.createSemaphore(semaphoreInfo);
-                    m_renderFinishedSemaphores[i] = dc.createSemaphore(semaphoreInfo);
-                    m_inFlightFences[i] = dc.createFence(fenceInfo);
-                } catch (const vk::SystemError& e) {
-                    destroySyncObjects();
-                    throw std::runtime_error("Failed to create synchronization objects: " + std::string(e.what()));
-                }
-            }
-        }
-
-        void VK_Swapchain::destroySyncObjects() {
-            if (m_ctx) {
-                auto dc = m_ctx->getDevice();
-
-                for (size_t i = 0; i < m_imageAvailableSemaphores.size(); i++) {
-                    if (m_imageAvailableSemaphores[i]) {
-                        dc.destroySemaphore(m_imageAvailableSemaphores[i]);
-                    }
-                }
-
-                for (size_t i = 0; i < m_renderFinishedSemaphores.size(); i++) {
-                    if (m_renderFinishedSemaphores[i]) {
-                        dc.destroySemaphore(m_renderFinishedSemaphores[i]);
-                    }
-                }
-
-                for (size_t i = 0; i < m_inFlightFences.size(); i++) {
-                    if (m_inFlightFences[i]) {
-                        dc.destroyFence(m_inFlightFences[i]);
-                    }
-                }
-
-                m_imageAvailableSemaphores.clear();
-                m_renderFinishedSemaphores.clear();
-                m_inFlightFences.clear();
-                m_imagesInFlight.clear();
-            }
-        }
-
         uint32_t VK_Swapchain::getCurrentImageIndex() const {
             return m_currentImageIndex;
         }
 
-        void VK_Swapchain::present() {
+        void VK_Swapchain::present()
+        {
             auto dc = m_ctx->getDevice();
-
-            try {
-                vk::PresentInfoKHR presentInfo{};
-                presentInfo.setWaitSemaphoreCount(1)
-                        .setPWaitSemaphores(&m_renderFinishedSemaphores[m_currentFrame])
-                        .setSwapchainCount(1)
-                        .setPSwapchains(&m_swapchain)
-                        .setPImageIndices(&m_currentImageIndex);
-
-                auto result = m_presentQueue.presentKHR(presentInfo);
-
-                m_currentFrame = (m_currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-
-                dc.waitForFences(1, &m_inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
-
-                dc.resetFences(1, &m_inFlightFences[m_currentFrame]);
-
-                auto nextResult = dc.acquireNextImageKHR(
-                        m_swapchain,
-                        UINT64_MAX,
-                        m_imageAvailableSemaphores[m_currentFrame],
-                        nullptr,
-                        &m_currentImageIndex
-                );
-
-                m_fctImage->changeCurrentIndex(m_currentImageIndex);
-
-                if (m_imagesInFlight[m_currentImageIndex]) {
-                    dc.waitForFences(1, m_imagesInFlight[m_currentImageIndex], VK_TRUE, UINT64_MAX);
-                }
-
-                m_imagesInFlight[m_currentImageIndex] = &m_inFlightFences[m_currentFrame];
-
-            } catch (const std::exception& e) {
-                FCT::ferr << "Failed to present image: " << e.what() << std::endl;
-                throw;
+            std::vector<vk::Semaphore> semaphores;
+            for (auto semaphore : m_renderFinshSemaphores)
+            {
+                semaphores.push_back(static_cast<VK_Semaphore*>(semaphore)->semaphore());
             }
+            vk::PresentInfoKHR presentInfo{};
+            presentInfo.setWaitSemaphores(semaphores)
+                    .setSwapchainCount(1)
+                    .setPSwapchains(&m_swapchain)
+                    .setPImageIndices(&m_currentImageIndex);
+
+            auto result = m_presentQueue.presentKHR(presentInfo);
+
+            auto nextResult = dc.acquireNextImageKHR(
+                    m_swapchain,
+                    UINT64_MAX,
+                    m_imageAvailable->semaphore(),
+                    nullptr,
+                    &m_currentImageIndex
+            );
+
+            m_fctImage->changeCurrentIndex(m_currentImageIndex);
         }
         void VK_Swapchain::acquireFirstImage() {
             auto dc = m_ctx->getDevice();
-
-            try {
-                dc.acquireNextImageKHR(
-                        m_swapchain,
-                        UINT64_MAX,
-                        m_imageAvailableSemaphores[m_currentFrame],
-                        nullptr,
-                        &m_currentImageIndex
-                );
-                m_fctImage->changeCurrentIndex(m_currentImageIndex);
-
-                if (m_imagesInFlight[m_currentImageIndex]) {
-                    dc.waitForFences(1, m_imagesInFlight[m_currentImageIndex], VK_TRUE, UINT64_MAX);
-                }
-
-                m_imagesInFlight[m_currentImageIndex] = &m_inFlightFences[m_currentFrame];
-
-            } catch (const std::exception& e) {
-                FCT::ferr << "Failed to acquire first image: " << e.what() << std::endl;
-                throw;
-            }
-        }
-
-        vk::Semaphore VK_Swapchain::getImageAvailableSemaphore() const {
-            return m_imageAvailableSemaphores[m_currentFrame];
-        }
-
-        vk::Semaphore VK_Swapchain::getRenderFinishedSemaphore() const {
-            return m_renderFinishedSemaphores[m_currentFrame];
-        }
-
-        vk::Fence VK_Swapchain::getInFlightFence() const {
-            return m_inFlightFences[m_currentFrame];
+            dc.acquireNextImageKHR(
+                    m_swapchain,
+                    UINT64_MAX,
+                    m_imageAvailable->semaphore(),
+                    nullptr,
+                    &m_currentImageIndex
+            );
+            m_fctImage->changeCurrentIndex(m_currentImageIndex);
         }
 
         vk::Extent2D VK_Swapchain::getExtent() const {
@@ -365,6 +224,16 @@ namespace FCT {
         ImageRenderTarget* VK_Swapchain::getCurrentTarget()
         {
             return m_target;
+        }
+
+        void VK_Swapchain::addRenderFinshSemaphore(RHI::Semaphore* semaphore)
+        {
+            m_renderFinshSemaphores.push_back(semaphore);
+        }
+
+        RHI::Semaphore* VK_Swapchain::getImageAvailableSemaphore()
+        {
+            return m_imageAvailable;
         }
     }
 }

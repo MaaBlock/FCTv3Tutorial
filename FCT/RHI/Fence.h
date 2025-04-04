@@ -11,6 +11,10 @@ namespace FCT
         class Fence : public RefCount
         {
         public:
+            Fence()
+            {
+                m_signaled = false;
+            }
             void initSignal(bool signal = true)
             {
                 m_signaled = signal;

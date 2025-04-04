@@ -5,6 +5,7 @@
 #include "../Context//VK_Context.h"
 #include "./Swapcain.h"
 #include "./VK_Image.h"
+#include "VK_Semaphore.h"
 #include "../Context/ImageRenderTarget.h"
 #include "../Context/MutilBufferImage.h"
 #ifndef FCT_VK_SWAPCHAIN_H
@@ -19,18 +20,19 @@ namespace FCT{
             void create(vk::SurfaceKHR surface, uint32_t width, uint32_t height);
             void create() override;
             void destroy();
-            void createImageViews();
-            void destoryImageViews();
             uint32_t getCurrentImageIndex() const;
             void present() override;
             void acquireFirstImage();
+            /*
             vk::Semaphore getImageAvailableSemaphore() const;
-            vk::Semaphore getRenderFinishedSemaphore() const;
+            vk::Semaphore getRenderFinishedSemaphore() const;*/
             vk::Fence getInFlightFence() const;
             vk::Extent2D getExtent() const;
             Format getFormat() const override;
             Samples getSamples() const override;
             ImageRenderTarget* getCurrentTarget() override;
+            void addRenderFinshSemaphore(RHI::Semaphore* semaphore);
+            RHI::Semaphore* getImageAvailableSemaphore() override;
         private:
             MutilBufferImage* m_fctImage;
             std::vector<RHI::Image*> m_fctImages;
@@ -44,21 +46,12 @@ namespace FCT{
             vk::SurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR>& availableFormats);
             vk::PresentModeKHR chooseSwapPresentMode(const std::vector<vk::PresentModeKHR>& availablePresentModes);
             std::vector<vk::Image> m_images;
-            std::vector<vk::ImageView> m_imageViews;
-            //std::vector<ImageRenderTarget*> m_targets;
-            static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
-            std::vector<vk::Semaphore> m_imageAvailableSemaphores;
-            std::vector<vk::Semaphore> m_renderFinishedSemaphores;
-            std::vector<vk::Fence> m_inFlightFences;
-            std::vector<vk::Fence*> m_imagesInFlight;
+            //std::vector<vk::ImageView> m_imageViews;
             size_t m_currentFrame = 0;
-
-            void createSyncObjects();
-
-            void destroySyncObjects();
-
+            std::vector<RHI::Semaphore*> m_renderFinshSemaphores;
             vk::Extent2D m_extent;
             uint32_t m_currentImageIndex = 0;
+            RHI::VK_Semaphore* m_imageAvailable;
         };
     }
 }

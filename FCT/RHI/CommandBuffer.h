@@ -41,6 +41,7 @@ namespace FCT
             {
                 m_level = level;
             }
+            virtual void reset() = 0;
             virtual void create() = 0;
             virtual void begin() = 0;
             virtual void viewport(Vec2 lt,Vec2 rb) = 0;
@@ -53,19 +54,25 @@ namespace FCT
             void fence(Fence* fence) { m_fence = fence; }
             std::vector<WaitSemaphoreDescription>& waitSemaphores() { return m_waitSemaphores; }
             std::vector<Semaphore*>& signalSemaphores() { return m_signalSemaphores; }
+            void clearWaitSemaphores() { m_waitSemaphores.clear(); }
             void addWaitSemaphore(Semaphore* semaphore,PipelineStages stage = PipelineStage::colorAttachmentOutput)
             {
                 WaitSemaphoreDescription desc;
                 desc.semaphore = semaphore;
                 desc.stages = stage;
                 m_waitSemaphores.push_back(desc);
-            }
+            }/*
+            void addFence(RHI::Fence* fence)
+            {
+                m_submitFence.push_back(fence);
+            }*/
             void addSignalSemaphore(Semaphore* semaphore) { m_signalSemaphores.push_back(semaphore); }
         protected:
             CommandBufferLevel m_level;
             Fence* m_fence;
             std::vector<WaitSemaphoreDescription> m_waitSemaphores;
             std::vector<Semaphore*> m_signalSemaphores;
+            //std::vector<Fence*> m_submitFence;
         };
     }
 }

@@ -5,6 +5,7 @@
 #include "./EventHandler.h"
 #include "./CallBackHandler.h"
 #include "../Context/ImageRenderTarget.h"
+#include "../RHI/Semaphore.h"
 
 namespace FCT {
     class WindowBehavior {
@@ -48,6 +49,9 @@ namespace FCT {
 			return m_callbackHandler;
 		}
 		virtual ImageRenderTarget* getCurrentTarget() = 0;
+		virtual RHI::Semaphore* getImageAvailableSemaphore() = 0;
+		virtual void addRenderFinshSemaphore(RHI::Semaphore* semaphore) = 0;
+
 	private:
 	protected:
 		CallBackEventHandler* m_callbackHandler;
