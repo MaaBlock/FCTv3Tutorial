@@ -12,12 +12,24 @@
       "platform": "windows"
     },
     {
+      "name": "vulkan",
+      "platform": "linux"
+    },
+    {
       "name": "physx",
       "platform": "windows"
     },
     {
+      "name": "physx",
+      "platform": "linux"
+    },
+    {
       "name": "glfw3",
       "platform": "windows"
+    },
+    {
+      "name": "glfw3",
+      "platform": "linux"
     },
     {
       "name": "vulkan-headers",
