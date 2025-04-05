@@ -1,5 +1,6 @@
 #pragma once
 #include "../ThirdParty.h"
+#include "../ToolDefine.h"
 #include "../MutilThreadBase/RefCount.h"
 #include "../MutilThreadBase/Computation.h"
 #include "./VertexFactory.h"
@@ -21,14 +22,17 @@
 #include "../RHI/Semaphore.h"
 #include "../RHI/PassGroup.h"
 #include "../RHI/RasterizationPipeline.h"
-namespace FCT {
+namespace FCT
+{
 	class VertexBuffer;
 	class InputLayout;
 	class DrawCall;
-    class Window;
+	class Window;
+	using SumitTicker = std::function<void()>;
+	using TickerToken = uint32_t;
 	class Context : public RefCount {
 	public:
-        Context();
+		Context();
 		virtual ~Context();
 		virtual void clear(float r, float g, float b) = 0;
 		virtual void viewport(int x, int y, int width, int height) = 0;
@@ -43,39 +47,82 @@ namespace FCT {
 		virtual ConstBuffer* createConstBuffer() = 0;
 		virtual Texture* createTexture() = 0;
 		virtual TextureArray* createTextureArray() = 0;
-        virtual Image* createImage() = 0;
+		virtual Image* createImage() = 0;
 		virtual RHI::Swapchain* createSwapchain() = 0;
 		virtual RHI::PassGroup* createPassGroup() = 0;
 		virtual RHI::Pass* createPass() = 0;
 		virtual RHI::RasterizationPipeline* createTraditionPipeline() = 0;
 		virtual RHI::Fence* createFence() = 0;
 		virtual RHI::Semaphore* createSemaphore() = 0;
-		virtual void create(IRenderTarget* renderTarget) = 0;
-        virtual void setFlushWindow(Window* wnd) {
-            m_flushWnd = wnd;
-        }
+		//virtual void create(IRenderTarget* renderTarget) = 0;
+		virtual void create() = 0;
 		virtual RHI::CommandPool* createCommandPool() = 0;
-        virtual void compilePasses() = 0;
-        virtual void submitPasses() = 0;
-        virtual void flush();
-        virtual void swapQueue();
-        virtual void submitThread();
-		virtual RHI::RenderTargetView* createRenderTargetView() = 0;
-		Window* flushWindow() const
+		virtual void compilePasses() = 0;
+		virtual void submitPasses() = 0;
+		void flush()
 		{
-			return m_flushWnd;
+			FCT_WAIT_FOR(m_currentFlush);
+			swapQueue();
+			nextFrame();
+		}
+		virtual void swapQueue();
+		void submitThread()
+		{
+			while (m_ctxRunning) {
+				FCT_WAIT_FOR(m_nextFrame);
+				tick();
+				currentFlush();
+			}
+		}
+		void swapBuffers();
+
+		void defaultTick()
+		{
+			compilePasses();
+			submitPasses();
+			swapBuffers();
+		}
+		virtual RHI::RenderTargetView* createRenderTargetView() = 0;
+		void addBindWindow(Window* wnd)
+		{
+			m_bindWindows.push_back(wnd);
+		}
+		void tick()
+		{
+			m_ticker();
+		}
+		/*
+		 * 初始化阶段 可以在flush前任意修改，因为提交线程一直在等待下一帧
+		 * 运行阶段 不允许修改 或 拆分flush函数，在wait currentFlush和nextFrame之间修改
+		 */
+		void submitTicker(SumitTicker ticker)
+		{
+			m_ticker = ticker;
 		}
 	protected:
-        Window* m_flushWnd;
-        bool m_nextFrame;
-        bool m_currentFlush;
-        void nextFrame();
-        void currentFlush();
-        std::unordered_map<std::string,Computation<Pass>*> m_passQueue0;
-        std::unordered_map<std::string,Computation<Pass>*> m_passQueue1;
-        std::unordered_map<std::string,Computation<Pass>*>* m_submitQueue;
-        std::unordered_map<std::string,Computation<Pass>*>* m_pushQueue;
-        std::thread m_submitThread;
-        bool m_ctxRunning;
+		SumitTicker m_ticker;
+		size_t m_maxFrameInFlights;
+		std::vector<Window*> m_bindWindows;
+		bool m_nextFrame;
+		bool m_currentFlush;
+		void nextFrame();
+		void currentFlush();
+		std::unordered_map<std::string,Computation<Pass>*> m_passQueue0;
+		std::unordered_map<std::string,Computation<Pass>*> m_passQueue1;
+		std::unordered_map<std::string,Computation<Pass>*>* m_submitQueue;
+		std::unordered_map<std::string,Computation<Pass>*>* m_pushQueue;
+		std::thread m_submitThread;
+		bool m_ctxRunning;
 	};
+}
+#include "../UI/Window.h"
+namespace FCT {
+	inline void Context::swapBuffers()
+	{
+		for (auto wnd : m_bindWindows)
+		{
+			wnd->swapBuffers();
+		}
+	}
+
 }

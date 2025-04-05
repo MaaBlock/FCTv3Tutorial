@@ -9,7 +9,8 @@ namespace FCT {
             m_swapchain = nullptr;
             m_fctImage = nullptr;
             m_target = nullptr;
-            m_imageAvailable = nullptr;
+            m_prensentFinshSemphore = nullptr;
+            m_needRecreated = false;
         }
 
         VK_Swapchain::~VK_Swapchain() {
@@ -25,8 +26,8 @@ namespace FCT {
                 }
                 m_fctImages.clear();
             }
-            FCT_SAFE_RELEASE(m_target);
-            FCT_SAFE_RELEASE(m_fctImage);
+            //FCT_SAFE_RELEASE(m_target);
+            //FCT_SAFE_RELEASE(m_fctImage);
 
             auto phyDc = m_ctx->getPhysicalDevice();
             auto dc = m_ctx->getDevice();
@@ -111,27 +112,37 @@ namespace FCT {
                         return ret;
                     }).operator()());
             }
-            m_fctImage = new MutilBufferImage(m_ctx);
-            m_fctImage->renderTargetType(RenderTargetType::WindowTarget);
-            m_fctImage->create(m_fctImages);
-            m_fctImage->as(ImageUsage::RenderTarget);
-            m_target = new ImageRenderTarget(m_ctx);
-            m_target->renderTargetType(RenderTargetType::WindowTarget);
-            m_target->bindTarget(m_fctImage);
-
-            //createImageViews();
-
-            if (!m_imageAvailable)
+            if (m_fctImage)
             {
-                m_imageAvailable = static_cast<VK_Semaphore*>(m_ctx->createSemaphore());
-                m_imageAvailable->create();
+                m_fctImage->create(m_fctImages);
+            } else
+            {
+                m_fctImage = new MutilBufferImage(m_ctx);
+                m_fctImage->renderTargetType(RenderTargetType::WindowTarget);
+                m_fctImage->as(ImageUsage::RenderTarget);
+                m_fctImage->create(m_fctImages);
             }
+            if (m_target)
+            {
+
+            } else
+            {
+                m_target = new ImageRenderTarget(m_ctx);
+                m_target->renderTargetType(RenderTargetType::WindowTarget);
+                m_target->bindTarget(m_fctImage);
+            }
+            //createImageViews();
+            /*
+            if (!m_prensentFinshSemphore)
+            {
+                m_prensentFinshSemphore = static_cast<VK_Semaphore*>(m_ctx->createSemaphore());
+                m_prensentFinshSemphore->create();
+            }*/
 
             if (oldSwapchain) {
                 dc.destroySwapchainKHR(oldSwapchain);
+                acquireFirstImage();
             }
-
-            acquireFirstImage();
         }
 
         void VK_Swapchain::create()
@@ -168,10 +179,14 @@ namespace FCT {
         uint32_t VK_Swapchain::getCurrentImageIndex() const {
             return m_currentImageIndex;
         }
-
         void VK_Swapchain::present()
         {
             auto dc = m_ctx->getDevice();
+            if (processRecreate())
+            {
+                return;
+            }
+
             std::vector<vk::Semaphore> semaphores;
             for (auto semaphore : m_renderFinshSemaphores)
             {
@@ -182,29 +197,90 @@ namespace FCT {
                     .setSwapchainCount(1)
                     .setPSwapchains(&m_swapchain)
                     .setPImageIndices(&m_currentImageIndex);
+            try {
+                auto result = m_presentQueue.presentKHR(presentInfo);
+                if (result == vk::Result::eSuboptimalKHR) {
+                    m_needRecreated = true;
+                }
+            } catch (vk::OutOfDateKHRError& e) {
+                m_needRecreated = true;
+                processRecreate();
+                return;
+            } catch (vk::SystemError& e) {
+                ferr << "fetal error in VK_Swapchain::present()" << e.what() << std::endl;
+                return;
+            }
+            try {
+                auto nextResult = dc.acquireNextImageKHR(
+                        m_swapchain,
+                        UINT64_MAX,
+                        m_prensentFinshSemphore->semaphore(),
+                        nullptr,
+                        &m_currentImageIndex
+                );
 
-            auto result = m_presentQueue.presentKHR(presentInfo);
-
-            auto nextResult = dc.acquireNextImageKHR(
-                    m_swapchain,
-                    UINT64_MAX,
-                    m_imageAvailable->semaphore(),
-                    nullptr,
-                    &m_currentImageIndex
-            );
+                if (nextResult == vk::Result::eSuboptimalKHR) {
+                    m_needRecreated = true;
+                }
+            } catch (vk::OutOfDateKHRError& e) {
+                m_needRecreated = true;
+                processRecreate();
+                return;
+            } catch (vk::SystemError& e) {
+                ferr << "fetal error in VK_Swapchain::present() - acquireNextImage" << e.what() << std::endl;
+                return;
+            }
 
             m_fctImage->changeCurrentIndex(m_currentImageIndex);
         }
         void VK_Swapchain::acquireFirstImage() {
             auto dc = m_ctx->getDevice();
-            dc.acquireNextImageKHR(
-                    m_swapchain,
-                    UINT64_MAX,
-                    m_imageAvailable->semaphore(),
-                    nullptr,
-                    &m_currentImageIndex
-            );
+            VK_Fence* fence = nullptr;
+            if (m_prensentFinshSemphore)
+            {
+                dc.acquireNextImageKHR(
+                        m_swapchain,
+                        UINT64_MAX,
+                        m_prensentFinshSemphore->semaphore(),
+                        nullptr,
+                        &m_currentImageIndex
+                );
+            } else
+            {
+                fence = new VK_Fence(m_ctx);
+                fence->create();
+                dc.acquireNextImageKHR(
+                        m_swapchain,
+                        UINT64_MAX,
+                        nullptr,
+                        fence->fence(),
+                        &m_currentImageIndex
+                );
+                fence->waitFor();
+                fence->release();
+            }
             m_fctImage->changeCurrentIndex(m_currentImageIndex);
+        }
+
+        void VK_Swapchain::needRecreate()
+        {
+            m_needRecreated = true;
+            m_recreated = false;
+            FCT_WAIT_FOR(m_recreated);
+        }
+
+        bool VK_Swapchain::processRecreate()
+        {
+            auto dc = m_ctx->getDevice();
+            if (m_needRecreated)
+            {
+                //dc.waitIdle();
+                create();
+                m_needRecreated = false;
+                m_recreated = true;
+                return true;
+            }
+            return false;
         }
 
         vk::Extent2D VK_Swapchain::getExtent() const {
@@ -231,9 +307,14 @@ namespace FCT {
             m_renderFinshSemaphores.push_back(semaphore);
         }
 
+        void VK_Swapchain::setPresentFinshSemaphore(RHI::Semaphore* semaphore)
+        {
+            m_prensentFinshSemphore = static_cast<VK_Semaphore*>(semaphore);
+        }
+
         RHI::Semaphore* VK_Swapchain::getImageAvailableSemaphore()
         {
-            return m_imageAvailable;
+            return m_prensentFinshSemphore;
         }
     }
 }

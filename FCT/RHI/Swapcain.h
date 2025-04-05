@@ -34,9 +34,12 @@ namespace FCT
             virtual void present() = 0;
             virtual Format getFormat() const = 0;
             virtual Samples getSamples() const = 0;
+            virtual void acquireFirstImage() = 0;
             virtual ImageRenderTarget* getCurrentTarget() = 0;
             virtual RHI::Semaphore* getImageAvailableSemaphore() = 0;
             virtual void addRenderFinshSemaphore(RHI::Semaphore* semaphore) = 0;
+            virtual void setPresentFinshSemaphore(RHI::Semaphore* semaphore) = 0;
+            virtual void needRecreate() = 0;
         protected:
             void* m_nativeHandle;
             uint32_t m_width;

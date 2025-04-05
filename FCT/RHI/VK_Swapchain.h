@@ -2,6 +2,7 @@
 // Created by Administrator on 2025/3/4.
 //
 #include "../ThirdParty.h"
+#include "../ToolDefine.h"
 #include "../Context//VK_Context.h"
 #include "./Swapcain.h"
 #include "./VK_Image.h"
@@ -23,6 +24,8 @@ namespace FCT{
             uint32_t getCurrentImageIndex() const;
             void present() override;
             void acquireFirstImage();
+            void needRecreate();
+            bool processRecreate();
             /*
             vk::Semaphore getImageAvailableSemaphore() const;
             vk::Semaphore getRenderFinishedSemaphore() const;*/
@@ -32,8 +35,11 @@ namespace FCT{
             Samples getSamples() const override;
             ImageRenderTarget* getCurrentTarget() override;
             void addRenderFinshSemaphore(RHI::Semaphore* semaphore);
+            void setPresentFinshSemaphore(RHI::Semaphore* semaphore) override;
             RHI::Semaphore* getImageAvailableSemaphore() override;
         private:
+            bool m_recreated;
+            bool m_needRecreated;
             MutilBufferImage* m_fctImage;
             std::vector<RHI::Image*> m_fctImages;
             ImageRenderTarget* m_target;
@@ -51,7 +57,7 @@ namespace FCT{
             std::vector<RHI::Semaphore*> m_renderFinshSemaphores;
             vk::Extent2D m_extent;
             uint32_t m_currentImageIndex = 0;
-            RHI::VK_Semaphore* m_imageAvailable;
+            RHI::VK_Semaphore* m_prensentFinshSemphore;
         };
     }
 }

@@ -57,6 +57,8 @@ namespace FCT
         Context* createContext();
     private:
         RuntimeCommon* g_common;
+    	Runtime(const Runtime&) = delete;
+    	Runtime& operator=(const Runtime&) = delete;
     };
 #ifdef FCT_DEPRECATED
     struct RuntimeCommon {

@@ -125,10 +125,14 @@ namespace FCT {
         m_commandBuffers = m_device.allocateCommandBuffers(allocInfo);
     }
 
-    void VK_Context::create(IRenderTarget *target) {
-        target->bind(this);
-    }
+   /* void VK_Context::create(IRenderTarget *target) {
+        //target->bind(this);
+    }*/
 
+    void VK_Context::create()
+    {
+
+    }
 
 
     Image *VK_Context::createImage() {

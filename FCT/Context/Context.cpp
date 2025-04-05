@@ -17,6 +17,8 @@ namespace FCT {
     void Context::swapQueue() {
         std::swap(m_pushQueue,m_submitQueue);
     }
+
+    /*
     namespace test
     {
         std::vector<char> readFile(const std::string& filename) {
@@ -40,15 +42,6 @@ namespace FCT {
             bool isInited = false;
             Context* ctx;
             Window* wnd;
-            RHI::Pass* pass;
-            RHI::PassGroup* passGroup;
-            RHI::PixelShader* ps;
-            RHI::VertexShader* vs;
-            RHI::RasterizationPipeline* pipeline;
-            RHI::CommandPool* cmdPool;
-            RHI::CommandBuffer* cmdBuf;
-            RHI::Fence* fence;
-            RHI::Semaphore* semaphore;
             void init(Context* ctx)
             {
                 this->ctx = ctx;
@@ -78,11 +71,14 @@ namespace FCT {
                 cmdBuf->create();
                 fence = ctx->createFence();
                 semaphore = ctx->createSemaphore();
+                presentFinshSemaphore = ctx->createSemaphore();
+                presentFinshSemaphore->create();
                 fence->create();
                 semaphore->create();
-                cmdBuf->addWaitSemaphore(wnd->getImageAvailableSemaphore());
+                cmdBuf->addWaitSemaphore(presentFinshSemaphore);
                 cmdBuf->addSignalSemaphore(semaphore);
                 wnd->addRenderFinshSemaphore(semaphore);
+                wnd->setPresentFinshSemaphore(presentFinshSemaphore);
                 cmdBuf->fence(fence);
             }
             void tick(Context* ctx)
@@ -105,34 +101,20 @@ namespace FCT {
             }
         } state;
     }
-    void Context::submitThread() {
-        while (m_ctxRunning) {
-            FCT_WAIT_FOR(m_nextFrame);
-            test::state.tick(this);
-            compilePasses();
-            submitPasses();
-            if (m_flushWnd){
-                m_flushWnd->swapBuffers();
-            }
-            currentFlush();
-        }
-    }
+    */
 
 
-    void Context::flush() {
-        FCT_WAIT_FOR(m_currentFlush);
-        swapQueue();
-        nextFrame();
-    }
+
 
     Context::Context() {
         m_ctxRunning = true;
-        m_flushWnd = nullptr;
+        //m_flushWnd = nullptr;
         m_nextFrame = false;
         m_currentFlush = true;
         m_submitQueue = &m_passQueue0;
         m_pushQueue = &m_passQueue1;
         m_submitThread = std::thread(&Context::submitThread, this);
+        m_ticker = std::bind(&Context::defaultTick,this);
     }
 
     Context::~Context() {

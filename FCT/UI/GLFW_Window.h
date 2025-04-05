@@ -6,11 +6,13 @@
 #include "../Runtime/Runtime.h"
 #ifndef GLFW_WINDOW_H
 #define GLFW_WINDOW_H
-namespace FCT {
-    class GLFW_UICommon;
-    class GLFW_Window : public Window {
+
+namespace FCT
+{
+    class GLFW_Window : public Window
+    {
     public:
-        GLFW_Window(GLFW_UICommon* common,Runtime* rt);
+        GLFW_Window(GLFW_UICommon* common, Runtime* rt);
         ~GLFW_Window();
         void invokeResizeCallbacks(int width, int height);
         void invokeMouseMoveCallbacks(int xpos, int ypos);
@@ -29,22 +31,24 @@ namespace FCT {
         ImageRenderTarget* getCurrentTarget() override;
         RHI::Semaphore* getImageAvailableSemaphore() override;
         void addRenderFinshSemaphore(RHI::Semaphore* semaphore) override;
+        void setPresentFinshSemaphore(RHI::Semaphore* semaphore) override;
+
     private:
         GLFWwindow* m_window;
         Runtime* m_rt;
         GLFW_UICommon* m_common;
         Context* m_ctx;
-        void recreateSwapchain(int width,int height);
+        void recreateSwapchain(int width, int height);
 #ifdef FCT_USE_VULKAN
         VkSurfaceKHR m_vkSurface;
 #endif
 
         void* m_swapchainNativeHandle;
-        RHI::Swapchain* m_swapchain;
         //std::function<void()> recreateSwapChain;
         //std::function<void()> present;
     };
 
+    class GLFW_UICommon;
 }
 
 #endif //GLFW_WINDOW_H

@@ -29,6 +29,7 @@
 #include "./RHI/CommandPool.h"
 #include "./RHI/Semaphore.h"
 #include "./RHI/Fence.h"
+#include "./Context/RenderGraph.h"
 //#include "MutilThreadBase/RefCount.h"
 //#include "MutilThreadBase/TlsPtr.h"
 //#include "Context/Context.h"

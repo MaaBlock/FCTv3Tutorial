@@ -42,10 +42,8 @@ namespace FCT {
         RHI::PassGroup* createPassGroup() override;
         RHI::Semaphore* createSemaphore() override;
         RHI::Fence* createFence() override;
-        void create(IRenderTarget* target) override;
-        void create(){
-
-        }
+        //void create(IRenderTarget* target) override;
+        void create();
         auto device()
         {
             return m_device;

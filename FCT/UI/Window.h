@@ -6,9 +6,15 @@
 #include "./CallBackHandler.h"
 #include "../Context/ImageRenderTarget.h"
 #include "../RHI/Semaphore.h"
+#include "../RHI/Swapcain.h"
 
 namespace FCT {
-    class WindowBehavior {
+	namespace RHI
+	{
+		class Swapchain;
+	}
+
+	class WindowBehavior {
     public:
         virtual void pos(int x,int y) = 0;
         virtual void size(int w, int h) = 0;
@@ -51,13 +57,15 @@ namespace FCT {
 		virtual ImageRenderTarget* getCurrentTarget() = 0;
 		virtual RHI::Semaphore* getImageAvailableSemaphore() = 0;
 		virtual void addRenderFinshSemaphore(RHI::Semaphore* semaphore) = 0;
-
+		virtual void setPresentFinshSemaphore(RHI::Semaphore* semaphore) = 0;
+		void initRender();
 	private:
 	protected:
 		CallBackEventHandler* m_callbackHandler;
 		std::vector<EventHandler*> m_handlers;
         int m_x,m_y, m_width, m_height;
 		std::string m_title;
+        RHI::Swapchain* m_swapchain;
 	private:
 
 	};
@@ -79,6 +87,14 @@ namespace FCT {
     inline FCT::Window::Window() {
         m_behavior = new SetParamWindowBehavior(this);
         m_callbackHandler = new CallBackEventHandler();
+    	m_callbackHandler->addResizeCallback([this](Window*,int w,int h)
+    	{
+    		if (m_swapchain)
+    		{
+    			m_swapchain->size(w,h);
+    			m_swapchain->needRecreate();
+    		}
+    	});
         registerHandler(m_callbackHandler);
     }
 }
