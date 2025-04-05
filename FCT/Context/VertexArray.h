@@ -2,6 +2,7 @@
 #include "./VertexFactory.h"
 namespace FCT
 {
+#ifdef FCT_DEPRECATED
     class VertexArray
     {
     public:
@@ -254,4 +255,5 @@ namespace FCT
         std::memcpy(&result, dataVec.data() + offset, GetDataTypeSize(attr.dataType));
         return result;
     }
+#endif
 }

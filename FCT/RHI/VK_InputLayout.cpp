@@ -5,34 +5,46 @@
 #include "../FCTAPI.h"
 namespace FCT
 {
+    namespace RHI
+    {/*
+        void VK_InputLayout::create()
+        {
 
-    VK_InputLayout::VK_InputLayout(VK_Context* context)
-    {
-        m_ctx = context;
-    }
+            m_attributeDecriptions.clear();
+            m_bindingDescriptions.clear();
 
-    VK_InputLayout::~VK_InputLayout()
-    {
-    }
+            // 为每个绑定点创建一个绑定描述
+            for (const auto& [binding, layout] : m_vertexLayouts) {
+                vk::VertexInputBindingDescription bindingDescription;
+                bindingDescription.binding = binding;
+                bindingDescription.stride = static_cast<uint32_t>(layout.getStride());
+                bindingDescription.inputRate = vk::VertexInputRate::eVertex; // 默认使用顶点输入速率
 
-    void VK_InputLayout::bind()
-    {
-    }
+                m_bindingDescriptions.push_back(bindingDescription);
 
-    void VK_InputLayout::unbind()
-    {
-    }
+                // 为当前绑定点的每个元素创建属性描述
+                for (size_t i = 0; i < layout.getElementCount(); i++) {
+                    const auto& element = layout.getElement(i);
 
-    void VK_InputLayout::create()
-    {
-        m_attributeDescriptions.clear();
-        for (const auto& element : m_elements) {
-            vk::VertexInputAttributeDescription attributeDescription = {};
-            attributeDescription.location = element.location;
-            attributeDescription.binding = element.slot;
-            attributeDescription.format = ToVkFormat(element.format);
-            attributeDescription.offset = element.offset;
-            m_attributeDescriptions.push_back(attributeDescription);
+                    vk::VertexInputAttributeDescription attributeDescription;
+                    attributeDescription.binding = binding; // 使用当前绑定点
+                    attributeDescription.location = static_cast<uint32_t>(m_nextLocation++); // 使用全局递增的location
+                    attributeDescription.format = ToVkFormat(element.getFormat());
+                    attributeDescription.offset = static_cast<uint32_t>(layout.getElementOffset(i));
+
+                    m_attributeDecriptions.push_back(attributeDescription);
+                }
+            }
+
+            // 更新顶点输入状态信息
+            m_vertexInputInfo = vk::PipelineVertexInputStateCreateInfo(
+                vk::PipelineVertexInputStateCreateFlags(),
+                static_cast<uint32_t>(m_bindingDescriptions.size()),
+                m_bindingDescriptions.data(),
+                static_cast<uint32_t>(m_attributeDecriptions.size()),
+                m_attributeDecriptions.data()
+            );
         }
+        */
     }
 }

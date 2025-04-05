@@ -8,6 +8,7 @@
 #include "ToolDefine.h"
 #include "./Base/Flags.h"
 #include "Runtime/Runtime.h"
+#include "./Context/Vertex.h"
 #include "./Context/ImageRenderTarget.h"
 #include "./Context/Image.h"
 #include "./Context/SingleBufferImage.h"

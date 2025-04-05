@@ -33,6 +33,51 @@ namespace FCT {
         D32_SFLOAT,
         D32_SFLOAT_S8_UINT
     };
+    constexpr size_t FormatSize(Format format) noexcept {
+        switch (format) {
+
+        case Format::R8_UNORM:
+            return 1;
+        case Format::R8G8_UNORM:
+            return 2;
+        case Format::R8G8B8_UNORM:
+            return 3;
+        case Format::R8G8B8A8_UNORM:
+        case Format::B8G8R8A8_UNORM:
+        case Format::R8G8B8A8_SRGB:
+        case Format::B8G8R8A8_SRGB:
+            return 4;
+
+        case Format::R16_SFLOAT:
+            return 2;
+        case Format::R16G16_SFLOAT:
+            return 4;
+        case Format::R16G16B16A16_SFLOAT:
+            return 8;
+
+        case Format::R32_SFLOAT:
+            return 4;
+        case Format::R32G32_SFLOAT:
+            return 8;
+        case Format::R32G32B32_SFLOAT:
+            return 12;
+        case Format::R32G32B32A32_SFLOAT:
+            return 16;
+
+        case Format::D16_UNORM:
+            return 2;
+        case Format::D24_UNORM_S8_UINT:
+            return 4;
+        case Format::D32_SFLOAT:
+            return 4;
+        case Format::D32_SFLOAT_S8_UINT:
+            return 5;
+
+        case Format::UNDEFINED:
+        default:
+            return 0;
+        }
+    }
     enum class Samples
     {
         sample_1,

@@ -34,7 +34,6 @@ public:
     void init()
     {
         maxFrameInFlight = 2;
-
         presentFinshSemaphore = ctx->createSemaphore();
         presentFinshSemaphore->create();
         wnd->setPresentFinshSemaphore(presentFinshSemaphore);
