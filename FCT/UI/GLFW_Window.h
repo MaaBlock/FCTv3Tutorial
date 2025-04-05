@@ -27,12 +27,6 @@ namespace FCT
         int getHeight() override;
         void setCursorPos(int x, int y) override;
         Image* getImage() const override;
-        //std::vector<Image*> getTargetImages() override;
-        ImageRenderTarget* getCurrentTarget() override;
-        RHI::Semaphore* getImageAvailableSemaphore() override;
-        void addRenderFinshSemaphore(RHI::Semaphore* semaphore) override;
-        void setPresentFinshSemaphore(RHI::Semaphore* semaphore) override;
-
     private:
         GLFWwindow* m_window;
         Runtime* m_rt;
@@ -42,10 +36,7 @@ namespace FCT
 #ifdef FCT_USE_VULKAN
         VkSurfaceKHR m_vkSurface;
 #endif
-
         void* m_swapchainNativeHandle;
-        //std::function<void()> recreateSwapChain;
-        //std::function<void()> present;
     };
 
     class GLFW_UICommon;

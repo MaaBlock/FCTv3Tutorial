@@ -7,6 +7,7 @@
 #include "../Context/ImageRenderTarget.h"
 #include "../RHI/Semaphore.h"
 #include "../RHI/Swapcain.h"
+#include "../DebugTools/OutStream.h"
 
 namespace FCT {
 	namespace RHI
@@ -54,10 +55,22 @@ namespace FCT {
 		CallBackEventHandler* getCallBack() const {
 			return m_callbackHandler;
 		}
-		virtual ImageRenderTarget* getCurrentTarget() = 0;
-		virtual RHI::Semaphore* getImageAvailableSemaphore() = 0;
-		virtual void addRenderFinshSemaphore(RHI::Semaphore* semaphore) = 0;
-		virtual void setPresentFinshSemaphore(RHI::Semaphore* semaphore) = 0;
+		ImageRenderTarget* getCurrentTarget() {
+			return m_swapchain->getCurrentTarget();
+		}
+		void addRenderFinshSemaphore(RHI::Semaphore* semaphore)
+		{
+			if (m_swapchain)
+			{
+				m_swapchain->addRenderFinshSemaphore(semaphore);
+				return;
+			}
+			ferr << "未 bind Context" << std::endl;
+		}
+		void setPresentFinshSemaphore(RHI::Semaphore* semaphore)
+		{
+			m_swapchain->setPresentFinshSemaphore(semaphore);
+		}
 		void initRender();
 	private:
 	protected:

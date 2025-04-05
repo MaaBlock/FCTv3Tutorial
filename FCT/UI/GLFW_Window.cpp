@@ -222,25 +222,9 @@ std::vector<FCT::Image*> FCT::GLFW_Window::getTargetImages()
     return std::vector<FCT::Image*>();
 }
 */
-FCT::ImageRenderTarget* FCT::GLFW_Window::getCurrentTarget()
-{
-    return m_swapchain->getCurrentTarget();
-}
 
-FCT::RHI::Semaphore* FCT::GLFW_Window::getImageAvailableSemaphore()
-{
-    return m_swapchain->getImageAvailableSemaphore();
-}
 
-void FCT::GLFW_Window::addRenderFinshSemaphore(RHI::Semaphore* semaphore)
-{
-    m_swapchain->addRenderFinshSemaphore(semaphore);
-}
 
-void FCT::GLFW_Window::setPresentFinshSemaphore(RHI::Semaphore* semaphore)
-{
-    m_swapchain->setPresentFinshSemaphore(semaphore);
-}
 
 void FCT::GLFW_Window::recreateSwapchain(int width, int height)
 {
