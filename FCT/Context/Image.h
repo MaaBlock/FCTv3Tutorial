@@ -2,6 +2,7 @@
 // Created by Administrator on 2025/3/5.
 //
 #include "../MutilThreadBase/RefCount.h"
+#include "../Base/Flags.h"
 #include "./IRenderTarget.h"
 #include "./Format.h"
 #include "../RHI/Image.h"
@@ -18,6 +19,8 @@ namespace FCT {
         DepthStencil = 0x2,
         Texture      = 0x4,
     };
+    using ImageUsageFlags = Flags<ImageUsage>;
+    /*
     struct ImageUsageFlags
     {
         ImageUsageFlags() : m_mask(0) {}
@@ -40,7 +43,7 @@ namespace FCT {
         }
 
         unsigned int m_mask;
-    };
+    }; */
     class Image;
     class ImageBehavior
     {

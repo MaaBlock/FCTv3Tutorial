@@ -33,6 +33,7 @@ namespace FCT
             m_currentIndex = index % m_images.size();
         }
     private:
+        ImageUsageFlags m_usage;
         size_t m_currentIndex = 0;
         std::vector<RHI::Image*> m_images;
         std::vector<RHI::RenderTargetView*> m_rtvs;

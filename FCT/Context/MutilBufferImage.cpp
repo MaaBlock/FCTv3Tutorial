@@ -35,6 +35,11 @@ namespace FCT
         {
             FCT_SAFE_RELEASE(img);
         }
+        for (auto rtv : m_rtvs)
+        {
+            rtv->release();
+        }
+        m_rtvs.clear();
         m_images = images;
         for (auto img : m_images)
         {
@@ -44,10 +49,21 @@ namespace FCT
         m_height = images[0]->height();
         delete m_behavior;
         m_behavior = new MutilBufferAffterCreateImageBehavior(this);
+        if (m_usage & ImageUsage::RenderTarget)
+        {
+            for (auto img : m_images)
+            {
+                auto rtv = m_ctx->createRenderTargetView();
+                rtv->image(img);
+                rtv->create();
+                m_rtvs.push_back(rtv);
+            }
+        }
     }
 
     void MutilBufferImage::as(ImageUsageFlags usage)
     {
+        m_usage |= usage;
         if (usage & ImageUsage::RenderTarget && m_rtvs.empty())
         {
             for (auto img : m_images)

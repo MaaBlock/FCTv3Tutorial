@@ -1,5 +1,7 @@
 #include "Window.h"
 
+#include "../RHI/Swapcain.h"
+
 void FCT::Window::registerHandler(EventHandler* handler)
 {
 	m_handlers.push_back(handler);
@@ -21,6 +23,11 @@ void FCT::Window::clearHandler()
 		handler->release();
 	}
 	m_handlers.clear();
+}
+
+void FCT::Window::initRender()
+{
+	m_swapchain->acquireFirstImage();
 }
 
 
