@@ -186,6 +186,125 @@ namespace FCT
         size_t m_elementCount = 0;
         size_t m_stride = 0;
     };
+    class PixelLayout
+    {
+    public:
+        constexpr PixelLayout() noexcept : m_elementCount(0), m_stride(0) {}
+
+        template<typename... Args>
+        constexpr PixelLayout(Args&&... args) noexcept : m_elementCount(0), m_stride(0) {
+            addElements(std::forward<Args>(args)...);
+        }
+
+        constexpr void addElement(const VertexElement& element) noexcept {
+            if (m_elementCount < MaxElements) {
+                m_elements[m_elementCount++] = element;
+                m_stride += element.getSize();
+            }
+        }
+
+        constexpr void addElements(const VertexLayout& layout) noexcept {
+            for (size_t i = 0; i < layout.getElementCount() && m_elementCount < MaxElements; ++i) {
+                addElement(layout.getElement(i));
+            }
+        }
+
+        constexpr size_t getElementCount() const noexcept {
+            return m_elementCount;
+        }
+
+        constexpr const VertexElement& getElement(size_t index) const noexcept {
+            return (index < m_elementCount) ? m_elements[index] : m_elements[0];
+        }
+
+        constexpr size_t getStride() const noexcept {
+            return m_stride;
+        }
+
+        constexpr int getElementIndexBySemantic(const char* semantic) const noexcept {
+            for (size_t i = 0; i < m_elementCount; ++i) {
+                if (StringEquals(m_elements[i].getSemantic(), semantic)) {
+                    return static_cast<int>(i);
+                }
+            }
+            return -1;
+        }
+
+        constexpr int getElementIndexByType(ElementType type) const noexcept {
+            for (size_t i = 0; i < m_elementCount; ++i) {
+                if (m_elements[i].getType() == type) {
+                    return static_cast<int>(i);
+                }
+            }
+            return -1;
+        }
+
+        constexpr const VertexElement* getElementByType(ElementType type) const noexcept {
+            int index = getElementIndexByType(type);
+            return (index >= 0) ? &m_elements[index] : nullptr;
+        }
+
+        constexpr const VertexElement* getElementBySemantic(const char* semantic) const noexcept {
+            int index = getElementIndexBySemantic(semantic);
+            return (index >= 0) ? &m_elements[index] : nullptr;
+        }
+
+        constexpr size_t getElementOffset(size_t index) const noexcept {
+            size_t offset = 0;
+            for (size_t i = 0; i < index && i < m_elementCount; ++i) {
+                offset += m_elements[i].getSize();
+            }
+            return offset;
+        }
+
+        constexpr size_t getElementOffsetByType(ElementType type) const noexcept {
+            int index = getElementIndexByType(type);
+            return (index >= 0) ? getElementOffset(index) : 0;
+        }
+
+        constexpr size_t getElementOffsetBySemantic(const char* semantic) const noexcept {
+            int index = getElementIndexBySemantic(semantic);
+            return (index >= 0) ? getElementOffset(index) : 0;
+        }
+
+        constexpr void ensurePositionFirst() noexcept {
+            int posIndex = getElementIndexByType(ElementType::Position3f);
+            if (posIndex < 0) {
+                posIndex = getElementIndexByType(ElementType::Position2f);
+            }
+
+            if (posIndex > 0) {
+                VertexElement posElement = m_elements[posIndex];
+
+                for (int i = posIndex; i > 0; --i) {
+                    m_elements[i] = m_elements[i - 1];
+                }
+
+                m_elements[0] = posElement;
+
+            }
+        }
+
+    private:
+        constexpr void addElements() noexcept {}
+
+        template<typename... Rest>
+        constexpr void addElements(const VertexElement& element, Rest&&... rest) noexcept {
+            addElement(element);
+            addElements(std::forward<Rest>(rest)...);
+        }
+
+        template<typename... Rest>
+        constexpr void addElements(const VertexLayout& layout, Rest&&... rest) noexcept {
+            addElements(layout);
+            addElements(std::forward<Rest>(rest)...);
+        }
+
+        static constexpr size_t MaxElements = 64;
+        VertexElement m_elements[MaxElements];
+        size_t m_elementCount;
+        size_t m_stride;
+    };
     class VertexBuffer;
 
     class Vertex {

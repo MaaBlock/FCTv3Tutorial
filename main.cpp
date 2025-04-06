@@ -1,6 +1,18 @@
 #include "FCT/headers.h"
 using namespace FCT;
 using namespace std;
+static constexpr VertexLayout vertexLayout {
+    VertexElement{ElementType::Color4f},
+    VertexElement{ElementType::Position3f},
+    VertexElement{ElementType::Custom,Format::R32G32_SFLOAT,"ShapeCoord"}
+};
+static constexpr PixelLayout pixelLayout {
+    VertexElement{ElementType::TexCoord2f},
+    vertexLayout,
+    VertexElement{ElementType::Normal3f}
+};
+
+
 std::vector<char> readFile(const std::string& filename) {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
 

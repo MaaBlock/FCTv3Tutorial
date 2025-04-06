@@ -12,6 +12,10 @@ namespace FCT {
         class InputLayout : public IPipelineResource {
         public:
             virtual ~InputLayout() = default;
+            void inputShaderCode(std::vector<char> code)
+            {
+                m_codes = code;
+            }
             void vertexLayout(VertexLayout vertexLayout,uint32_t slot = 0)
             {
                 m_vertexLayouts[slot] = vertexLayout;
@@ -19,6 +23,7 @@ namespace FCT {
             virtual void create() = 0;
         protected:
             std::map<uint32_t,VertexLayout> m_vertexLayouts;
+            std::vector<char> m_codes;
         };
     }
 } // namespace FCT
