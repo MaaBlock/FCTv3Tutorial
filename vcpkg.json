@@ -7,6 +7,7 @@
     "boost",
     "bullet3",
     "spirv-cross",
+    "shaderc",
     {
       "name": "vulkan",
       "platform": "windows"

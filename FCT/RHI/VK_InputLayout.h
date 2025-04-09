@@ -8,21 +8,34 @@
 
 namespace FCT
 {
+    class VK_Context;
     namespace RHI
     {
-        class VK_Context;
+        constexpr vk::VertexInputRate ToVkVertexInputRate(InputRate rate)
+        {
+            switch (rate)
+            {
+                case InputRate::PerVertex:
+                    return vk::VertexInputRate::eVertex;
+                case InputRate::PerInstance:
+                    return vk::VertexInputRate::eInstance;
+                default:
+                    return vk::VertexInputRate::eVertex;
+            }
+        }
         class VK_InputLayout : public InputLayout {
         public:
+
             VK_InputLayout(VK_Context* context);
-            ~VK_InputLayout() override;
+            ~VK_InputLayout() override {};
             void create() override;
+            vk::PipelineVertexInputStateCreateInfo inputStateInfo() const { return m_vertexInputStateInfo; }
+            vk::PipelineVertexInputStateCreateInfo* pInputStateInfo() { return &m_vertexInputStateInfo; }
         private:
             VK_Context* m_ctx;
-            //std::map<uint32_t, vk::VertexInputRate> m_inputRates;
-            /*std::vector<vk::VertexInputBindingDescription> m_bindingDescriptions;
-            std::vector<vk::VertexInputAttributeDescription> m_attributeDecriptions;
-            vk::PipelineVertexInputStateCreateInfo m_vertexInputInfo;
-            uint32_t m_nextLocation;*/
+            std::vector<vk::VertexInputBindingDescription> m_bindingDescriptions;
+            std::vector<vk::VertexInputAttributeDescription> m_attributeDescriptions;
+            vk::PipelineVertexInputStateCreateInfo m_vertexInputStateInfo;
         };
 
     }

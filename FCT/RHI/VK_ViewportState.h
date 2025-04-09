@@ -12,8 +12,6 @@ namespace FCT
     class VK_ViewportState : public ViewportState {
     public:
         VK_ViewportState(VK_Context* ctx);
-        void bind() override;
-        void unbind() override;
         void create() override;
         vk::PipelineViewportStateCreateInfo& viewportStateCreateInfo() { return m_createInfo; }
     private:

@@ -1,5 +1,6 @@
 #pragma once
 namespace FCT {
+
     enum class PipelineResourceType {
         VertexShader,
         PixelShader,
@@ -22,8 +23,6 @@ namespace FCT {
         virtual ~IPipelineResource() {};
 
         virtual PipelineResourceType getType() const = 0;
-        virtual void bind() = 0;
-        virtual void unbind() = 0;
     };
 
 }// namespace FCT

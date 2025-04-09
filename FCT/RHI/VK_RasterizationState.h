@@ -11,8 +11,6 @@ namespace FCT
     class VK_RasterizationState : public RasterizationState {
     public:
         VK_RasterizationState(VK_Context* ctx);
-        void bind() override;
-        void unbind() override;
         void create() override;
         vk::PipelineRasterizationStateCreateInfo& rasterizationStateCreateInfo() { return m_rasterizationStateCreateInfo; }
         vk::PipelineMultisampleStateCreateInfo& multisampleStateCreateInfo() { return m_multisampleStateCreateInfo; }

@@ -12,14 +12,6 @@ namespace FCT
         m_ctx = ctx;
     }
 
-    void VK_ViewportState::bind()
-    {
-    }
-
-    void VK_ViewportState::unbind()
-    {
-    }
-
     void VK_ViewportState::create()
     {
         m_viewport.setX(m_viewportPosition.x)

@@ -2,16 +2,12 @@
 using namespace FCT;
 using namespace std;
 static constexpr VertexLayout vertexLayout {
-    VertexElement{ElementType::Color4f},
-    VertexElement{ElementType::Position3f},
-    VertexElement{ElementType::Custom,Format::R32G32_SFLOAT,"ShapeCoord"}
+
 };
 static constexpr PixelLayout pixelLayout {
-    VertexElement{ElementType::TexCoord2f},
-    vertexLayout,
-    VertexElement{ElementType::Normal3f}
+    VertexElement{ElementType::Color4f},
+    VertexElement{ElementType::Position2f},
 };
-
 
 std::vector<char> readFile(const std::string& filename) {
     std::ifstream file(filename, std::ios::ate | std::ios::binary);
@@ -55,16 +51,33 @@ public:
         passGroup = ctx->createPassGroup();
         passGroup->addPass(pass);
         passGroup->create();
-        ps = ctx->createPixelShader();
         vs = ctx->createVertexShader();
+        vs->pixelLayout(pixelLayout);
         fout << std::filesystem::current_path().string() << std::endl;
-        vs->code(readFile("../FCT/Shader/tmpVert.spv"));
-        ps->code(readFile("../FCT/Shader/tmpFrag.spv"));
+        vs->code(R"(
+static const float2 positions[3] = {
+    float2(0.0, -0.5),
+    float2(0.5, 0.5),
+    float2(-0.5, 0.5)
+};
+
+static const float3 colors[3] = {
+    float3(1.0, 0.0, 0.0),
+    float3(0.0, 1.0, 0.0),
+    float3(0.0, 0.0, 1.0)
+};
+
+ShaderOut main(ShaderIn In) {
+    ShaderOut Out;
+    Out.color = float4(colors[ In.vertexID], 1.0);
+    Out.pos = positions[In.vertexID];
+    return Out;
+}
+)");
         vs->create();
-        ps->create();
         pipeline = ctx->createTraditionPipeline();
+        pipeline->pixelLayout(pixelLayout);
         pipeline->addResources(vs);
-        pipeline->addResources(ps);
         pipeline->bindPass(pass);
         pipeline->create();
         cmdPool = ctx->createCommandPool();
@@ -113,10 +126,11 @@ private:
     Window* wnd;
     Context* ctx;
     Runtime& rt;
+    VertexShader* vs;
     RHI::Pass* pass;
     RHI::PassGroup* passGroup;
     RHI::PixelShader* ps;
-    RHI::VertexShader* vs;
+    //RHI::VertexShader* vs;
     RHI::RasterizationPipeline* pipeline;
     RHI::CommandPool* cmdPool;
     RHI::CommandBuffer* cmdBuf;

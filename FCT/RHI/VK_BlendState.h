@@ -13,8 +13,6 @@ namespace FCT
     public:
         VK_BlendState(VK_Context* ctx);
         void create() override;
-        void bind() override;
-        void unbind() override;
         vk::PipelineColorBlendStateCreateInfo& colorBlendStateCreateInfo() { return m_createInfo; }
     private:
         VK_Context* m_ctx;

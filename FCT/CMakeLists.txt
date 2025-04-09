@@ -77,6 +77,13 @@ file(GLOB CONTEXT_VULKAN_MODULE_HEADERS
         CONFIGURE_DEPENDS
         "./Context/VK_*.h"
 )
+file(GLOB CONTEXT_SHARDEC_MODULE_SOURCES
+        LIST_DIRECTORIES false
+        CONFIGURE_DEPENDS
+        "./Context/Shaderc_*.cpp"
+)
+
+list(REMOVE_ITEM CONTEXT_MODULE_SOURCES ${CONTEXT_SHARDEC_MODULE_SOURCES})
 file(GLOB DEBUGTOOLS_MODULE_HEADERS
         LIST_DIRECTORIES false
         CONFIGURE_DEPENDS
@@ -157,6 +164,9 @@ add_library(FCT STATIC
     ${RHI_MODULE_SOURCES}
     headers.cpp
 )
+target_sources(FCT PRIVATE
+        ${CONTEXT_SHARDEC_MODULE_SOURCES}
+)
 
 if (FCT_WIN32)
     target_sources(FCT PRIVATE
@@ -204,6 +214,21 @@ else()
         message(WARNING "GPU acceleration library target not defined - GPU acceleration will NOT be available!")
     endif()
 endif()
+
+
+find_package(unofficial-shaderc CONFIG REQUIRED)
+find_package(spirv_cross_core CONFIG REQUIRED)
+find_package(spirv_cross_glsl CONFIG REQUIRED)
+find_package(spirv_cross_hlsl CONFIG REQUIRED)
+find_package(spirv_cross_cpp CONFIG REQUIRED)
+find_package(spirv_cross_reflect CONFIG REQUIRED)
+target_link_libraries(FCT PUBLIC
+        spirv-cross-core
+        spirv-cross-glsl
+        spirv-cross-hlsl
+        spirv-cross-cpp
+        spirv-cross-reflect
+        unofficial::shaderc::shaderc)
 
 #target_link_libraries(FCT PUBLIC
 #    harfbuzz::harfbuzz

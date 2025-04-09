@@ -7,6 +7,8 @@
 #define FCT_USE_HARFBUZZ
 #define FCT_USE_BULLET
 #define FCT_USE_VULKAN
+#define FCT_USE_SPIRV
+#define FCT_USE_SHADERC
 #ifdef _WIN32
 	#define FCT_WIN32
 	#define NOMINMAX
@@ -88,6 +90,15 @@ extern int main();
 #include <vulkan/vulkan.hpp>
 #endif
 
+#ifdef FCT_USE_SPIRV
+#include <spirv_reflect.hpp>
+#include <spirv_hlsl.hpp>
+#endif
+
+#ifdef FCT_USE_SHADERC
+#include <shaderc/shaderc.hpp>
+#endif
+
 #if defined(_DEBUG) || defined(DEBUG)
 #define FCT_DEBUG_MODE
 #define FCT_DEBUG
@@ -102,4 +113,5 @@ extern int main();
 #include <vector>
 #include <fstream>
 #include <filesystem>
+#include <set>
 #endif // FCT_THIRDPARTY_HEADER

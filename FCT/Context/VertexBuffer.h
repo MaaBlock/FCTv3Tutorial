@@ -4,6 +4,7 @@
 
 namespace FCT {
     class Context;
+    /*
     class VertexBuffer : public IPipelineResource {
     public:
         PipelineResourceType getType() const override;
@@ -17,7 +18,6 @@ namespace FCT {
         virtual VertexArray* getVertexArray() const = 0;
         virtual size_t getVertexCount() const = 0;
         virtual const VertexFactory* getFactory() const = 0;
-
-    };
+    };*/
 
 } // namespace FCT

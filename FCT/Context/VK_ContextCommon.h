@@ -31,7 +31,7 @@ namespace FCT {
                    .setApplicationVersion(VK_MAKE_VERSION(1, 0, 0))
                    .setPEngineName("FCT")
                    .setEngineVersion(VK_MAKE_VERSION(1, 0, 0))
-                   .setApiVersion(VK_API_VERSION_1_1);
+                   .setApiVersion(VK_API_VERSION_1_2);
             std::vector<vk::ExtensionProperties> availableExtensions = vk::enumerateInstanceExtensionProperties();
 
             // 输出可用的扩展，用于调试

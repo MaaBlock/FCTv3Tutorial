@@ -18,6 +18,11 @@ namespace FCT
         Custom
     };
 
+    constexpr bool isPositionType(ElementType type) noexcept
+    {
+        return type == ElementType::Position2f || type == ElementType::Position3f;
+    }
+
     constexpr bool StringEquals(const char* a, const char* b) noexcept {
         if (a == b) return true;
         if (!a || !b) return false;
@@ -80,6 +85,9 @@ namespace FCT
 
     class VertexElement {
     public:
+        constexpr VertexElement() noexcept
+       : m_type(ElementType::Custom), m_format(Format::UNDEFINED), m_semantic("") {}
+
         constexpr VertexElement(ElementType type) noexcept
             : m_type(type), m_format(GetDefaultFormat(type)), m_semantic(GetDefaultSemantic(type)) {}
 
@@ -182,14 +190,14 @@ namespace FCT
 
     private:
         static constexpr size_t MaxElements = 64;
-        VertexElement m_elements[MaxElements];
+        VertexElement m_elements[MaxElements]{};
         size_t m_elementCount = 0;
         size_t m_stride = 0;
     };
     class PixelLayout
     {
     public:
-        constexpr PixelLayout() noexcept : m_elementCount(0), m_stride(0) {}
+        //constexpr PixelLayout() noexcept : m_elementCount(0), m_stride(0) {}
 
         template<typename... Args>
         constexpr PixelLayout(Args&&... args) noexcept : m_elementCount(0), m_stride(0) {
@@ -204,6 +212,12 @@ namespace FCT
         }
 
         constexpr void addElements(const VertexLayout& layout) noexcept {
+            for (size_t i = 0; i < layout.getElementCount() && m_elementCount < MaxElements; ++i) {
+                addElement(layout.getElement(i));
+            }
+        }
+
+        constexpr void addElements(const PixelLayout& layout) noexcept {
             for (size_t i = 0; i < layout.getElementCount() && m_elementCount < MaxElements; ++i) {
                 addElement(layout.getElement(i));
             }
@@ -354,6 +368,10 @@ namespace FCT
             return m_data;
         }
 
+        const uint8_t* getData() const noexcept {
+            return m_data;
+        }
+
         const VertexLayout& getLayout() const noexcept {
             return m_layout;
         }
@@ -405,7 +423,7 @@ namespace FCT
         const uint8_t* m_data;
         const VertexLayout& m_layout;
     };
-     class VertexBuffer {
+    class VertexBuffer {
     public:
         explicit VertexBuffer(const VertexLayout& layout) noexcept
             : m_layout(layout), m_stride(layout.getStride()) {}

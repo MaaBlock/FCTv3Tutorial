@@ -1,9 +1,16 @@
 
 
-#include "runtime.h"
+#include "../FCTAPI.h"
 
 namespace FCT
 {
+
+	void Context::createCompiler()
+	{
+#ifdef FCT_USE_SHADERC
+		m_compiler = new Shaderc_ShaderCompiler;
+#endif
+	}
     /*
 	Runtime *CreateRuntime()
 	{

@@ -6,45 +6,62 @@
 namespace FCT
 {
     namespace RHI
-    {/*
+    {
+        VK_InputLayout::VK_InputLayout(VK_Context* context)
+        {
+            m_ctx = context;
+        }
+
         void VK_InputLayout::create()
         {
-
-            m_attributeDecriptions.clear();
             m_bindingDescriptions.clear();
+            m_attributeDescriptions.clear();
 
-            // 为每个绑定点创建一个绑定描述
-            for (const auto& [binding, layout] : m_vertexLayouts) {
-                vk::VertexInputBindingDescription bindingDescription;
-                bindingDescription.binding = binding;
-                bindingDescription.stride = static_cast<uint32_t>(layout.getStride());
-                bindingDescription.inputRate = vk::VertexInputRate::eVertex; // 默认使用顶点输入速率
+            for (const auto& [slot, layout] : m_vertexLayouts) {
+                uint32_t stride = static_cast<uint32_t>(layout.getStride());
+                vk::VertexInputRate inputRate = ToVkVertexInputRate(m_inputRates[slot]);
 
-                m_bindingDescriptions.push_back(bindingDescription);
+                m_bindingDescriptions.push_back(
+                    vk::VertexInputBindingDescription(
+                        slot,
+                        stride,
+                        inputRate
+                    )
+                );
 
-                // 为当前绑定点的每个元素创建属性描述
                 for (size_t i = 0; i < layout.getElementCount(); i++) {
-                    const auto& element = layout.getElement(i);
+                    const VertexElement& element = layout.getElement(i);
+                    const char* semantic = element.getSemantic();
 
-                    vk::VertexInputAttributeDescription attributeDescription;
-                    attributeDescription.binding = binding; // 使用当前绑定点
-                    attributeDescription.location = static_cast<uint32_t>(m_nextLocation++); // 使用全局递增的location
-                    attributeDescription.format = ToVkFormat(element.getFormat());
-                    attributeDescription.offset = static_cast<uint32_t>(layout.getElementOffset(i));
+                    int32_t location = m_shaderBinary.locationBySemantic(semantic);
 
-                    m_attributeDecriptions.push_back(attributeDescription);
+                    if (location < 0) {
+                        continue;
+                    }
+
+                    vk::Format format = ToVkFormat(element.getFormat());
+
+                    uint32_t offset = static_cast<uint32_t>(layout.getElementOffset(i));
+
+                    m_attributeDescriptions.push_back(
+                        vk::VertexInputAttributeDescription(
+                            static_cast<uint32_t>(location),
+                            slot,
+                            format,
+                            offset
+                        )
+                    );
                 }
             }
 
-            // 更新顶点输入状态信息
-            m_vertexInputInfo = vk::PipelineVertexInputStateCreateInfo(
+            m_vertexInputStateInfo = vk::PipelineVertexInputStateCreateInfo(
                 vk::PipelineVertexInputStateCreateFlags(),
                 static_cast<uint32_t>(m_bindingDescriptions.size()),
                 m_bindingDescriptions.data(),
-                static_cast<uint32_t>(m_attributeDecriptions.size()),
-                m_attributeDecriptions.data()
+                static_cast<uint32_t>(m_attributeDescriptions.size()),
+                m_attributeDescriptions.data()
             );
+
         }
-        */
     }
 }

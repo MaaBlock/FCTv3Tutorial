@@ -24,16 +24,6 @@ namespace FCT
             createPipelineStage();
         }
 
-        void VK_VertexShader::bind()
-        {
-
-        }
-
-        void VK_VertexShader::unbind()
-        {
-
-        }
-
         vk::PipelineShaderStageCreateInfo VK_VertexShader::getStageInfo()
         {
             return m_stageInfo;
@@ -51,7 +41,12 @@ namespace FCT
         {
             m_stageInfo.stage = vk::ShaderStageFlagBits::eVertex;
             m_stageInfo.module = m_module;
-            m_stageInfo.pName = "main";
+            m_stageInfo.pName = "FCTEntry";
+        }
+
+        void VK_VertexShader::performReflection()
+        {
+
         }
     }
 }

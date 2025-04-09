@@ -19,16 +19,11 @@ namespace FCT {
         void viewport(int x, int y, int width, int height) override;
 
         VertexBuffer *createVertexBuffer(VertexArray *array) override;
-
-        RHI::VertexShader *createVertexShader(VertexFactory *factory) override;
-        RHI::VertexShader* createVertexShader() override;
-        RHI::PixelShader* createPixelShader() override;
-        RHI::PixelShader *createPixelShader(const ShaderOutput &output) override;
-
-        //Material *createMaterial(VertexShader *vertexShader, PixelShader *pixelShader) override;
-
-        InputLayout *createInputLayout(VertexFactory *factory) override;
-
+        VertexShader* createVertexShader() override;
+        RHI::VertexShader* newRhiVertexShader() override;
+        RHI::PixelShader* newRhiPixelShader() override;
+        PixelShader* createPixelShader() override;
+        RHI::InputLayout* createInputLayout() override;
         DrawCall *createDrawCall(PrimitiveType primitiveType, uint32_t startVertex,
                                  uint32_t vertexCount) override;
 

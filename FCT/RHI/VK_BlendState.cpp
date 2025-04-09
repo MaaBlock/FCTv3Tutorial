@@ -29,19 +29,6 @@ namespace FCT
             .setBlendConstants({0.0f, 0.0f, 0.0f, 0.0f});
     }
 
-
-
-    void VK_BlendState::bind()
-    {
-
-    }
-
-    void VK_BlendState::unbind()
-    {
-
-    }
-
-
       vk::BlendFactor VK_BlendState::convertBlendFactor(BlendFactor factor) const
     {
         switch (factor)

@@ -25,16 +25,6 @@ namespace FCT
             createPipelineStage();
         }
 
-        void VK_PixelShader::bind()
-        {
-
-        }
-
-        void VK_PixelShader::unbind()
-        {
-
-        }
-
         void VK_PixelShader::createShaderModule()
         {
             vk::ShaderModuleCreateInfo createInfo{};
@@ -47,7 +37,7 @@ namespace FCT
         {
             m_stageInfo.stage = vk::ShaderStageFlagBits::eFragment;
             m_stageInfo.module = m_module;
-            m_stageInfo.pName = "main";
+            m_stageInfo.pName = "FCTEntry";
         }
     }
 }

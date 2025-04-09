@@ -25,8 +25,6 @@ namespace FCT {
 		void primitive(PrimitiveType primitive) {
 			m_primitiveType = primitive;
 		}
-		void bind() override = 0;
-		void unbind() override = 0;
 
 	protected:
 		PrimitiveType m_primitiveType;

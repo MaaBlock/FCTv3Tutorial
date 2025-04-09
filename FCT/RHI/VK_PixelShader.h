@@ -18,8 +18,6 @@ namespace FCT
             ~VK_PixelShader() override;
 
             void create() override;
-            void bind() override;
-            void unbind() override;
             vk::PipelineShaderStageCreateInfo getStageInfo() const { return m_stageInfo; }
         private:
             void createShaderModule();

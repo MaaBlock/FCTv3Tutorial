@@ -8,6 +8,7 @@
 #define VK_TRADITIONALPIPELINE_H
 namespace FCT
 {
+    class VK_Context;
     namespace RHI
     {
         class VK_TraditionalPipeline : public VK_RasterizationPipeline
@@ -19,8 +20,12 @@ namespace FCT
             void create() override;
         private:
             void generateDefaultResources();
+            FCT::VertexShader* m_vertexShader;
+            FCT::PixelShader* m_pixelShader;
+            /*
             VK_VertexShader* m_vertexShader;
             VK_PixelShader* m_pixelShader;
+            */
         };
 
     }

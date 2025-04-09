@@ -33,6 +33,44 @@ namespace FCT {
         D32_SFLOAT,
         D32_SFLOAT_S8_UINT
     };
+    constexpr const char* FormatToShaderType(Format format) noexcept
+    {
+        switch (format) {
+        case Format::R8_UNORM:
+        case Format::R16_SFLOAT:
+        case Format::R32_SFLOAT:
+            return "float";
+
+        case Format::R8G8_UNORM:
+        case Format::R16G16_SFLOAT:
+        case Format::R32G32_SFLOAT:
+            return "float2";
+
+        case Format::R8G8B8_UNORM:
+        case Format::R32G32B32_SFLOAT:
+            return "float3";
+
+        case Format::R8G8B8A8_UNORM:
+        case Format::B8G8R8A8_UNORM:
+        case Format::R8G8B8A8_SRGB:
+        case Format::B8G8R8A8_SRGB:
+        case Format::R16G16B16A16_SFLOAT:
+        case Format::R32G32B32A32_SFLOAT:
+            return "float4";
+
+        case Format::D16_UNORM:
+        case Format::D32_SFLOAT:
+            return "float";
+
+        case Format::D24_UNORM_S8_UINT:
+        case Format::D32_SFLOAT_S8_UINT:
+            return "float";
+
+        case Format::UNDEFINED:
+        default:
+            return "float4";
+        }
+    }
     constexpr size_t FormatSize(Format format) noexcept {
         switch (format) {
 

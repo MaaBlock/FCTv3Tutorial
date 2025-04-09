@@ -70,12 +70,7 @@ namespace FCT::RHI
         m_createInfo.renderPass = static_cast<VK_PassGroup*>(m_pass->passGroup())->getRenderPass();
         m_createInfo.subpass = static_cast<VK_PassGroup*>(m_pass->passGroup())->getPassIndex(m_pass);
         m_createInfo.layout = pipelineLayout;
-        m_vertexInputState = vk::PipelineVertexInputStateCreateInfo{};
-        m_vertexInputState.vertexBindingDescriptionCount = 0;
-        m_vertexInputState.pVertexBindingDescriptions = nullptr;
-        m_vertexInputState.vertexAttributeDescriptionCount = m_inputLayout->attributeDescriptions().size();
-        m_vertexInputState.pVertexAttributeDescriptions = m_inputLayout->attributeDescriptions().data();
-        m_createInfo.pVertexInputState = &m_vertexInputState;
+        m_createInfo.pVertexInputState = m_inputLayout->pInputStateInfo();
         m_createInfo.pRasterizationState = &m_rasterizationState->rasterizationStateCreateInfo();
         m_createInfo.pMultisampleState = &m_rasterizationState->multisampleStateCreateInfo();
         m_inputAssemblyState = vk::PipelineInputAssemblyStateCreateInfo{};

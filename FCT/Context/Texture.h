@@ -25,8 +25,6 @@ namespace FCT {
 		virtual unsigned int getWidth() const = 0;
 		virtual unsigned int getHeight() const = 0;
 		virtual Format getFormat() const = 0;
-		virtual void bind() override = 0;
-		virtual void unbind() override = 0;
 
 		virtual void setSlot(unsigned int slot) = 0;
 		virtual unsigned int getSlot() const = 0;

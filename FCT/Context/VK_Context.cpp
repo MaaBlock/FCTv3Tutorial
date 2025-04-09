@@ -20,31 +20,33 @@ namespace FCT {
         return nullptr;
     }
 
-    RHI::VertexShader *VK_Context::createVertexShader(VertexFactory *factory) {
-        return nullptr;
+    VertexShader* VK_Context::createVertexShader()
+    {
+        return new VK_VertexShader(this);
     }
 
-    RHI::VertexShader* VK_Context::createVertexShader()
+    RHI::VertexShader* VK_Context::newRhiVertexShader()
     {
         return new RHI::VK_VertexShader(this);
     }
 
-    RHI::PixelShader* VK_Context::createPixelShader()
+    RHI::PixelShader* VK_Context::newRhiPixelShader()
     {
         return new RHI::VK_PixelShader(this);
     }
+    PixelShader* VK_Context::createPixelShader()
+    {
+        return new PixelShader(this);
+    }
 
-    RHI::PixelShader *VK_Context::createPixelShader(const ShaderOutput &output) {
-        return nullptr;
+    RHI::InputLayout* VK_Context::createInputLayout()
+    {
+        return new RHI::VK_InputLayout(this);
     }
 
     /*Material *VK_Context::createMaterial(VertexShader *vertexShader, PixelShader *pixelShader) {
         return nullptr;
     }*/
-
-    InputLayout *VK_Context::createInputLayout(VertexFactory *factory) {
-        return nullptr;
-    }
 
     DrawCall *VK_Context::createDrawCall(PrimitiveType primitiveType, uint32_t startVertex,
                                          uint32_t vertexCount) {

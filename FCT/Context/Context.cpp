@@ -104,9 +104,8 @@ namespace FCT {
     */
 
 
-
-
     Context::Context() {
+        m_compiler = nullptr;
         m_ctxRunning = true;
         //m_flushWnd = nullptr;
         m_nextFrame = false;
@@ -115,6 +114,7 @@ namespace FCT {
         m_pushQueue = &m_passQueue1;
         m_submitThread = std::thread(&Context::submitThread, this);
         m_ticker = std::bind(&Context::defaultTick,this);
+        createCompiler();
     }
 
     Context::~Context() {

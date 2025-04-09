@@ -23,10 +23,13 @@
 #include "../RHI/PassGroup.h"
 #include "../RHI/RasterizationPipeline.h"
 #include "../RHI/InputLayout.h"
+#include "./ShaderCompiler.h"
 namespace FCT
 {
 	class VertexBuffer;
 	//class InputLayout;
+	class VertexShader;
+	class PixelShader;
 	class DrawCall;
 	class Window;
 	using SumitTicker = std::function<void()>;
@@ -38,12 +41,11 @@ namespace FCT
 		virtual void clear(float r, float g, float b) = 0;
 		virtual void viewport(int x, int y, int width, int height) = 0;
 		virtual VertexBuffer* createVertexBuffer(VertexArray* array) = 0;
-		virtual RHI::VertexShader* createVertexShader(VertexFactory* factory) = 0;
-		virtual RHI::VertexShader* createVertexShader() = 0;
-		virtual RHI::PixelShader* createPixelShader(const ShaderOutput& output) = 0;
-		virtual RHI::PixelShader* createPixelShader() = 0;
-		//virtual Material* createMaterial(VertexShader* vertexShader, PixelShader* pixelShader) = 0;
-		virtual RHI::InputLayout* createInputLayout(VertexFactory* factory) = 0;
+		virtual VertexShader* createVertexShader() = 0;
+		virtual RHI::VertexShader* newRhiVertexShader() = 0;
+		virtual RHI::PixelShader* newRhiPixelShader() = 0;
+		virtual PixelShader* createPixelShader() = 0;
+		virtual RHI::InputLayout* createInputLayout() = 0;
 		virtual DrawCall* createDrawCall(PrimitiveType primitiveType, uint32_t startVertex, uint32_t vertexCount) = 0;
 		virtual ConstBuffer* createConstBuffer() = 0;
 		virtual Texture* createTexture() = 0;
@@ -55,7 +57,6 @@ namespace FCT
 		virtual RHI::RasterizationPipeline* createTraditionPipeline() = 0;
 		virtual RHI::Fence* createFence() = 0;
 		virtual RHI::Semaphore* createSemaphore() = 0;
-		//virtual void create(IRenderTarget* renderTarget) = 0;
 		virtual void create() = 0;
 		virtual RHI::CommandPool* createCommandPool() = 0;
 		virtual void compilePasses() = 0;
@@ -100,6 +101,8 @@ namespace FCT
 		{
 			m_ticker = ticker;
 		}
+		void createCompiler();
+		ShaderCompiler* getCompiler() { return m_compiler; }
 	protected:
 		SumitTicker m_ticker;
 		size_t m_maxFrameInFlights;
@@ -114,6 +117,7 @@ namespace FCT
 		std::unordered_map<std::string,Computation<Pass>*>* m_pushQueue;
 		std::thread m_submitThread;
 		bool m_ctxRunning;
+		ShaderCompiler* m_compiler;
 	};
 }
 #include "../UI/Window.h"

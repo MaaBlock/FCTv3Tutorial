@@ -13,6 +13,7 @@
 #ifdef FCT_USE_VULKAN
 #include "./Context/VK_ContextCommon.h"
 #include "./Context/VK_Context.h"
+#include "./Context/VK_VertexShader.h"
 #include "./RHI/VK_Swapchain.h"
 #include "./Context/VK_RenderPass.h"
 #include "./RHI/VK_VertexShader.h"
@@ -34,6 +35,7 @@
 #include "./RHI/VK_CommandBuffer.h"
 #include "./RHI/VK_Semaphore.h"
 #include "./RHI/VK_Fence.h"
+#include "./RHI/VK_ShaderBinary.h"
 //#include "./Context/VK_Image.h"
 #endif
 //#include "./Runtime/FCT_Runtime.h"
@@ -44,4 +46,8 @@
 #include "./UI/GLFW_Window.h"
 #include "./UI/GLFW_UICommon.h"
 #endif
+#ifdef FCT_USE_SHADERC
+#include "./Context/Shaderc_ShaderCompiler.h"
+#endif
+
 #endif //TUTORIAL_FCTAPI_H
