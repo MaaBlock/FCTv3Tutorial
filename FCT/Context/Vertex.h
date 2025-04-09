@@ -354,6 +354,13 @@ namespace FCT
                 *reinterpret_cast<T*>(m_data + offset) = value;
             }
         }
+        template<typename T>
+        void setAttribute(size_t elementIndex, const T& value) noexcept {
+            if (elementIndex < m_layout.getElementCount()) {
+                size_t offset = m_layout.getElementOffset(elementIndex);
+                *reinterpret_cast<T*>(m_data + offset) = value;
+            }
+        }
 
         template<typename T>
         void setAttribute(const char* semantic, const T& value) noexcept {
@@ -439,6 +446,10 @@ namespace FCT
         size_t getStride() const noexcept {
             return m_stride;
         }
+        void* getData()
+        {
+            return m_data.data();
+        }
 
         const void* getData() const noexcept {
             return m_data.data();
@@ -510,16 +521,14 @@ namespace FCT
         template<typename T>
         void setAttributes(Vertex& vertex, size_t elementIndex, T&& value) {
             if (elementIndex < m_layout.getElementCount()) {
-                const auto& element = m_layout.getElement(elementIndex);
-                vertex.setAttribute(element.getType(), std::forward<T>(value));
+                vertex.setAttribute(elementIndex, std::forward<T>(value));
             }
         }
 
         template<typename T, typename... Rest>
         void setAttributes(Vertex& vertex, size_t elementIndex, T&& first, Rest&&... rest) {
             if (elementIndex < m_layout.getElementCount()) {
-                const auto& element = m_layout.getElement(elementIndex);
-                vertex.setAttribute(element.getType(), std::forward<T>(first));
+                vertex.setAttribute(elementIndex, std::forward<T>(first));
                 setAttributes(vertex, elementIndex + 1, std::forward<Rest>(rest)...);
             }
         }

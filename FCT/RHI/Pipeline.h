@@ -19,11 +19,11 @@ namespace FCT
         {
         public:
             virtual PipelineType getType() const = 0;
-            void vertexLayout(const VertexLayout& layout) { m_vertexLayout = layout; }
+            void vertexLayout(VertexLayout layout,uint32_t slot = 0) { m_vertexLayouts[slot] = layout; }
             void pixelLayout(const PixelLayout& layout) { m_pixelLayout = layout; }
             virtual void create() = 0;
         protected:
-            VertexLayout m_vertexLayout;
+            std::map<uint32_t,VertexLayout> m_vertexLayouts;
             PixelLayout m_pixelLayout;
         };
     }

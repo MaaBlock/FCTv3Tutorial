@@ -37,6 +37,7 @@ namespace FCT {
         RHI::PassGroup* createPassGroup() override;
         RHI::Semaphore* createSemaphore() override;
         RHI::Fence* createFence() override;
+        RHI::VertexBuffer* createVertexBuffer() override;
         //void create(IRenderTarget* target) override;
         void create();
         auto device()

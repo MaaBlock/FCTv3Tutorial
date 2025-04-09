@@ -56,7 +56,17 @@ namespace FCT
             if (!m_vertexShader)
             {
                 m_vertexShader = m_ctx->createVertexShader();
+                for (auto pair : m_vertexLayouts)
+                {
+                    m_vertexShader->addLayout(pair.first, pair.second);
+                }
+                m_vertexShader->pixelLayout(m_pixelLayout);
                 m_vertexShader->create();
+                if (!m_inputLayout)
+                {
+                    m_inputLayout = static_cast<VK_InputLayout*>(m_vertexShader->createBindedInputLayout());
+                    m_inputLayout->create();
+                }
             }
             if (!m_pixelShader)
             {

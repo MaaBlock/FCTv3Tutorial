@@ -2,11 +2,11 @@
 using namespace FCT;
 using namespace std;
 static constexpr VertexLayout vertexLayout {
-
-};
-static constexpr PixelLayout pixelLayout {
     VertexElement{ElementType::Color4f},
     VertexElement{ElementType::Position2f},
+};
+static constexpr PixelLayout pixelLayout {
+    vertexLayout
 };
 
 std::vector<char> readFile(const std::string& filename) {
@@ -41,6 +41,25 @@ public:
     }
     void init()
     {
+        cpuVertexBuffer = new VertexBuffer(vertexLayout);
+        cpuVertexBuffer->emplaceBack(
+        Vec4(1,0,0,1),
+        Vec2(0.0f,-0.5f)
+        );
+        cpuVertexBuffer->emplaceBack(
+        Vec4(0,1,0,1),
+        Vec2(0.5f,0.5f)
+        );
+        cpuVertexBuffer->emplaceBack(
+        Vec4(0,0,1,1),
+        Vec2(-0.5f,0.5f)
+        );
+
+        vertexBuffer = ctx->createVertexBuffer();
+        vertexBuffer->vertexBuffer(cpuVertexBuffer);
+        vertexBuffer->create();
+        vertexBuffer->updataBuffer();
+
         maxFrameInFlight = 2;
         presentFinshSemaphore = ctx->createSemaphore();
         presentFinshSemaphore->create();
@@ -51,9 +70,9 @@ public:
         passGroup = ctx->createPassGroup();
         passGroup->addPass(pass);
         passGroup->create();
+        /*
         vs = ctx->createVertexShader();
         vs->pixelLayout(pixelLayout);
-        fout << std::filesystem::current_path().string() << std::endl;
         vs->code(R"(
 static const float2 positions[3] = {
     float2(0.0, -0.5),
@@ -74,10 +93,11 @@ ShaderOut main(ShaderIn In) {
     return Out;
 }
 )");
-        vs->create();
+        vs->create();*/
         pipeline = ctx->createTraditionPipeline();
         pipeline->pixelLayout(pixelLayout);
-        pipeline->addResources(vs);
+        pipeline->vertexLayout(vertexLayout);
+        //pipeline->addResources(vs);
         pipeline->bindPass(pass);
         pipeline->create();
         cmdPool = ctx->createCommandPool();
@@ -105,6 +125,7 @@ ShaderOut main(ShaderIn In) {
         cmdBuf->scissor(Vec2(0,0),Vec2(800,600));
         cmdBuf->bindPipieline(pipeline);
         passGroup->beginSubmit(cmdBuf);
+        vertexBuffer->bind(cmdBuf);
         cmdBuf->draw(0,0,3,1);
         passGroup->endSubmit(cmdBuf);
         cmdBuf->end();
@@ -137,6 +158,8 @@ private:
     RHI::Fence* fence;
     RHI::Semaphore* semaphore;
     RHI::Semaphore* presentFinshSemaphore;
+    RHI::VertexBuffer* vertexBuffer;
+    VertexBuffer* cpuVertexBuffer;
     int frameIndex;
     int maxFrameInFlight;
 };

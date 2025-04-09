@@ -68,6 +68,10 @@ namespace FCT
                 m_commandBuffer.end();
             }
             void submit() override;
+            vk::CommandBuffer commandBuffer() const
+            {
+                return m_commandBuffer;
+            }
         protected:
             VK_CommandPool* m_pool;
             vk::CommandBufferAllocateInfo m_allocateInfo;

@@ -171,6 +171,11 @@ namespace FCT {
         return new RHI::VK_Fence(this);
     }
 
+    RHI::VertexBuffer* VK_Context::createVertexBuffer()
+    {
+        return new RHI::VK_VertexBuffer(this);
+    }
+
     RHI::CommandPool* VK_Context::createCommandPool()
     {
         return new RHI::VK_CommandPool(this);

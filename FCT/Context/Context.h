@@ -61,6 +61,7 @@ namespace FCT
 		virtual RHI::CommandPool* createCommandPool() = 0;
 		virtual void compilePasses() = 0;
 		virtual void submitPasses() = 0;
+		virtual RHI::VertexBuffer* createVertexBuffer() = 0;
 		void flush()
 		{
 			FCT_WAIT_FOR(m_currentFlush);
