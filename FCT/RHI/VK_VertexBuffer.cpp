@@ -32,7 +32,7 @@ namespace FCT
             vk::MemoryRequirements memRequirements = m_ctx->getDevice().getBufferMemoryRequirements(m_buffer);
             vk::MemoryAllocateInfo allocInfo{};
             allocInfo.allocationSize = memRequirements.size;
-            allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits,
+            allocInfo.memoryTypeIndex = m_ctx->findMemoryType(memRequirements.memoryTypeBits,
                 vk::MemoryPropertyFlagBits::eHostVisible |
                 vk::MemoryPropertyFlagBits::eHostCoherent);
             m_memory = m_ctx->getDevice().allocateMemory(allocInfo);
@@ -53,16 +53,5 @@ namespace FCT
             cmd->commandBuffer().bindVertexBuffers(0, 1, &m_buffer,&offset);
         }
 
-        uint32_t VK_VertexBuffer::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties)
-        {
-            vk::PhysicalDeviceMemoryProperties memProperties = m_ctx->getPhysicalDevice().getMemoryProperties();
-
-            for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-                if ((typeFilter & (1 << i)) &&
-                    (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
-                    return i;
-                    }
-            }
-        }
     }
 }

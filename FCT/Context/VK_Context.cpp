@@ -176,6 +176,23 @@ namespace FCT {
         return new RHI::VK_VertexBuffer(this);
     }
 
+    RHI::IndexBuffer* VK_Context::createIndexBuffer()
+    {
+        return new RHI::VK_IndexBuffer(this);
+    }
+
+    uint32_t VK_Context::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties)
+    {
+        vk::PhysicalDeviceMemoryProperties memProperties = getPhysicalDevice().getMemoryProperties();
+
+        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+            if ((typeFilter & (1 << i)) &&
+                (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+                return i;
+                }
+        }
+    }
+
     RHI::CommandPool* VK_Context::createCommandPool()
     {
         return new RHI::VK_CommandPool(this);

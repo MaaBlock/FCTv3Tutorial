@@ -72,6 +72,10 @@ namespace FCT
             {
                 return m_commandBuffer;
             }
+            void drawIndex(size_t indexBegin, size_t instanceBegin, size_t indexCount, size_t instanceCount, size_t firstVertex) override
+            {
+                m_commandBuffer.drawIndexed(static_cast<uint32_t>(indexCount),static_cast<uint32_t>(instanceCount), static_cast<uint32_t>(indexBegin), static_cast<int32_t>(firstVertex), static_cast<uint32_t>(instanceBegin));
+            }
         protected:
             VK_CommandPool* m_pool;
             vk::CommandBufferAllocateInfo m_allocateInfo;

@@ -517,6 +517,7 @@ namespace FCT
             setAttributes(vertex, 0, std::forward<Args>(args)...);
         }
 
+
     private:
         template<typename T>
         void setAttributes(Vertex& vertex, size_t elementIndex, T&& value) {

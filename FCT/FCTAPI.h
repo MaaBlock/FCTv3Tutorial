@@ -37,6 +37,7 @@
 #include "./RHI/VK_Fence.h"
 #include "./RHI/VK_ShaderBinary.h"
 #include "./RHI/VK_VertexBuffer.h"
+#include "./RHI/VK_IndexBuffer.h"
 //#include "./Context/VK_Image.h"
 #endif
 //#include "./Runtime/FCT_Runtime.h"

@@ -2,8 +2,8 @@
 using namespace FCT;
 using namespace std;
 static constexpr VertexLayout vertexLayout {
-    VertexElement{ElementType::Color4f},
     VertexElement{ElementType::Position2f},
+    VertexElement{ElementType::Color4f},
 };
 static constexpr PixelLayout pixelLayout {
     vertexLayout
@@ -42,19 +42,47 @@ public:
     void init()
     {
         cpuVertexBuffer = new VertexBuffer(vertexLayout);
-        cpuVertexBuffer->emplaceBack(
-        Vec4(1,0,0,1),
-        Vec2(0.0f,-0.5f)
+        /*cpuVertexBuffer->emplaceBack(
+        Vec2(0.0f,-0.5f),
+        Vec4(1,0,0,1)
         );
         cpuVertexBuffer->emplaceBack(
-        Vec4(0,1,0,1),
-        Vec2(0.5f,0.5f)
+        Vec2(0.5f,0.5f),
+        Vec4(0,1,0,1)
         );
         cpuVertexBuffer->emplaceBack(
-        Vec4(0,0,1,1),
-        Vec2(-0.5f,0.5f)
+        Vec2(-0.5f,0.5f),
+        Vec4(0,0,1,1)
+        );*/
+        cpuVertexBuffer->emplaceBack(
+            Vec2(-0.5f, -0.5f),
+            Vec4(1.0f, 0.0f, 0.0f, 1.0f)
         );
-
+        cpuVertexBuffer->emplaceBack(
+            Vec2(0.5f, -0.5f),
+            Vec4(0.0f, 1.0f, 0.0f, 1.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec2(0.5f, 0.5f),
+            Vec4(0.0f, 0.0f, 1.0f, 1.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec2(-0.5f, 0.5f),
+            Vec4(1.0f, 1.0f, 1.0f, 1.0f)
+        );
+        std::vector<uint16_t> indices = {
+            0, 1, 2, 2, 3, 0
+        };
+        indexBuffer = ctx->createIndexBuffer();
+        indexBuffer->indexBuffer(indices);
+        indexBuffer->create();
+        indexBuffer->updataBuffer();
+        /*
+        cpuVertexBuffer->emplace(
+        {{0.0f,-0.5f},{1.0f,0.0f,0.0f,1.0f}}
+            ,{{0.5f,0.5f},{0.0f,1.0f,0.0f,1.0f}}
+            ,{{-0.5f,0.5f},{0.0f,0.0f,1.0f,1.0f}}
+        );*/
         vertexBuffer = ctx->createVertexBuffer();
         vertexBuffer->vertexBuffer(cpuVertexBuffer);
         vertexBuffer->create();
@@ -70,34 +98,9 @@ public:
         passGroup = ctx->createPassGroup();
         passGroup->addPass(pass);
         passGroup->create();
-        /*
-        vs = ctx->createVertexShader();
-        vs->pixelLayout(pixelLayout);
-        vs->code(R"(
-static const float2 positions[3] = {
-    float2(0.0, -0.5),
-    float2(0.5, 0.5),
-    float2(-0.5, 0.5)
-};
-
-static const float3 colors[3] = {
-    float3(1.0, 0.0, 0.0),
-    float3(0.0, 1.0, 0.0),
-    float3(0.0, 0.0, 1.0)
-};
-
-ShaderOut main(ShaderIn In) {
-    ShaderOut Out;
-    Out.color = float4(colors[ In.vertexID], 1.0);
-    Out.pos = positions[In.vertexID];
-    return Out;
-}
-)");
-        vs->create();*/
         pipeline = ctx->createTraditionPipeline();
         pipeline->pixelLayout(pixelLayout);
         pipeline->vertexLayout(vertexLayout);
-        //pipeline->addResources(vs);
         pipeline->bindPass(pass);
         pipeline->create();
         cmdPool = ctx->createCommandPool();
@@ -126,7 +129,9 @@ ShaderOut main(ShaderIn In) {
         cmdBuf->bindPipieline(pipeline);
         passGroup->beginSubmit(cmdBuf);
         vertexBuffer->bind(cmdBuf);
-        cmdBuf->draw(0,0,3,1);
+        indexBuffer->bind(cmdBuf);
+        cmdBuf->drawIndex(0,0,6,1);
+        //cmdBuf->draw(0,0,3,1);
         passGroup->endSubmit(cmdBuf);
         cmdBuf->end();
         cmdBuf->submit();
@@ -155,6 +160,7 @@ private:
     RHI::RasterizationPipeline* pipeline;
     RHI::CommandPool* cmdPool;
     RHI::CommandBuffer* cmdBuf;
+    RHI::IndexBuffer* indexBuffer;
     RHI::Fence* fence;
     RHI::Semaphore* semaphore;
     RHI::Semaphore* presentFinshSemaphore;

@@ -34,6 +34,7 @@
 #include "./RHI/Fence.h"
 #include "./RHI/ShaderBinary.h"
 #include "./RHI/VertexBuffer.h"
+#include "./RHI/IndexBuffer.h"
 #include "./Context/RenderGraph.h"
 //#include "MutilThreadBase/RefCount.h"
 //#include "MutilThreadBase/TlsPtr.h"

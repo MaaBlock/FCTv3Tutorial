@@ -26,6 +26,11 @@
 #include "./ShaderCompiler.h"
 namespace FCT
 {
+	namespace RHI
+	{
+		class IndexBuffer;
+	}
+
 	class VertexBuffer;
 	//class InputLayout;
 	class VertexShader;
@@ -62,6 +67,7 @@ namespace FCT
 		virtual void compilePasses() = 0;
 		virtual void submitPasses() = 0;
 		virtual RHI::VertexBuffer* createVertexBuffer() = 0;
+		virtual RHI::IndexBuffer* createIndexBuffer() = 0;
 		void flush()
 		{
 			FCT_WAIT_FOR(m_currentFlush);

@@ -47,6 +47,7 @@ namespace FCT
             virtual void viewport(Vec2 lt,Vec2 rb) = 0;
             virtual void scissor(Vec2 lt,Vec2 rb) = 0;
             virtual void draw(size_t vertexBegin,size_t instanceBegin,size_t vertexSize,size_t instanceSize) = 0;
+            virtual void drawIndex(size_t indexBegin, size_t instanceBegin, size_t indexCount, size_t instanceCount, size_t firstVertex = 0) = 0;
             virtual void bindPipieline(RasterizationPipeline* pipeline) = 0;
             virtual void end() = 0;
             virtual void submit() = 0;

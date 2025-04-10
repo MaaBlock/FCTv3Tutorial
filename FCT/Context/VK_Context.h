@@ -38,7 +38,9 @@ namespace FCT {
         RHI::Semaphore* createSemaphore() override;
         RHI::Fence* createFence() override;
         RHI::VertexBuffer* createVertexBuffer() override;
+        RHI::IndexBuffer* createIndexBuffer() override;
         //void create(IRenderTarget* target) override;
+        uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
         void create();
         auto device()
         {

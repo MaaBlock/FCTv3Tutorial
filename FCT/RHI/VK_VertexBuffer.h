@@ -20,7 +20,6 @@ namespace FCT
             vk::Buffer m_buffer;
             VK_Context* m_ctx;
             vk::DeviceMemory m_memory;
-            uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
         };
     }
 
