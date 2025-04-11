@@ -34,9 +34,24 @@ namespace FCT
                 }
                 return -1;
             }
+            void uniformLocation(std::map<std::string,std::pair<uint32_t,uint32_t>> uniformLocations)
+            {
+                m_uniformLocations = uniformLocations;
+            }
+            void constBufferLocation(std::map<std::string,std::pair<uint32_t,uint32_t>> constBufferLocations)
+            {
+                m_constBufferLocations = constBufferLocations;
+            }
+            std::map<std::string,std::pair<uint32_t,uint32_t>> uniformLocations()
+            {
+                return m_uniformLocations;
+            }
+
         protected:
             std::vector<char> m_code;
             std::map<std::string, uint32_t> m_locations;
+            std::map<std::string,std::pair<uint32_t,uint32_t>> m_uniformLocations;
+            std::map<std::string,std::pair<uint32_t,uint32_t>> m_constBufferLocations;
             bool m_reflected = false;
         };
     }

@@ -3,7 +3,7 @@
 #include "../ToolDefine.h"
 #include "../MutilThreadBase/RefCount.h"
 #include "../MutilThreadBase/Computation.h"
-#include "./VertexFactory.h"
+#include "./DataTypes.h"
 #include "../RHI/VertexShader.h"
 #include "../RHI/PixelShader.h"
 #include "../RHI/Swapcain.h"
@@ -24,6 +24,7 @@
 #include "../RHI/RasterizationPipeline.h"
 #include "../RHI/InputLayout.h"
 #include "./ShaderCompiler.h"
+#include "./ShaderGenerator.h"
 namespace FCT
 {
 	namespace RHI
@@ -45,7 +46,7 @@ namespace FCT
 		virtual ~Context();
 		virtual void clear(float r, float g, float b) = 0;
 		virtual void viewport(int x, int y, int width, int height) = 0;
-		virtual VertexBuffer* createVertexBuffer(VertexArray* array) = 0;
+		//virtual VertexBuffer* createVertexBuffer(VertexArray* array) = 0;
 		virtual VertexShader* createVertexShader() = 0;
 		virtual RHI::VertexShader* newRhiVertexShader() = 0;
 		virtual RHI::PixelShader* newRhiPixelShader() = 0;
@@ -110,6 +111,7 @@ namespace FCT
 		}
 		void createCompiler();
 		ShaderCompiler* getCompiler() { return m_compiler; }
+		ShaderGenerator* getGenerator() { return m_generator; }
 	protected:
 		SumitTicker m_ticker;
 		size_t m_maxFrameInFlights;
@@ -125,6 +127,7 @@ namespace FCT
 		std::thread m_submitThread;
 		bool m_ctxRunning;
 		ShaderCompiler* m_compiler;
+		ShaderGenerator* m_generator;
 	};
 }
 #include "../UI/Window.h"

@@ -16,10 +16,6 @@ namespace FCT {
 
     }
 
-    VertexBuffer *VK_Context::createVertexBuffer(VertexArray *array) {
-        return nullptr;
-    }
-
     VertexShader* VK_Context::createVertexShader()
     {
         return new VK_VertexShader(this);

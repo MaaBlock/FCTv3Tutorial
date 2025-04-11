@@ -18,7 +18,6 @@ namespace FCT {
 
         void viewport(int x, int y, int width, int height) override;
 
-        VertexBuffer *createVertexBuffer(VertexArray *array) override;
         VertexShader* createVertexShader() override;
         RHI::VertexShader* newRhiVertexShader() override;
         RHI::PixelShader* newRhiPixelShader() override;

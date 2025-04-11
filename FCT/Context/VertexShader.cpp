@@ -20,17 +20,7 @@
 
 namespace FCT
 {
-    void VertexShader::generateDefaultCode()
-    {
-        m_userSource = generatDefaultUserVertexMain(m_vertexLayouts,m_pixelLayout);
-    }
 
-    void VertexShader::preprocess()
-    {
-        std::map<std::string,uint32_t> locations;
-        m_source = generatVertexShader(m_vertexLayouts, m_pixelLayout,locations,m_userSource);
-        m_binaryCode.location(locations);
-    }
 }
 
 

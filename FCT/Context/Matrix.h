@@ -172,5 +172,8 @@ namespace FCT
 			return result;
 		}
 	};
+	class Mat3 : public Mat4
+	{
 
+	};
 } // namespace FCT

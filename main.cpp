@@ -2,11 +2,17 @@
 using namespace FCT;
 using namespace std;
 static constexpr VertexLayout vertexLayout {
-    VertexElement{ElementType::Position2f},
-    VertexElement{ElementType::Color4f},
+    VertexElement{VtxType::Position2f},
+    VertexElement{VtxType::Color4f},
 };
 static constexpr PixelLayout pixelLayout {
     vertexLayout
+};
+static constexpr UniformLayout mvpUniform {
+    "mvp",
+    UniformElement(UniformType::ModelMatrix),
+    UniformElement(UniformType::ViewMatrix),
+    UniformElement(UniformType::ProjectionMatrix)
 };
 
 std::vector<char> readFile(const std::string& filename) {
@@ -41,19 +47,17 @@ public:
     }
     void init()
     {
+        vs = ctx->createVertexShader();
+        vs->addUniform(mvpUniform);
+        vs->pixelLayout(pixelLayout);
+        vs->addLayout(0,vertexLayout);
+        vs->create();
+        ps = ctx->createPixelShader();
+        ps->addUniform(mvpUniform);
+        ps->pixelLayout(pixelLayout);
+        ps->create();
+
         cpuVertexBuffer = new VertexBuffer(vertexLayout);
-        /*cpuVertexBuffer->emplaceBack(
-        Vec2(0.0f,-0.5f),
-        Vec4(1,0,0,1)
-        );
-        cpuVertexBuffer->emplaceBack(
-        Vec2(0.5f,0.5f),
-        Vec4(0,1,0,1)
-        );
-        cpuVertexBuffer->emplaceBack(
-        Vec2(-0.5f,0.5f),
-        Vec4(0,0,1,1)
-        );*/
         cpuVertexBuffer->emplaceBack(
             Vec2(-0.5f, -0.5f),
             Vec4(1.0f, 0.0f, 0.0f, 1.0f)
@@ -77,12 +81,6 @@ public:
         indexBuffer->indexBuffer(indices);
         indexBuffer->create();
         indexBuffer->updataBuffer();
-        /*
-        cpuVertexBuffer->emplace(
-        {{0.0f,-0.5f},{1.0f,0.0f,0.0f,1.0f}}
-            ,{{0.5f,0.5f},{0.0f,1.0f,0.0f,1.0f}}
-            ,{{-0.5f,0.5f},{0.0f,0.0f,1.0f,1.0f}}
-        );*/
         vertexBuffer = ctx->createVertexBuffer();
         vertexBuffer->vertexBuffer(cpuVertexBuffer);
         vertexBuffer->create();
@@ -131,7 +129,6 @@ public:
         vertexBuffer->bind(cmdBuf);
         indexBuffer->bind(cmdBuf);
         cmdBuf->drawIndex(0,0,6,1);
-        //cmdBuf->draw(0,0,3,1);
         passGroup->endSubmit(cmdBuf);
         cmdBuf->end();
         cmdBuf->submit();
@@ -155,8 +152,7 @@ private:
     VertexShader* vs;
     RHI::Pass* pass;
     RHI::PassGroup* passGroup;
-    RHI::PixelShader* ps;
-    //RHI::VertexShader* vs;
+    PixelShader* ps;
     RHI::RasterizationPipeline* pipeline;
     RHI::CommandPool* cmdPool;
     RHI::CommandBuffer* cmdBuf;

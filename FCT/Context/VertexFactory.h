@@ -11,7 +11,7 @@
 
 namespace FCT {
 
-
+/*
     struct VertexAttribute {
         PipelineAttributeType type;
         std::string name;
@@ -119,5 +119,5 @@ namespace FCT {
         }
         throw std::runtime_error("未找到属性");
     }
-
+*/
 } // namespace FCT

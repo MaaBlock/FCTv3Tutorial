@@ -4,8 +4,10 @@
 #include "../MutilThreadBase/RefCount.h"
 #include "Vertex.h"
 #include "Context.h"
+#include "Uniform.h"
 #include "../RHI/IPipelineResource.h"
 #include "../RHI/ShaderBinary.h"
+
 #ifndef FCT_VERTEXSHADER_H
 #define FCT_VERTEXSHADER_H
 namespace FCT {
@@ -29,7 +31,10 @@ namespace FCT {
         {
             m_userSource = source;
         }
-        void generateDefaultCode();
+        void generateDefaultCode()
+        {
+            m_userSource =  m_ctx->getGenerator()->generateDefaultVertexMain(m_vertexLayouts,m_pixelLayout);
+        }
         void compile()
         {
             m_binaryCode.code(
@@ -51,7 +56,10 @@ namespace FCT {
             m_vertexShader->code(m_binaryCode.code());
             m_vertexShader->create();
         }
-        void preprocess();
+        void preprocess()
+        {
+            m_source = m_ctx->getGenerator()->generateVertexShader(m_vertexLayouts, m_pixelLayout,m_uniformLayouts,m_binaryCode,m_userSource);
+        }
         RHI::ShaderBinary binaryCode()
         {
             return m_binaryCode;
@@ -79,10 +87,15 @@ namespace FCT {
         {
             m_pixelLayout = layout;
         }
+        void addUniform(UniformLayout layout)
+        {
+            m_uniformLayouts.push_back(layout);
+        }
     protected:
         RHI::ShaderBinary m_binaryCode;
         Context* m_ctx;
         std::map<uint32_t,VertexLayout> m_vertexLayouts;
+        std::vector<UniformLayout> m_uniformLayouts;
         PixelLayout m_pixelLayout;
         RHI::VertexShader* m_vertexShader;
         std::string m_userSource;

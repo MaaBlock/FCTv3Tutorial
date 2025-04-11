@@ -6,7 +6,7 @@
 #define VERTEX_H
 namespace FCT
 {
-     enum class ElementType {
+     enum class VtxType {
         Position2f,
         Position3f,
         Normal3f,
@@ -18,9 +18,9 @@ namespace FCT
         Custom
     };
 
-    constexpr bool isPositionType(ElementType type) noexcept
+    constexpr bool isPositionType(VtxType type) noexcept
     {
-        return type == ElementType::Position2f || type == ElementType::Position3f;
+        return type == VtxType::Position2f || type == VtxType::Position3f;
     }
 
     constexpr bool StringEquals(const char* a, const char* b) noexcept {
@@ -36,48 +36,48 @@ namespace FCT
         return *a == *b;
     }
 
-    constexpr Format GetDefaultFormat(ElementType type) noexcept {
+    constexpr Format GetDefaultFormat(VtxType type) noexcept {
         switch (type) {
-            case ElementType::Position2f:
+            case VtxType::Position2f:
                 return Format::R32G32_SFLOAT;
-            case ElementType::Position3f:
+            case VtxType::Position3f:
                 return Format::R32G32B32_SFLOAT;
-            case ElementType::Normal3f:
+            case VtxType::Normal3f:
                 return Format::R32G32B32_SFLOAT;
-            case ElementType::Tangent3f:
+            case VtxType::Tangent3f:
                 return Format::R32G32B32_SFLOAT;
-            case ElementType::Bitangent3f:
+            case VtxType::Bitangent3f:
                 return Format::R32G32B32_SFLOAT;
-            case ElementType::TexCoord2f:
+            case VtxType::TexCoord2f:
                 return Format::R32G32_SFLOAT;
-            case ElementType::Color3f:
+            case VtxType::Color3f:
                 return Format::R32G32B32_SFLOAT;
-            case ElementType::Color4f:
+            case VtxType::Color4f:
                 return Format::R32G32B32A32_SFLOAT;
                 return Format::R32G32B32A32_SFLOAT;
-            case ElementType::Custom:
+            case VtxType::Custom:
             default:
                 return Format::UNDEFINED;
         }
     }
 
-    constexpr const char* GetDefaultSemantic(ElementType type) noexcept {
+    constexpr const char* GetDefaultSemantic(VtxType type) noexcept {
         switch (type) {
-            case ElementType::Position2f:
-            case ElementType::Position3f:
+            case VtxType::Position2f:
+            case VtxType::Position3f:
                 return "pos";
-            case ElementType::Normal3f:
+            case VtxType::Normal3f:
                 return "normal";
-            case ElementType::Tangent3f:
+            case VtxType::Tangent3f:
                 return "tangent";
-            case ElementType::Bitangent3f:
+            case VtxType::Bitangent3f:
                 return "bitangent";
-            case ElementType::TexCoord2f:
+            case VtxType::TexCoord2f:
                 return "texcoord";
-            case ElementType::Color3f:
-            case ElementType::Color4f:
+            case VtxType::Color3f:
+            case VtxType::Color4f:
                 return "color";
-            case ElementType::Custom:
+            case VtxType::Custom:
             default:
                 return "Ccstom";
         }
@@ -86,21 +86,21 @@ namespace FCT
     class VertexElement {
     public:
         constexpr VertexElement() noexcept
-       : m_type(ElementType::Custom), m_format(Format::UNDEFINED), m_semantic("") {}
+       : m_type(VtxType::Custom), m_format(Format::UNDEFINED), m_semantic("") {}
 
-        constexpr VertexElement(ElementType type) noexcept
+        constexpr VertexElement(VtxType type) noexcept
             : m_type(type), m_format(GetDefaultFormat(type)), m_semantic(GetDefaultSemantic(type)) {}
 
-        constexpr VertexElement(ElementType type, const char* semantic) noexcept
+        constexpr VertexElement(VtxType type, const char* semantic) noexcept
             : m_type(type), m_format(GetDefaultFormat(type)), m_semantic(semantic) {}
 
-        constexpr VertexElement(ElementType type, Format format, const char* semantic) noexcept
+        constexpr VertexElement(VtxType type, Format format, const char* semantic) noexcept
             : m_type(type), m_format(format), m_semantic(semantic) {}
 
         constexpr VertexElement(Format format, const char* semantic) noexcept
-            : m_type(ElementType::Custom), m_format(format), m_semantic(semantic) {}
+            : m_type(VtxType::Custom), m_format(format), m_semantic(semantic) {}
 
-        constexpr ElementType getType() const noexcept { return m_type; }
+        constexpr VtxType getType() const noexcept { return m_type; }
 
         constexpr Format getFormat() const noexcept { return m_format; }
 
@@ -111,7 +111,7 @@ namespace FCT
         }
 
     private:
-        ElementType m_type;
+        VtxType m_type;
         Format m_format;
         const char* m_semantic;
     };
@@ -151,7 +151,7 @@ namespace FCT
             return -1;
         }
 
-        constexpr int getElementIndexByType(ElementType type) const noexcept {
+        constexpr int getElementIndexByType(VtxType type) const noexcept {
             for (size_t i = 0; i < m_elementCount; ++i) {
                 if (m_elements[i].getType() == type) {
                     return static_cast<int>(i);
@@ -160,7 +160,7 @@ namespace FCT
             return -1;
         }
 
-        constexpr const VertexElement* getElementByType(ElementType type) const noexcept {
+        constexpr const VertexElement* getElementByType(VtxType type) const noexcept {
             int index = getElementIndexByType(type);
             return (index >= 0) ? &m_elements[index] : nullptr;
         }
@@ -178,7 +178,7 @@ namespace FCT
             return offset;
         }
 
-        constexpr size_t getElementOffsetByType(ElementType type) const noexcept {
+        constexpr size_t getElementOffsetByType(VtxType type) const noexcept {
             int index = getElementIndexByType(type);
             return (index >= 0) ? getElementOffset(index) : 0;
         }
@@ -244,7 +244,7 @@ namespace FCT
             return -1;
         }
 
-        constexpr int getElementIndexByType(ElementType type) const noexcept {
+        constexpr int getElementIndexByType(VtxType type) const noexcept {
             for (size_t i = 0; i < m_elementCount; ++i) {
                 if (m_elements[i].getType() == type) {
                     return static_cast<int>(i);
@@ -253,7 +253,7 @@ namespace FCT
             return -1;
         }
 
-        constexpr const VertexElement* getElementByType(ElementType type) const noexcept {
+        constexpr const VertexElement* getElementByType(VtxType type) const noexcept {
             int index = getElementIndexByType(type);
             return (index >= 0) ? &m_elements[index] : nullptr;
         }
@@ -271,7 +271,7 @@ namespace FCT
             return offset;
         }
 
-        constexpr size_t getElementOffsetByType(ElementType type) const noexcept {
+        constexpr size_t getElementOffsetByType(VtxType type) const noexcept {
             int index = getElementIndexByType(type);
             return (index >= 0) ? getElementOffset(index) : 0;
         }
@@ -282,9 +282,9 @@ namespace FCT
         }
 
         constexpr void ensurePositionFirst() noexcept {
-            int posIndex = getElementIndexByType(ElementType::Position3f);
+            int posIndex = getElementIndexByType(VtxType::Position3f);
             if (posIndex < 0) {
-                posIndex = getElementIndexByType(ElementType::Position2f);
+                posIndex = getElementIndexByType(VtxType::Position2f);
             }
 
             if (posIndex > 0) {
@@ -325,7 +325,7 @@ namespace FCT
         friend class VertexBuffer;
     public:
         template<typename T>
-        T& getAttribute(ElementType type) noexcept {
+        T& getAttribute(VtxType type) noexcept {
             const auto* element = m_layout.getElementByType(type);
             if (element) {
                 size_t offset = m_layout.getElementOffsetByType(type);
@@ -347,7 +347,7 @@ namespace FCT
         }
 
         template<typename T>
-        void setAttribute(ElementType type, const T& value) noexcept {
+        void setAttribute(VtxType type, const T& value) noexcept {
             const auto* element = m_layout.getElementByType(type);
             if (element) {
                 size_t offset = m_layout.getElementOffsetByType(type);
@@ -397,7 +397,7 @@ namespace FCT
             : m_data(vertex.getData()), m_layout(vertex.getLayout()) {}
 
         template<typename T>
-        const T& getAttribute(ElementType type) const noexcept {
+        const T& getAttribute(VtxType type) const noexcept {
             const auto* element = m_layout.getElementByType(type);
             if (element) {
                 size_t offset = m_layout.getElementOffsetByType(type);

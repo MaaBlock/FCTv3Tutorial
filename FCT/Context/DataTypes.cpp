@@ -1,10 +1,10 @@
 #include "DataTypes.h"
 #include <stdexcept>
 
-namespace FCT {
-
-size_t GetDataTypeSize(DataType type) {
-    switch (type) {
+namespace FCT
+{
+    size_t GetDataTypeSize(DataType type) {
+        switch (type) {
         case DataType::Float: return sizeof(float);
         case DataType::Vec2: return 2 * sizeof(float);
         case DataType::Vec3: return 3 * sizeof(float);
@@ -25,32 +25,31 @@ size_t GetDataTypeSize(DataType type) {
         case DataType::BVec3: return 3 * sizeof(bool);
         case DataType::BVec4: return 4 * sizeof(bool);
         default: throw std::runtime_error("Unknown data type");
+        }
     }
-}
 
-const char* GetDataTypeName(DataType type) {
-    switch (type) {
+    const char* GetDataTypeName(DataType type) {
+        switch (type) {
         case DataType::Float: return "float";
-        case DataType::Vec2: return "vec2";
-        case DataType::Vec3: return "vec3";
-        case DataType::Vec4: return "vec4";
-        case DataType::Mat2: return "mat2";
-        case DataType::Mat3: return "mat3";
-        case DataType::Mat4: return "mat4";
+        case DataType::Vec2: return "float2";
+        case DataType::Vec3: return "float3";
+        case DataType::Vec4: return "float4";
+        case DataType::Mat2: return "float2x2";
+        case DataType::Mat3: return "float3x3";
+        case DataType::Mat4: return "float4x4";
         case DataType::Int: return "int";
-        case DataType::IVec2: return "ivec2";
-        case DataType::IVec3: return "ivec3";
-        case DataType::IVec4: return "ivec4";
+        case DataType::IVec2: return "int2";
+        case DataType::IVec3: return "int3";
+        case DataType::IVec4: return "int4";
         case DataType::UInt: return "uint";
-        case DataType::UVec2: return "uvec2";
-        case DataType::UVec3: return "uvec3";
-        case DataType::UVec4: return "uvec4";
+        case DataType::UVec2: return "uint2";
+        case DataType::UVec3: return "uint3";
+        case DataType::UVec4: return "uint4";
         case DataType::Bool: return "bool";
-        case DataType::BVec2: return "bvec2";
-        case DataType::BVec3: return "bvec3";
-        case DataType::BVec4: return "bvec4";
+        case DataType::BVec2: return "bool2";
+        case DataType::BVec3: return "bool3";
+        case DataType::BVec4: return "bool4";
         default: throw std::runtime_error("Unknown data type");
+        }
     }
-}
-
 } // namespace FCT

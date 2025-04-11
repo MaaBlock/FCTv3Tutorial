@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 #include "../MutilThreadBase/RefCount.h"
-#include "./ShaderOutput.h"
 #include "./IPipelineResource.h"
 
 namespace FCT {

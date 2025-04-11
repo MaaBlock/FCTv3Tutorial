@@ -3,6 +3,7 @@
 //
 #include "../ThirdParty.h"
 #include "./Vertex.h"
+#include "Uniform.h"
 #ifndef SHADERGENERATE_H
 #define SHADERGENERATE_H
 /*
@@ -115,11 +116,11 @@ namespace FCT
         bool hasPosition = false;
         const VertexElement* posElement = nullptr;
 
-        posElement = pixleLayout.getElementByType(ElementType::Position3f);
+        posElement = pixleLayout.getElementByType(VtxType::Position3f);
         if (posElement) {
             hasPosition = true;
         }
-        else if ((posElement = pixleLayout.getElementByType(ElementType::Position2f))) {
+        else if ((posElement = pixleLayout.getElementByType(VtxType::Position2f))) {
             hasPosition = true;
         }
 
@@ -127,11 +128,11 @@ namespace FCT
 
         if (hasPosition && posElement) {
             const char* semantic = posElement->getSemantic();
-            ElementType type = posElement->getType();
+            VtxType type = posElement->getType();
 
-            if (type == ElementType::Position3f) {
+            if (type == VtxType::Position3f) {
                 ss << "    sOut.outPosition = float4(sOut." << semantic << ", 1.0f);\n";
-            } else if (type == ElementType::Position2f) {
+            } else if (type == VtxType::Position2f) {
                 ss << "    sOut.outPosition = float4(sOut." << semantic << ", 0.0f, 1.0f);\n";
             }
         } else {
@@ -157,7 +158,7 @@ namespace FCT
                 const VertexElement& inElement = layout.getElement(i);
                 const char* semantic = inElement.getSemantic();
 
-                if (inElement.getType() != ElementType::Custom)
+                if (inElement.getType() != VtxType::Custom)
                 {
                     auto element = pixelLayout.getElementByType(inElement.getType());
                     if (element)
@@ -244,20 +245,121 @@ namespace FCT
         ss << "};\n";
         return ss.str();
     }
+
+    inline std::string uniformTypeToShaderType(UniformType type)
+    {
+        switch (type) {
+        case UniformType::ModelMatrix:
+        case UniformType::ViewMatrix:
+        case UniformType::ProjectionMatrix:
+        case UniformType::MVPMatrix:
+        case UniformType::Mat4:
+            return "float4x4";
+        case UniformType::Mat3:
+            return "float3x3";
+        case UniformType::Vec4:
+            return "float4";
+        case UniformType::Vec3:
+            return "float3";
+        case UniformType::Vec2:
+            return "float2";
+        case UniformType::Float:
+            return "float";
+        case UniformType::Int:
+            return "int";
+        case UniformType::Bool:
+            return "bool";
+        case UniformType::Texture2D:
+        case UniformType::TextureCube:
+        case UniformType::Custom:
+        default:
+            return "float4";
+        }
+    }
+    inline std::string generatConstBuffer(
+    const std::vector<UniformLayout>& uniformLayouts,
+    std::map<std::string, std::pair<uint32_t, uint32_t>>& m_uniformsLocations,
+    std::map<std::string, std::pair<uint32_t, uint32_t>>& m_constBufferLocations)
+    {
+        std::stringstream ss;
+        ss << "//FCT Constant Buffers\n";
+
+        std::map<UpdateFrequency, std::vector<const UniformLayout*>> frequencyGroups;
+
+        for (const auto& layout : uniformLayouts) {
+            frequencyGroups[layout.getUpdateFrequency()].push_back(&layout);
+        }
+
+        uint32_t setIndex = 0;
+        std::map<UpdateFrequency, uint32_t> frequencyToSet;
+
+        const std::array<UpdateFrequency, 5> priorityOrder = {
+            UpdateFrequency::Static,
+            UpdateFrequency::PerFrame,
+            UpdateFrequency::PerObject,
+            UpdateFrequency::Dynamic,
+            UpdateFrequency::Default
+        };
+
+        for (const auto& freq : priorityOrder) {
+            if (frequencyGroups.find(freq) != frequencyGroups.end()) {
+                frequencyToSet[freq] = setIndex++;
+            }
+        }
+
+        uint32_t cbRegister = 0;
+
+        for (const auto& [freq, set] : frequencyToSet) {
+            const auto& layouts = frequencyGroups[freq];
+
+
+            uint32_t bindingIndex = 0;
+            for (const auto* layout : layouts) {
+                //ss << "[[vk::set(" << set << "), vk::binding(" << bindingIndex << ")]]\n";
+                ss << "[[vk::binding(" << bindingIndex << ", " << set << ")]]\n";
+                ss << "cbuffer " << layout->getName() << " : register(b" << cbRegister << ") {\n";
+
+                m_constBufferLocations[layout->getName()] = std::make_pair(set, bindingIndex);
+                m_uniformsLocations[layout->getName()] = std::make_pair(set, bindingIndex);
+
+                for (size_t i = 0; i < layout->getElementCount(); ++i) {
+                    const auto& element = layout->getElement(i);
+                    std::string glslType = uniformTypeToShaderType(element.getType());
+                    ss << "    " << glslType << " " << element.getName() << ";\n";
+                }
+
+                ss << "};\n\n";
+
+                bindingIndex++;
+                cbRegister++;
+            }
+        }
+
+        return ss.str();
+    }
     inline std::string generatVertexShader(
         std::map<uint32_t,VertexLayout> vertexLayouts,
         PixelLayout pixelLayout,
-        std::map<std::string, uint32_t>& locationMap,
+        std::vector<UniformLayout> uniformLayouts,
+        RHI::ShaderBinary& binary,
         std::string userCode)
     {
-        locationMap.clear();
+        std::map<std::string,uint32_t> locations;
+        std::map<std::string,std::pair<uint32_t,uint32_t>> uniformsLocations;
+        std::map<std::string,std::pair<uint32_t,uint32_t>> constBufferLocations;
         std::stringstream ss;
-        ss << generatShaderIn(vertexLayouts, locationMap);
+        ss << generatShaderIn(vertexLayouts, locations);
         ss << generatShaderOut(pixelLayout);
+        ss << generatConstBuffer(uniformLayouts, uniformsLocations, constBufferLocations);
         ss << generatVertexMain(vertexLayouts, pixelLayout);
         ss << userCode;
+        binary.location(locations);
+        binary.uniformLocation(uniformsLocations);
+        binary.constBufferLocation(constBufferLocations);
         return ss.str();
     }
+
+
     inline std::string generatPixelMain(PixelLayout pixleLayout)
     {
         std::stringstream ss;
@@ -278,17 +380,17 @@ namespace FCT
         ss << "//FCT Default User Pixel Main\n";
         ss << "ShaderOut main(ShaderIn sIn) {\n";
         ss << "    ShaderOut sOut;\n";
-        auto colorElement = pixelLayout.getElementByType(ElementType::Color4f);
+        auto colorElement = pixelLayout.getElementByType(VtxType::Color4f);
         if (!colorElement) {
-            colorElement = pixelLayout.getElementByType(ElementType::Color3f);
+            colorElement = pixelLayout.getElementByType(VtxType::Color3f);
         }
         if (colorElement) {
             const char* semantic = colorElement->getSemantic();
-            ElementType type = colorElement->getType();
+            VtxType type = colorElement->getType();
 
-            if (type == ElementType::Color4f) {
+            if (type == VtxType::Color4f) {
                 ss << "    sOut.target0 = sIn." << semantic << ";\n";
-            } else if (type == ElementType::Color3f) {
+            } else if (type == VtxType::Color3f) {
                 ss << "    sOut.target0 = float4(sIn." << semantic << ", 1.0f);\n";
             } else {
                 std::string typeStr = FormatToShaderType(colorElement->getFormat());
@@ -322,13 +424,19 @@ namespace FCT
         ss << "}\n";
         return ss.str();
     }
-    inline std::string generatPixelShader(PixelLayout layout, std::string userCode)
+    inline std::string generatPixelShader(PixelLayout layout,std::vector<UniformLayout> uniformLayouts,RHI::ShaderBinary& binary, std::string userCode)
     {
+
         std::stringstream ss;
+        std::map<std::string,std::pair<uint32_t,uint32_t>> uniformsLocations;
+        std::map<std::string,std::pair<uint32_t,uint32_t>> constBufferLocations;
         ss << generatShaderIn(layout);
         ss << generatShaderOut();
+        ss << generatConstBuffer(uniformLayouts, uniformsLocations, constBufferLocations);
         ss << generatPixelMain(layout);
         ss << userCode;
+        binary.uniformLocation(uniformsLocations);
+        binary.constBufferLocation(constBufferLocations);
         return ss.str();
     }
 }
