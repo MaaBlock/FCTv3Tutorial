@@ -17,14 +17,11 @@ namespace FCT
         std::stringstream ss;
         ss << generateShaderIn(vertexLayouts, locations);
         ss << generateShaderOut(pixelLayout);
-        // 暂时不生成constBuffer
-        // ss << generatConstBuffer(uniformLayouts, uniformsLocations, constBufferLocations);
+        ss << generateConstBuffer(binary,uniformLayouts);
         ss << generateVertexMain(vertexLayouts, pixelLayout);
         ss << userCode;
 
         binary.location(locations);
-        binary.uniformLocation(uniformsLocations);
-        binary.constBufferLocation(constBufferLocations);
 
         return ss.str();
     }
@@ -41,8 +38,7 @@ namespace FCT
 
         ss << generateShaderIn(layout);
         ss << generateShaderOut();
-        // 暂时不生成constBuffer
-        // ss << generatConstBuffer(uniformLayouts, uniformsLocations, constBufferLocations);
+        ss << generateConstBuffer(binary,uniformLayouts);
         ss << generatePixelMain(layout);
         ss << userCode;
 
@@ -176,7 +172,7 @@ namespace FCT
             ss << "    // Vertex buffer slot " << slot << "\n";
 
             for (size_t i = 0; i < layout.getElementCount(); i++) {
-                                const VertexElement& element = layout.getElement(i);
+                const VertexElement& element = layout.getElement(i);
                 std::string typeStr = FormatToShaderType(element.getFormat());
                 const char* semantic = element.getSemantic();
 
@@ -345,5 +341,70 @@ namespace FCT
         default:
             return "float4";
         }
+    }
+    std::string ShaderGenerator::generateConstBuffer(RHI::ShaderBinary& binary,
+        const std::vector<UniformLayout>& uniforms)
+    {
+        std::stringstream ss;
+        ss << "//FCT Constant Buffers\n";
+
+        for (const auto& layout : uniforms) {
+            UpdateFrequency frequency = layout.getUpdateFrequency();
+
+            uint32_t set;
+            switch (frequency) {
+            case UpdateFrequency::Static:
+                set = 0;
+                break;
+            case UpdateFrequency::PerFrame:
+                set = 1;
+                break;
+            case UpdateFrequency::PerObject:
+                set = 2;
+                break;
+            case UpdateFrequency::Dynamic:
+                set = 3;
+                break;
+            default:
+                set = 0;
+                break;
+            }
+
+            uint32_t binding;
+            bool found = false;
+
+            for (const auto& [storedLayout, setBinding] : m_layoutSetBindings) {
+                if (storedLayout == layout) {
+                    set = setBinding.first;
+                    binding = setBinding.second;
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                binding = m_frequencyBindingCount[frequency]++;
+
+                m_layoutSetBindings.push_back({layout, {set, binding}});
+            }
+
+            binary.addConstBufferLocation(layout, set, binding);
+
+            ss << "[[vk::binding(" << binding << ", " << set << ")]] ";
+            ss << "[[vk::set(" << set << ")]] ";
+            ss << "cbuffer " << layout.getName() << " : register(b" << binding << ", space" << set << ") {\n";
+
+            for (size_t i = 0; i < layout.getElementCount(); i++) {
+                const UniformElement& element = layout.getElement(i);
+                std::string typeStr = uniformTypeToShaderType(element.getType());
+                const char* name = element.getName();
+
+                ss << "    " << typeStr << " " << name << ";\n";
+            }
+
+            ss << "};\n\n";
+        }
+
+        return ss.str();
     }
 }

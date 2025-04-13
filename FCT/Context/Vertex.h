@@ -2,6 +2,7 @@
 // Created by Administrator on 2025/4/5.
 //
 #include "./Format.h"
+#include "../Base/string.h"
 #ifndef VERTEX_H
 #define VERTEX_H
 namespace FCT
@@ -21,19 +22,6 @@ namespace FCT
     constexpr bool isPositionType(VtxType type) noexcept
     {
         return type == VtxType::Position2f || type == VtxType::Position3f;
-    }
-
-    constexpr bool StringEquals(const char* a, const char* b) noexcept {
-        if (a == b) return true;
-        if (!a || !b) return false;
-
-        while (*a && *b) {
-            if (*a != *b) return false;
-            ++a;
-            ++b;
-        }
-
-        return *a == *b;
     }
 
     constexpr Format GetDefaultFormat(VtxType type) noexcept {

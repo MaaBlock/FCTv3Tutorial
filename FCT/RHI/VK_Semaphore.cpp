@@ -13,6 +13,12 @@ namespace FCT {
 
         void VK_Semaphore::create()
         {
+            if (m_semaphore)
+            {
+                m_ctx->device().waitIdle();
+                m_ctx->device().destroySemaphore(m_semaphore);
+                m_semaphore = nullptr;
+            }
             vk::SemaphoreCreateInfo semaphoreInfo;
             m_semaphore = m_ctx->device().createSemaphore(semaphoreInfo);
         }

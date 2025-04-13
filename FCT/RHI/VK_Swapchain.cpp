@@ -182,8 +182,12 @@ namespace FCT {
         void VK_Swapchain::present()
         {
             auto dc = m_ctx->getDevice();
-            if (processRecreate())
+            if (processRecreate(true))
             {
+                for (auto semaphore : m_renderFinshSemaphores)
+                {
+                    semaphore->create();
+                }
                 return;
             }
 
@@ -205,10 +209,25 @@ namespace FCT {
             } catch (vk::OutOfDateKHRError& e) {
                 m_needRecreated = true;
                 processRecreate();
+                for (auto fence : m_renderFinshFences)
+                {
+                    fence->waitFor();
+                    fence->reset();
+                }
+                for (auto semaphore : m_renderFinshSemaphores)
+                {
+                    semaphore->create();
+                }
                 return;
-            } catch (vk::SystemError& e) {
+            } catch (vk::SystemError& e)
+            {
                 ferr << "fetal error in VK_Swapchain::present()" << e.what() << std::endl;
                 return;
+            }
+            for (auto fence : m_renderFinshFences)
+            {
+                fence->waitFor();
+                fence->reset();
             }
             try {
                 auto nextResult = dc.acquireNextImageKHR(
@@ -238,6 +257,7 @@ namespace FCT {
             VK_Fence* fence = nullptr;
             if (m_prensentFinshSemphore)
             {
+                m_prensentFinshSemphore->create();
                 dc.acquireNextImageKHR(
                         m_swapchain,
                         UINT64_MAX,
@@ -269,12 +289,19 @@ namespace FCT {
             FCT_WAIT_FOR(m_recreated);
         }
 
-        bool VK_Swapchain::processRecreate()
+        bool VK_Swapchain::processRecreate(bool waitFence)
         {
             auto dc = m_ctx->getDevice();
             if (m_needRecreated)
             {
-                //dc.waitIdle();
+                if (waitFence)
+                {
+                    for (auto fence : m_renderFinshFences)
+                    {
+                        fence->waitFor();
+                        fence->reset();
+                    }
+                }
                 create();
                 m_needRecreated = false;
                 m_recreated = true;

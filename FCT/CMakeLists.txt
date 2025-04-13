@@ -228,7 +228,8 @@ target_link_libraries(FCT PUBLIC
         spirv-cross-hlsl
         spirv-cross-cpp
         spirv-cross-reflect
-        unofficial::shaderc::shaderc)
+        unofficial::shaderc::shaderc
+)
 
 #target_link_libraries(FCT PUBLIC
 #    harfbuzz::harfbuzz

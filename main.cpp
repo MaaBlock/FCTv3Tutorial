@@ -52,6 +52,7 @@ public:
         vs->pixelLayout(pixelLayout);
         vs->addLayout(0,vertexLayout);
         vs->create();
+
         ps = ctx->createPixelShader();
         ps->addUniform(mvpUniform);
         ps->pixelLayout(pixelLayout);
@@ -101,6 +102,9 @@ public:
         pipeline->vertexLayout(vertexLayout);
         pipeline->bindPass(pass);
         pipeline->create();
+
+        pipeline->addResources(vs);
+
         cmdPool = ctx->createCommandPool();
         cmdPool->create();
         cmdBuf = cmdPool->createCommandBuffer();
@@ -112,6 +116,7 @@ public:
         cmdBuf->addWaitSemaphore(presentFinshSemaphore);
         cmdBuf->addSignalSemaphore(semaphore);
         wnd->addRenderFinshSemaphore(semaphore);
+        wnd->addRenderFinshFence(fence);
         cmdBuf->fence(fence);
     }
     void logicTick()
@@ -120,6 +125,7 @@ public:
     }
     void submitTick()
     {
+
         cmdBuf->reset();
         cmdBuf->begin();
         cmdBuf->viewport(Vec2(0,0),Vec2(800,600));
@@ -132,8 +138,7 @@ public:
         passGroup->endSubmit(cmdBuf);
         cmdBuf->end();
         cmdBuf->submit();
-        fence->waitFor();
-        fence->reset();
+
         ctx->compilePasses();
         ctx->submitPasses();
         ctx->swapBuffers();

@@ -12,7 +12,9 @@ namespace FCT
         class Semaphore : public RefCount
         {
         public:
+            //实在需要reset可以 调用create,但是不推荐
             virtual void create() = 0;
+
         protected:
 
         };

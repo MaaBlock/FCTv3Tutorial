@@ -25,7 +25,7 @@ namespace FCT{
             void present() override;
             void acquireFirstImage();
             void needRecreate();
-            bool processRecreate();
+            bool processRecreate(bool waitFence = false);
             /*
             vk::Semaphore getImageAvailableSemaphore() const;
             vk::Semaphore getRenderFinishedSemaphore() const;*/

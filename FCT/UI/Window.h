@@ -71,6 +71,10 @@ namespace FCT {
 		{
 			m_swapchain->setPresentFinshSemaphore(semaphore);
 		}
+		void addRenderFinshFence(RHI::Fence* fence)
+		{
+			m_swapchain->addRenderFinshFence(fence);
+		}
 		void initRender();
 	private:
 	protected:

@@ -40,6 +40,11 @@ namespace FCT
 	class Window;
 	using SumitTicker = std::function<void()>;
 	using TickerToken = uint32_t;
+	/*Context作用
+	 *1.作为Context接口
+	 *2.作为RenderGraph系统
+	 *3.作为帧 管理器（合并在RenderGraph系统里）
+	 */
 	class Context : public RefCount {
 	public:
 		Context();
@@ -112,6 +117,8 @@ namespace FCT
 		void createCompiler();
 		ShaderCompiler* getCompiler() { return m_compiler; }
 		ShaderGenerator* getGenerator() { return m_generator; }
+		//maxFrameInFlight 是用来封装在RenerGraph系统里的（Context扮演RenderGraph的角色）
+		void setMaxFrameInFlights(size_t max) { m_maxFrameInFlights = max; }
 	protected:
 		SumitTicker m_ticker;
 		size_t m_maxFrameInFlights;

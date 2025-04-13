@@ -20,6 +20,7 @@ namespace FCT
             void create() override;
         private:
             void generateDefaultResources();
+            void createDescriptorSetLayouts();
             FCT::VertexShader* m_vertexShader;
             FCT::PixelShader* m_pixelShader;
             /*

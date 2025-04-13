@@ -61,15 +61,9 @@ namespace FCT::RHI
         m_dynamicState = vk::PipelineDynamicStateCreateInfo();
         m_dynamicState.setDynamicStates(dynamicStates);
         m_createInfo.pDynamicState = &m_dynamicState;
-        vk::PipelineLayoutCreateInfo pipelineLayoutInfo{};
-        pipelineLayoutInfo.setLayoutCount = 0;
-        pipelineLayoutInfo.pSetLayouts = nullptr;
-        pipelineLayoutInfo.pushConstantRangeCount = 0;
-        pipelineLayoutInfo.pPushConstantRanges = nullptr;
-        auto pipelineLayout = m_ctx->getDevice().createPipelineLayout(pipelineLayoutInfo);
         m_createInfo.renderPass = static_cast<VK_PassGroup*>(m_pass->passGroup())->getRenderPass();
         m_createInfo.subpass = static_cast<VK_PassGroup*>(m_pass->passGroup())->getPassIndex(m_pass);
-        m_createInfo.layout = pipelineLayout;
+        m_createInfo.layout = m_pipelineLayout;
         m_createInfo.pVertexInputState = m_inputLayout->pInputStateInfo();
         m_createInfo.pRasterizationState = &m_rasterizationState->rasterizationStateCreateInfo();
         m_createInfo.pMultisampleState = &m_rasterizationState->multisampleStateCreateInfo();

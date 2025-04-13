@@ -25,6 +25,7 @@ namespace FCT
         MeshShader,
       };
 
+#ifdef FCT_DEPRECATED
     //locationMap使用前自己clear
     inline std::string generatShaderIn(const std::map<uint32_t, VertexLayout>& layouts,std::map<std::string,uint32_t>& locationMap)
     {
@@ -276,12 +277,15 @@ namespace FCT
             return "float4";
         }
     }
+
     inline std::string generatConstBuffer(
     const std::vector<UniformLayout>& uniformLayouts,
     std::map<std::string, std::pair<uint32_t, uint32_t>>& m_uniformsLocations,
     std::map<std::string, std::pair<uint32_t, uint32_t>>& m_constBufferLocations)
     {
+
         std::stringstream ss;
+        /*
         ss << "//FCT Constant Buffers\n";
 
         std::map<UpdateFrequency, std::vector<const UniformLayout*>> frequencyGroups;
@@ -297,8 +301,7 @@ namespace FCT
             UpdateFrequency::Static,
             UpdateFrequency::PerFrame,
             UpdateFrequency::PerObject,
-            UpdateFrequency::Dynamic,
-            UpdateFrequency::Default
+            UpdateFrequency::Dynamic
         };
 
         for (const auto& freq : priorityOrder) {
@@ -334,9 +337,10 @@ namespace FCT
                 cbRegister++;
             }
         }
-
+        */
         return ss.str();
     }
+
     inline std::string generatVertexShader(
         std::map<uint32_t,VertexLayout> vertexLayouts,
         PixelLayout pixelLayout,
@@ -439,5 +443,6 @@ namespace FCT
         binary.constBufferLocation(constBufferLocations);
         return ss.str();
     }
+#endif
 }
 #endif //SHADERGENERATE_H

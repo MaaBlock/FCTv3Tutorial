@@ -43,6 +43,10 @@ namespace FCT
             vk::PipelineDynamicStateCreateInfo m_dynamicState{};
             vk::PipelineVertexInputStateCreateInfo m_vertexInputState{};
             vk::PipelineInputAssemblyStateCreateInfo m_inputAssemblyState{};
+
+            //需要由子类填充
+            std::map<uint32_t, vk::DescriptorSetLayout> m_descriptorSetLayouts;
+            vk::PipelineLayout m_pipelineLayout;
         };
     }
 }

@@ -115,6 +115,7 @@ namespace FCT {
         m_submitThread = std::thread(&Context::submitThread, this);
         m_ticker = std::bind(&Context::defaultTick,this);
         createCompiler();
+        m_generator = new ShaderGenerator();
     }
 
     Context::~Context() {

@@ -6,6 +6,8 @@
 #include <memory>
 #include <cstring>
 #include "DataTypes.h"
+#include "../Base/Flags.h"
+#include "../Base/string.h"
 
 namespace FCT
 {
@@ -36,6 +38,82 @@ namespace FCT
         // 自定义类型
         Custom
     };
+
+    enum class ShaderStage : uint32_t {
+        Vertex          = 0x00000001,
+        Fragment        = 0x00000002,
+        Compute         = 0x00000004,
+        Geometry        = 0x00000008,
+        TessControl     = 0x00000010,
+        TessEvaluation  = 0x00000020,
+        Mesh            = 0x00000040,
+        Task            = 0x00000080,
+        RayGen          = 0x00000100,
+        AnyHit          = 0x00000200,
+        ClosestHit      = 0x00000400,
+        Miss            = 0x00000800,
+        Intersection    = 0x00001000,
+        Callable        = 0x00002000,
+        All             = 0xFFFFFFFF
+    };
+
+    using ShaderStages = Flags<ShaderStage>;
+
+#ifdef FCT_USE_VULKAN
+#include <vulkan/vulkan.hpp>
+
+    inline vk::ShaderStageFlags ConvertToVkShaderStageFlags(ShaderStages stages)
+    {
+        vk::ShaderStageFlags flags;
+
+        if (stages & ShaderStage::Vertex)
+            flags |= vk::ShaderStageFlagBits::eVertex;
+
+        if (stages & ShaderStage::Fragment)
+            flags |= vk::ShaderStageFlagBits::eFragment;
+
+        if (stages & ShaderStage::Compute)
+            flags |= vk::ShaderStageFlagBits::eCompute;
+
+        if (stages & ShaderStage::Geometry)
+            flags |= vk::ShaderStageFlagBits::eGeometry;
+
+        if (stages & ShaderStage::TessControl)
+            flags |= vk::ShaderStageFlagBits::eTessellationControl;
+
+        if (stages & ShaderStage::TessEvaluation)
+            flags |= vk::ShaderStageFlagBits::eTessellationEvaluation;
+
+        if (stages & ShaderStage::Task)
+            flags |= vk::ShaderStageFlagBits::eTaskEXT;
+
+        if (stages & ShaderStage::Mesh)
+            flags |= vk::ShaderStageFlagBits::eMeshEXT;
+
+        if (stages & ShaderStage::RayGen)
+            flags |= vk::ShaderStageFlagBits::eRaygenKHR;
+
+        if (stages & ShaderStage::AnyHit)
+            flags |= vk::ShaderStageFlagBits::eAnyHitKHR;
+
+        if (stages & ShaderStage::ClosestHit)
+            flags |= vk::ShaderStageFlagBits::eClosestHitKHR;
+
+        if (stages & ShaderStage::Miss)
+            flags |= vk::ShaderStageFlagBits::eMissKHR;
+
+        if (stages & ShaderStage::Intersection)
+            flags |= vk::ShaderStageFlagBits::eIntersectionKHR;
+
+        if (stages & ShaderStage::Callable)
+            flags |= vk::ShaderStageFlagBits::eCallableKHR;
+
+        if (!flags)
+            flags = vk::ShaderStageFlagBits::eAll;
+
+        return flags;
+    }
+#endif
 
     // 获取Uniform类型的大小
     constexpr size_t GetUniformSize(UniformType type) {
@@ -140,7 +218,6 @@ namespace FCT
     }
 
     enum class UpdateFrequency {
-        Default,    // 默认，不进行特殊优化
         Static,     // 很少更新（如场景常量）
         PerFrame,   // 每帧更新（如相机矩阵）
         PerObject,  // 每个对象更新（如模型矩阵）
@@ -170,29 +247,53 @@ namespace FCT
 
     class UniformLayout {
     public:
-        // 新的构造函数，要求第一个参数是名称，后续参数可以包含UpdateFrequency和UniformElement
+        constexpr UniformLayout() noexcept
+        : m_name(""), m_shaderStages(ShaderStage::All), m_updateFrequency(UpdateFrequency::PerFrame),
+          m_elementCount(0), m_size(0)
+        {
+            for (size_t i = 0; i < MaxElements; ++i) {
+                m_elements[i] = UniformElement();
+                m_offsets[i] = 0;
+            }
+        }
         template<typename... Args>
         constexpr UniformLayout(const char* layoutName, Args&&... args) noexcept
-            : m_name(layoutName), m_updateFrequency(UpdateFrequency::Default) {
+        : m_name(layoutName), m_updateFrequency(UpdateFrequency::PerFrame)
+        {
             processArgs(std::forward<Args>(args)...);
         }
 
-        // 获取布局名称
         constexpr const char* getName() const noexcept { return m_name; }
 
-        // 获取更新频率
         constexpr UpdateFrequency getUpdateFrequency() const noexcept { return m_updateFrequency; }
 
-        // 其余方法保持不变
+        constexpr ShaderStages getShaderStages() const noexcept { return m_shaderStages; }
+
         constexpr void addElement(const UniformElement& element) noexcept {
             if (m_elementCount < MaxElements) {
                 size_t alignment = element.getAlignment();
-                m_size = (m_size + alignment - 1) & ~(alignment - 1); // 向上对齐
+                m_size = (m_size + alignment - 1) & ~(alignment - 1);
 
                 m_offsets[m_elementCount] = m_size;
                 m_elements[m_elementCount++] = element;
                 m_size += element.getSize();
             }
+        }
+        bool operator==(const UniformLayout& other) const noexcept {
+
+            if (!StringEquals(m_name, other.m_name)) {
+                return false;
+            }
+            if (m_elementCount != other.m_elementCount) {
+                return false;
+            }
+
+            for (size_t i = 0; i < m_elementCount; ++i) {
+                if (m_elements[i].getType() != other.m_elements[i].getType()) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         constexpr size_t getElementCount() const noexcept { return m_elementCount; }
@@ -238,28 +339,32 @@ namespace FCT
         }
 
     private:
-        // 递归处理可变参数
         constexpr void processArgs() noexcept {
-            // 基本情况：没有更多参数
+
         }
 
-        // 处理UpdateFrequency参数
         template<typename... Rest>
         constexpr void processArgs(UpdateFrequency frequency, Rest&&... rest) noexcept {
             m_updateFrequency = frequency;
             processArgs(std::forward<Rest>(rest)...);
         }
 
-        // 处理UniformElement参数
         template<typename... Rest>
         constexpr void processArgs(const UniformElement& element, Rest&&... rest) noexcept {
             addElement(element);
             processArgs(std::forward<Rest>(rest)...);
         }
 
+        template<typename... Rest>
+        constexpr void processArgs(ShaderStages stages, Rest&&... rest) noexcept {
+            m_shaderStages = stages;
+            processArgs(std::forward<Rest>(rest)...);
+        }
+
         static constexpr size_t MaxElements = 16;
         const char* m_name = "";
-        UpdateFrequency m_updateFrequency = UpdateFrequency::Default;
+        ShaderStages m_shaderStages = ShaderStage::All;
+        UpdateFrequency m_updateFrequency = UpdateFrequency::PerFrame;
         UniformElement m_elements[MaxElements]{};
         size_t m_offsets[MaxElements]{};
         size_t m_elementCount = 0;
