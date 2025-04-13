@@ -8,7 +8,7 @@ namespace FCT
 {
     namespace RHI
     {
-        VK_PassGroup::VK_PassGroup(VK_Context* ctx) : m_createInfo{},m_beginInfo{},m_framebufferInfo{} , m_framebuffer()
+        VK_PassGroup::VK_PassGroup(VK_Context* ctx) : m_createInfo{},m_beginInfo{},m_framebufferInfo{} // , m_framebuffer()
         {
             m_ctx = ctx;
         }
@@ -67,11 +67,17 @@ namespace FCT
         void VK_PassGroup::beginSubmit(CommandBuffer* cmdBuf)
         {
             collectImageViews();
+            if (m_framebuffers[cmdBuf])
+            {
+                m_ctx->device().destroyFramebuffer(m_framebuffers[cmdBuf]);
+                m_framebuffers[cmdBuf] = nullptr;
+            }
+            /*
             if (m_framebuffer)
             {
                 m_ctx->device().destroyFramebuffer(m_framebuffer);
                 m_framebuffer = nullptr;
-            }
+            }*/
 
             m_framebufferInfo.attachmentCount = m_framebufferViews.size();
             m_framebufferInfo.pAttachments = m_framebufferViews.data();
@@ -79,9 +85,9 @@ namespace FCT
             m_framebufferInfo.height = m_targetAttachments.rbegin()->second.image->height();
             m_framebufferInfo.layers = 1;
             m_framebufferInfo.renderPass = m_renderPass;
-            m_framebuffer = m_ctx->device().createFramebuffer(m_framebufferInfo);
+            m_framebuffers[cmdBuf] = m_ctx->device().createFramebuffer(m_framebufferInfo);
 
-            m_beginInfo.framebuffer = m_framebuffer;
+            m_beginInfo.framebuffer = m_framebuffers[cmdBuf];
             m_beginInfo.renderArea.offset.setX(0).setY(0);
             m_beginInfo.renderArea.extent.width =
                 m_targetAttachments.rbegin()->second.image->width();

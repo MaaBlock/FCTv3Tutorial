@@ -44,9 +44,9 @@ namespace FCT
             IRenderTarget* m_target;
             vk::RenderPassBeginInfo m_beginInfo;
             vk::FramebufferCreateInfo m_framebufferInfo;
-            vk::Framebuffer m_framebuffer;
+            //vk::Framebuffer m_framebuffer;
             std::vector<vk::ClearValue> m_clearValues;
-
+            std::unordered_map<RHI::CommandBuffer*,vk::Framebuffer> m_framebuffers;
             //std::vector<FCT::Image*> m_targets;
         };
     }

@@ -11,6 +11,7 @@ namespace FCT
         m_uiThread = std::thread([this,&inited]()
         {
             glfwInit();
+            glfwSwapInterval(0);
             inited = true;
             while (m_running)
             {
@@ -45,7 +46,7 @@ namespace FCT
         data->waiting = waiting;
         m_taskQueue.push(UITaskTrans(data));
         while (*waiting) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(0));
         }
     }
 }

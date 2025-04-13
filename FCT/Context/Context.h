@@ -43,7 +43,7 @@ namespace FCT
 	/*Context作用
 	 *1.作为Context接口
 	 *2.作为RenderGraph系统
-	 *3.作为帧 管理器（合并在RenderGraph系统里）
+	 *3.作为帧 管理器（合并在RenderGraph系统）
 	 */
 	class Context : public RefCount {
 	public:

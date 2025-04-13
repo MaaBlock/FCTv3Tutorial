@@ -19,6 +19,7 @@ namespace FCT {
     public:
         virtual void pos(int x,int y) = 0;
         virtual void size(int w, int h) = 0;
+		virtual void title(const std::string& title) = 0;
     private:
 
     };
@@ -26,7 +27,7 @@ namespace FCT {
 	class EventHandler;
     using VFuncII = std::function<void(int,int)>;
 	class Window : public RefCount,public IRenderTarget {
-    private:
+    protected:
         WindowBehavior* m_behavior;
     public:
         friend class SetParamWindowBehavior;
@@ -84,6 +85,10 @@ namespace FCT {
 			m_swapchain->clearRenderFinshFences();
 		}
 		void initRender();
+		void title(const std::string& title)
+		{
+            m_behavior->title(title);
+		}
 	private:
 	protected:
 		CallBackEventHandler* m_callbackHandler;
@@ -107,6 +112,9 @@ namespace FCT {
         void size(int w, int h) override {
             m_window->m_width = w;
             m_window->m_height = h;
+        }
+    	void title(const std::string& title) override {
+            m_window->m_title = title;
         }
     };
     inline FCT::Window::Window() {

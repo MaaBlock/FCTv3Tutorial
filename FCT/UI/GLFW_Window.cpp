@@ -122,6 +122,12 @@ void FCT::GLFW_Window::create()
            wnd->invokeScrollCallbacks(xoffset, yoffset);
        });
     });
+    if (m_behavior)
+    {
+        delete m_behavior;
+        m_behavior = nullptr;
+    }
+    m_behavior = new GLFW_WindowBehavior(this);
 }
 
 

@@ -9,9 +9,11 @@
 
 namespace FCT
 {
+    class GLFW_WindowBehavior;
     class GLFW_Window : public Window
     {
     public:
+        friend class GLFW_WindowBehavior;
         GLFW_Window(GLFW_UICommon* common, Runtime* rt);
         ~GLFW_Window();
         void invokeResizeCallbacks(int width, int height);
@@ -40,6 +42,29 @@ namespace FCT
     };
 
     class GLFW_UICommon;
+
+
+    class GLFW_WindowBehavior : public WindowBehavior {
+    public:
+        GLFW_WindowBehavior(GLFW_Window* wnd) : m_wnd(wnd) {}
+        void pos(int x,int y)
+        {
+
+        }
+        void size(int w, int h)
+        {
+
+        }
+        void title(const std::string& title)
+        {
+            m_wnd->m_common->postUiTask([this, title](void*)
+            {
+                glfwSetWindowTitle(m_wnd->m_window, title.c_str());
+            },nullptr,false);
+        }
+    private:
+        GLFW_Window* m_wnd;
+    };
 }
 
 #endif //GLFW_WINDOW_H

@@ -65,11 +65,11 @@ namespace FCT {
                     std::clamp(height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height)
             );
 
-            auto imageCount = std::clamp(2u, capabilities.minImageCount, capabilities.maxImageCount);
+            auto imageCount = std::clamp(3u, capabilities.minImageCount, capabilities.maxImageCount);
 
             vk::SwapchainCreateInfoKHR createInfo{};
             createInfo.setSurface(surface)
-                      .setMinImageCount(std::clamp(2u, capabilities.minImageCount, capabilities.maxImageCount))
+                      .setMinImageCount(imageCount)
                       .setImageFormat(format.format)
                       .setImageColorSpace(format.colorSpace)
                       .setImageExtent(extent)
