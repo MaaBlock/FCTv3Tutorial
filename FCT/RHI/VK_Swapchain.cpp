@@ -131,13 +131,6 @@ namespace FCT {
                 m_target->renderTargetType(RenderTargetType::WindowTarget);
                 m_target->bindTarget(m_fctImage);
             }
-            //createImageViews();
-            /*
-            if (!m_prensentFinshSemphore)
-            {
-                m_prensentFinshSemphore = static_cast<VK_Semaphore*>(m_ctx->createSemaphore());
-                m_prensentFinshSemphore->create();
-            }*/
 
             if (oldSwapchain) {
                 dc.destroySwapchainKHR(oldSwapchain);
@@ -164,7 +157,7 @@ namespace FCT {
         vk::PresentModeKHR VK_Swapchain::chooseSwapPresentMode(
                 const std::vector<vk::PresentModeKHR> &availablePresentModes) {
             for (const auto &availablePresentMode : availablePresentModes) {
-                if (availablePresentMode == vk::PresentModeKHR::eMailbox) {
+                if (availablePresentMode == vk::PresentModeKHR::eImmediate) {
                     return availablePresentMode;
                 }
             }
