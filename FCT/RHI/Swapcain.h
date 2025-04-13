@@ -38,15 +38,25 @@ namespace FCT
             virtual void acquireFirstImage() = 0;
             virtual ImageRenderTarget* getCurrentTarget() = 0;
             virtual RHI::Semaphore* getImageAvailableSemaphore() = 0;
-            virtual void addRenderFinshSemaphore(RHI::Semaphore* semaphore) = 0;
             virtual void setPresentFinshSemaphore(RHI::Semaphore* semaphore) = 0;
             virtual void needRecreate() = 0;
-            virtual void addRenderFinshFence(RHI::Fence* fence)
+            void addRenderFinshFence(RHI::Fence* fence)
             {
                 m_renderFinshFences.push_back(fence);
             }
+            void clearRenderFinshFences()
+            {
+                m_renderFinshFences.clear();
+            }
+            void addRenderFinshSemaphore(RHI::Semaphore* semaphore)  {
+                m_renderFinshSemaphores.push_back(semaphore);
+            }
+            void clearRenderFinshSemaphores()  {
+                m_renderFinshSemaphores.clear();
+            }
         protected:
             std::vector<RHI::Fence*> m_renderFinshFences;
+            std::vector<RHI::Semaphore*> m_renderFinshSemaphores;
             void* m_nativeHandle;
             uint32_t m_width;
             uint32_t m_height;

@@ -329,11 +329,6 @@ namespace FCT {
             return m_target;
         }
 
-        void VK_Swapchain::addRenderFinshSemaphore(RHI::Semaphore* semaphore)
-        {
-            m_renderFinshSemaphores.push_back(semaphore);
-        }
-
         void VK_Swapchain::setPresentFinshSemaphore(RHI::Semaphore* semaphore)
         {
             m_prensentFinshSemphore = static_cast<VK_Semaphore*>(semaphore);

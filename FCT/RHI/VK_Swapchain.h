@@ -34,7 +34,6 @@ namespace FCT{
             Format getFormat() const override;
             Samples getSamples() const override;
             ImageRenderTarget* getCurrentTarget() override;
-            void addRenderFinshSemaphore(RHI::Semaphore* semaphore);
             void setPresentFinshSemaphore(RHI::Semaphore* semaphore) override;
             RHI::Semaphore* getImageAvailableSemaphore() override;
         private:
@@ -54,7 +53,6 @@ namespace FCT{
             std::vector<vk::Image> m_images;
             //std::vector<vk::ImageView> m_imageViews;
             size_t m_currentFrame = 0;
-            std::vector<RHI::Semaphore*> m_renderFinshSemaphores;
             vk::Extent2D m_extent;
             uint32_t m_currentImageIndex = 0;
             RHI::VK_Semaphore* m_prensentFinshSemphore;

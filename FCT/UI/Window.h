@@ -67,6 +67,10 @@ namespace FCT {
 			}
 			ferr << "未 bind Context" << std::endl;
 		}
+		void clearRenderFinshSemaphores()
+		{
+			m_swapchain->clearRenderFinshSemaphores();
+		}
 		void setPresentFinshSemaphore(RHI::Semaphore* semaphore)
 		{
 			m_swapchain->setPresentFinshSemaphore(semaphore);
@@ -74,6 +78,10 @@ namespace FCT {
 		void addRenderFinshFence(RHI::Fence* fence)
 		{
 			m_swapchain->addRenderFinshFence(fence);
+		}
+		void clearRenderFinshFences()
+		{
+			m_swapchain->clearRenderFinshFences();
 		}
 		void initRender();
 	private:
