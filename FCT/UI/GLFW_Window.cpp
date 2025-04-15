@@ -139,7 +139,6 @@ bool FCT::GLFW_Window::isRunning() const
 void FCT::GLFW_Window::bind(Context* srcCtx)
  {
         m_ctx = srcCtx;
-        m_ctx->addBindWindow(this);
         //m_ctx->setPresentWindow(this);
         //m_ctx->setFlushWindow(this);
         if (false) {
@@ -189,6 +188,7 @@ void FCT::GLFW_Window::bind(Context* srcCtx)
         else {
             ferr << "没有受支持的context" << std::endl;
         }
+        m_ctx->addBindWindow(this);
 }
 
 void FCT::GLFW_Window::swapBuffers()

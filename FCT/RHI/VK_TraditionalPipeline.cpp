@@ -62,17 +62,17 @@ namespace FCT
                 }
                 m_vertexShader->pixelLayout(m_pixelLayout);
                 m_vertexShader->create();
-                if (!m_inputLayout)
-                {
-                    m_inputLayout = static_cast<VK_InputLayout*>(m_vertexShader->createBindedInputLayout());
-                    m_inputLayout->create();
-                }
             }
             if (!m_pixelShader)
             {
                 m_pixelShader = m_ctx->createPixelShader();
                 m_pixelShader->pixelLayout(m_pixelLayout);
                 m_pixelShader->create();
+            }
+            if (!m_inputLayout)
+            {
+                m_inputLayout = static_cast<VK_InputLayout*>(m_vertexShader->createBindedInputLayout());
+                m_inputLayout->create();
             }
         }
 
@@ -157,23 +157,38 @@ namespace FCT
                 }
             }
 
-            std::vector<vk::DescriptorSetLayout> layouts;
+            m_descriptorSetLayoutsArr.clear();
             if (!m_descriptorSetLayouts.empty()) {
                 uint32_t maxSet = 0;
                 for (const auto& [set, layout] : m_descriptorSetLayouts) {
                     maxSet = std::max(maxSet, set);
                 }
 
-                layouts.resize(maxSet + 1);
-                for (const auto& [set, layout] : m_descriptorSetLayouts) {
-                    layouts[set] = layout;
+                vk::DescriptorSetLayoutCreateInfo emptyLayoutInfo(
+                    vk::DescriptorSetLayoutCreateFlags(),
+                    0,
+                    nullptr
+                );
+                vk::DescriptorSetLayout emptyLayout;
+                try {
+                    emptyLayout = m_ctx->getDevice().createDescriptorSetLayout(emptyLayoutInfo);
+                } catch (const vk::SystemError& e) {
+                    throw std::runtime_error("Failed to create empty descriptor set layout: " + std::string(e.what()));
                 }
+
+                m_descriptorSetLayoutsArr.resize(maxSet + 1, emptyLayout);
+
+                for (const auto& [set, layout] : m_descriptorSetLayouts) {
+                    m_descriptorSetLayoutsArr[set] = layout;
+                }
+
+                m_emptyLayout = emptyLayout;
             }
 
             vk::PipelineLayoutCreateInfo pipelineLayoutInfo(
                 vk::PipelineLayoutCreateFlags(),
-                static_cast<uint32_t>(layouts.size()),
-                layouts.data(),
+                static_cast<uint32_t>(m_descriptorSetLayoutsArr.size()),
+                m_descriptorSetLayoutsArr.empty() ? nullptr : m_descriptorSetLayoutsArr.data(),
                 0,
                 nullptr
             );

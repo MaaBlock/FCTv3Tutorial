@@ -1,5 +1,6 @@
+
+#include "./Vec.h"
 #pragma once
-#include <cmath>
 
 namespace FCT
 {
@@ -93,6 +94,36 @@ namespace FCT
 			ret.m[9] += y;
 			return ret;
 		}
+		static Mat4 LookAt(const Vec3& eye, const Vec3& center, const Vec3& up)
+		{
+			Vec3 f = (center - eye).normalize();
+			Vec3 s = f.cross(up).normalize();
+			Vec3 u = s.cross(f);
+
+			Mat4 result;
+
+			result.m[0] = s.x;
+			result.m[1] = u.x;
+			result.m[2] = -f.x;
+			result.m[3] = 0.0f;
+
+			result.m[4] = s.y;
+			result.m[5] = u.y;
+			result.m[6] = -f.y;
+			result.m[7] = 0.0f;
+
+			result.m[8] = s.z;
+			result.m[9] = u.z;
+			result.m[10] = -f.z;
+			result.m[11] = 0.0f;
+
+			result.m[12] = -s.dot(eye);
+			result.m[13] = -u.dot(eye);
+			result.m[14] = f.dot(eye);
+			result.m[15] = 1.0f;
+
+			return result;
+		}
 		static Mat4 Scale(float scaleX, float scaleY)
 		{
 			Mat4 ret = {
@@ -171,7 +202,25 @@ namespace FCT
 			}
 			return result;
 		}
+		friend std::ostream& operator<<(std::ostream& os, const Mat4& mat);
 	};
+	inline std::ostream& operator<<(std::ostream& os, const Mat4& mat)
+	{
+		os << std::fixed << std::setprecision(4);
+		os << "Matrix4x4:\n";
+		for (int i = 0; i < 4; ++i)
+		{
+			os << "[ ";
+			for (int j = 0; j < 4; ++j)
+			{
+				os << std::setw(10) << mat.m[i * 4 + j];
+				if (j < 3) os << ", ";
+			}
+			os << " ]\n";
+		}
+		return os;
+	}
+
 	class Mat3 : public Mat4
 	{
 

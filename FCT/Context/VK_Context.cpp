@@ -16,6 +16,11 @@ namespace FCT {
 
     }
 
+    RHI::DescriptorPool* VK_Context::createDescriptorPool()
+    {
+        return new RHI::VK_DescriptorPool(this);
+    }
+
     VertexShader* VK_Context::createVertexShader()
     {
         return new VK_VertexShader(this);
@@ -49,8 +54,8 @@ namespace FCT {
         return nullptr;
     }
 
-    ConstBuffer *VK_Context::createConstBuffer() {
-        return nullptr;
+    RHI::ConstBuffer *VK_Context::createConstBuffer() {
+        return new RHI::VK_ConstBuffer(this);
     }
 
     RHI::RasterizationPipeline* VK_Context::createTraditionPipeline()
@@ -175,6 +180,11 @@ namespace FCT {
     RHI::IndexBuffer* VK_Context::createIndexBuffer()
     {
         return new RHI::VK_IndexBuffer(this);
+    }
+
+    PassResource* VK_Context::createPassResource()
+    {
+        return new VK_PassResource(this);
     }
 
     uint32_t VK_Context::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties)

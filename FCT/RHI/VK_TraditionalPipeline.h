@@ -23,6 +23,7 @@ namespace FCT
             void createDescriptorSetLayouts();
             FCT::VertexShader* m_vertexShader;
             FCT::PixelShader* m_pixelShader;
+            vk::DescriptorSetLayout m_emptyLayout;
             /*
             VK_VertexShader* m_vertexShader;
             VK_PixelShader* m_pixelShader;

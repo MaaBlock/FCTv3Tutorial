@@ -17,7 +17,7 @@ namespace FCT {
         void clear(float r, float g, float b) override;
 
         void viewport(int x, int y, int width, int height) override;
-
+        RHI::DescriptorPool* createDescriptorPool() override;
         VertexShader* createVertexShader() override;
         RHI::VertexShader* newRhiVertexShader() override;
         RHI::PixelShader* newRhiPixelShader() override;
@@ -26,7 +26,7 @@ namespace FCT {
         DrawCall *createDrawCall(PrimitiveType primitiveType, uint32_t startVertex,
                                  uint32_t vertexCount) override;
 
-        ConstBuffer *createConstBuffer() override;
+        RHI::ConstBuffer *createConstBuffer() override;
         RHI::RasterizationPipeline* createTraditionPipeline() override;
         Texture *createTexture() override;
         Image *createImage() override;
@@ -38,6 +38,7 @@ namespace FCT {
         RHI::Fence* createFence() override;
         RHI::VertexBuffer* createVertexBuffer() override;
         RHI::IndexBuffer* createIndexBuffer() override;
+        PassResource* createPassResource() override;
         //void create(IRenderTarget* target) override;
         uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
         void create();

@@ -254,8 +254,8 @@ namespace FCT
     }
 
     std::string ShaderGenerator::generateVertexMain(
-        const std::map<uint32_t, VertexLayout>& vertexLayouts,
-        const PixelLayout& pixelLayout)
+    const std::map<uint32_t, VertexLayout>& vertexLayouts,
+    const PixelLayout& pixelLayout)
     {
         std::stringstream ss;
         ss << "ShaderOut main(ShaderIn);\n";
@@ -267,10 +267,16 @@ namespace FCT
         bool hasPosition = false;
         const VertexElement* posElement = nullptr;
 
-        posElement = pixelLayout.getElementByType(VtxType::Position3f);
+        // 首先检查Position4f类型
+        posElement = pixelLayout.getElementByType(VtxType::Position4f);
         if (posElement) {
             hasPosition = true;
         }
+        // 然后检查Position3f类型
+        else if ((posElement = pixelLayout.getElementByType(VtxType::Position3f))) {
+            hasPosition = true;
+        }
+        // 最后检查Position2f类型
         else if ((posElement = pixelLayout.getElementByType(VtxType::Position2f))) {
             hasPosition = true;
         }
@@ -281,7 +287,9 @@ namespace FCT
             const char* semantic = posElement->getSemantic();
             VtxType type = posElement->getType();
 
-            if (type == VtxType::Position3f) {
+            if (type == VtxType::Position4f) {
+                ss << "    sOut.outPosition = sOut." << semantic << ";\n";
+            } else if (type == VtxType::Position3f) {
                 ss << "    sOut.outPosition = float4(sOut." << semantic << ", 1.0f);\n";
             } else if (type == VtxType::Position2f) {
                 ss << "    sOut.outPosition = float4(sOut." << semantic << ", 0.0f, 1.0f);\n";
@@ -391,7 +399,7 @@ namespace FCT
             binary.addConstBufferLocation(layout, set, binding);
 
             ss << "[[vk::binding(" << binding << ", " << set << ")]] ";
-            ss << "[[vk::set(" << set << ")]] ";
+           // ss << "[[vk::set(" << set << ")]] ";
             ss << "cbuffer " << layout.getName() << " : register(b" << binding << ", space" << set << ") {\n";
 
             for (size_t i = 0; i < layout.getElementCount(); i++) {

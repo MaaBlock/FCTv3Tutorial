@@ -440,6 +440,21 @@ namespace FCT
             }
         }
 
+        template<typename T>
+        T getValue(const char* name) const {
+            T result{};
+            int index = m_layout.findElementIndex(name);
+            if (index >= 0) {
+                size_t offset = m_layout.getElementOffset(index);
+                size_t elementSize = m_layout.getElement(index).getSize();
+
+                if (sizeof(T) <= elementSize) {
+                    std::memcpy(&result, m_data.data() + offset, sizeof(T));
+                }
+            }
+            return result;
+        }
+
         const void* getData() const { return m_data.data(); }
 
         size_t getSize() const { return m_size; }

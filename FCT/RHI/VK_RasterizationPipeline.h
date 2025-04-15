@@ -29,6 +29,14 @@ namespace FCT
             {
                 return m_pipeline;
             }
+            std::vector<vk::DescriptorSetLayout> descriptorSetLayouts()
+            {
+                return m_descriptorSetLayoutsArr;
+            }
+            vk::PipelineLayout pipelineLayout()
+            {
+                return m_pipelineLayout;
+            }
         protected:
             void generateDefaultResources();
             std::vector<vk::PipelineShaderStageCreateInfo> m_shaderStages;
@@ -43,8 +51,7 @@ namespace FCT
             vk::PipelineDynamicStateCreateInfo m_dynamicState{};
             vk::PipelineVertexInputStateCreateInfo m_vertexInputState{};
             vk::PipelineInputAssemblyStateCreateInfo m_inputAssemblyState{};
-
-            //需要由子类填充
+            std::vector<vk::DescriptorSetLayout> m_descriptorSetLayoutsArr;
             std::map<uint32_t, vk::DescriptorSetLayout> m_descriptorSetLayouts;
             vk::PipelineLayout m_pipelineLayout;
         };

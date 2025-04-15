@@ -14,6 +14,7 @@ namespace FCT {
         m_currentFlush = true;
     }
 
+
     void Context::swapQueue() {
         std::swap(m_pushQueue,m_submitQueue);
     }
@@ -117,6 +118,8 @@ namespace FCT {
         m_ticker = std::bind(&Context::defaultTick,this);
         createCompiler();
         m_generator = new ShaderGenerator();
+        m_frameIndex = 0;
+        m_maxFrameInFlight = 3;
     }
 
     Context::~Context() {

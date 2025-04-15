@@ -42,7 +42,16 @@ namespace FCT
 
         std::string generateDefaultPixelMain(const PixelLayout& pixelLayout);
 
-
+        std::pair<uint32_t, uint32_t> getLayoutBinding(UniformLayout layout)
+        {
+            for (const auto& pair : m_layoutSetBindings) {
+                if (pair.first == layout) {
+                    return pair.second;
+                }
+            }
+            //todo:alloc new binding
+            return std::make_pair(0, 0);
+        }
     protected:
         std::string generateShaderIn(
             const std::map<uint32_t, VertexLayout>& layouts,
@@ -67,7 +76,7 @@ namespace FCT
         std::string generateConstBuffer(RHI::ShaderBinary& binary,const std::vector<UniformLayout>& uniforms);
 
         std::vector<std::pair<UniformLayout, std::pair<uint32_t, uint32_t>>> m_layoutSetBindings;
-
+        //key set value binding
         std::unordered_map<UpdateFrequency, uint32_t> m_frequencyBindingCount;
     };
 }

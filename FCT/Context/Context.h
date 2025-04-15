@@ -23,12 +23,16 @@
 #include "../RHI/PassGroup.h"
 #include "../RHI/RasterizationPipeline.h"
 #include "../RHI/InputLayout.h"
+#include "../RHI/DescriptorPool.h"
 #include "./ShaderCompiler.h"
 #include "./ShaderGenerator.h"
+#include "PassResource.h"
+
 namespace FCT
 {
 	namespace RHI
 	{
+		class ConstBuffer;
 		class IndexBuffer;
 	}
 
@@ -75,14 +79,13 @@ namespace FCT
 		virtual ~Context();
 		virtual void clear(float r, float g, float b) = 0;
 		virtual void viewport(int x, int y, int width, int height) = 0;
-		//virtual VertexBuffer* createVertexBuffer(VertexArray* array) = 0;
 		virtual VertexShader* createVertexShader() = 0;
 		virtual RHI::VertexShader* newRhiVertexShader() = 0;
 		virtual RHI::PixelShader* newRhiPixelShader() = 0;
 		virtual PixelShader* createPixelShader() = 0;
 		virtual RHI::InputLayout* createInputLayout() = 0;
 		virtual DrawCall* createDrawCall(PrimitiveType primitiveType, uint32_t startVertex, uint32_t vertexCount) = 0;
-		virtual ConstBuffer* createConstBuffer() = 0;
+		virtual RHI::ConstBuffer* createConstBuffer() = 0;
 		virtual Texture* createTexture() = 0;
 		virtual TextureArray* createTextureArray() = 0;
 		virtual Image* createImage() = 0;
@@ -98,6 +101,8 @@ namespace FCT
 		virtual void submitPasses() = 0;
 		virtual RHI::VertexBuffer* createVertexBuffer() = 0;
 		virtual RHI::IndexBuffer* createIndexBuffer() = 0;
+		virtual RHI::DescriptorPool* createDescriptorPool() = 0;
+		virtual PassResource* createPassResource() = 0;
 		void flush()
 		{
 			FCT_WAIT_FOR(m_currentFlush);
@@ -125,6 +130,7 @@ namespace FCT
 		void addBindWindow(Window* wnd)
 		{
 			m_bindWindows.push_back(wnd);
+			initWndFrameResources(wnd);
 		}
 		void tick()
 		{
@@ -162,13 +168,20 @@ namespace FCT
 	protected:
 		uint32_t m_maxFrameInFlight;
 		std::map<Window*, std::vector<FrameResource>> m_frameResources;
+		std::map<Window*, RHI::DescriptorPool*> m_descriptorPools;
 		size_t m_frameIndex = 0;
 	public:
-
 		RHI::CommandBuffer* getCmdBuf(Window* wnd,uint32_t index);
 		uint32_t allocBaseCommandBuffers(Window* wnd);
 		void maxFrameInFlight(uint32_t maxFrameInFlight);
+		uint32_t maxFrameInFlight() const { return m_maxFrameInFlight; }
 		void initFrameManager();
+		uint32_t currentFrameIndex() const { return m_frameIndex; }
+		RHI::DescriptorPool* getDescriptorPool(Window* wnd);
+		//todo: 考虑可能要变更为 [IRenderTarget*]<->[DescriptorPool*] map
+	protected:
+		void initWndFrameResources(Window* wnd);
+
 	};
 }
 #include "../UI/Window.h"
@@ -320,6 +333,7 @@ namespace FCT {
 	inline void Context::maxFrameInFlight(uint32_t maxFrameInFlight)
 	{
 		m_maxFrameInFlight = maxFrameInFlight;
+		initFrameManager();
 	}
 	inline void Context::initFrameManager()
 	{
@@ -327,13 +341,24 @@ namespace FCT {
 
 		for (auto wnd : m_bindWindows)
 		{
-			std::vector<FrameResource> frameResources(m_maxFrameInFlight);
-			for (auto& resource : frameResources) {
-				resource.init(this);
-			}
-			wnd->setPresentFinshSemaphore(frameResources[m_frameIndex].imageAvailableSemaphore);
-			wnd->initRender();
-			m_frameResources[wnd] = std::move(frameResources);
+			initWndFrameResources(wnd);
 		}
+	}
+	inline void Context::initWndFrameResources(Window* wnd)
+	{
+		std::vector<FrameResource> frameResources(m_maxFrameInFlight);
+		for (auto& resource : frameResources) {
+			resource.init(this);
+		}
+		wnd->setPresentFinshSemaphore(frameResources[m_frameIndex].imageAvailableSemaphore);
+		wnd->initRender();
+		m_frameResources[wnd] = std::move(frameResources);
+		m_descriptorPools[wnd] = createDescriptorPool();
+		m_descriptorPools[wnd]->create();
+	}
+
+	inline RHI::DescriptorPool* Context::getDescriptorPool(Window* wnd)
+	{
+		return m_descriptorPools[wnd];
 	}
 }

@@ -2,7 +2,7 @@
 #include "../RHI/IPipelineResource.h"
 
 namespace FCT {
-
+/*
 class ConstBuffer : public IPipelineResource {
 public:
     ConstBuffer() = default;
@@ -17,5 +17,5 @@ protected:
     uint32_t m_bindIndex;
     size_t m_size;
 };
-
+*/
 } // namespace FCT

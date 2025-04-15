@@ -10,6 +10,7 @@ namespace FCT
      enum class VtxType {
         Position2f,
         Position3f,
+        Position4f,
         Normal3f,
         Tangent3f,
         Bitangent3f,
@@ -21,7 +22,7 @@ namespace FCT
 
     constexpr bool isPositionType(VtxType type) noexcept
     {
-        return type == VtxType::Position2f || type == VtxType::Position3f;
+        return type == VtxType::Position2f || type == VtxType::Position3f || type == VtxType::Position4f;
     }
 
     constexpr Format GetDefaultFormat(VtxType type) noexcept {
@@ -30,6 +31,8 @@ namespace FCT
                 return Format::R32G32_SFLOAT;
             case VtxType::Position3f:
                 return Format::R32G32B32_SFLOAT;
+            case VtxType::Position4f:
+                return Format::R32G32B32A32_SFLOAT;
             case VtxType::Normal3f:
                 return Format::R32G32B32_SFLOAT;
             case VtxType::Tangent3f:
@@ -53,6 +56,7 @@ namespace FCT
         switch (type) {
             case VtxType::Position2f:
             case VtxType::Position3f:
+            case VtxType::Position4f:
                 return "pos";
             case VtxType::Normal3f:
                 return "normal";

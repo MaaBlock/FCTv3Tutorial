@@ -38,6 +38,9 @@
 #include "./RHI/VK_ShaderBinary.h"
 #include "./RHI/VK_VertexBuffer.h"
 #include "./RHI/VK_IndexBuffer.h"
+#include "./RHI/VK_ConstBuffer.h"
+#include "./RHI/VK_DescriptorPool.h"
+#include "./Context/VK_PassResource.h"
 //#include "./Context/VK_Image.h"
 #endif
 //#include "./Runtime/FCT_Runtime.h"
