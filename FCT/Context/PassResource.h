@@ -8,6 +8,11 @@
 #include "../UI/Window.h"
 namespace FCT
 {
+    namespace RHI
+    {
+        class Sampler;
+    }
+
     class PassResource
     {
     public:
@@ -22,6 +27,8 @@ namespace FCT
         }
         virtual void bind(RHI::CommandBuffer* cmdBuf) = 0;
         virtual void addConstBuffer(RHI::ConstBuffer* buffer) = 0;
+        virtual void addTexture(Image* texture,TextureElement element) = 0;
+        virtual void addSampler(RHI::Sampler* sampler,SamplerElement element) = 0;
         virtual void create() = 0;
         virtual void update() = 0;
         void pipeline(RHI::Pipeline* pipeline)
@@ -30,6 +37,8 @@ namespace FCT
         }
     protected:
         std::vector<RHI::ConstBuffer*> m_constBuffers;
+        std::vector<std::pair<RHI::Sampler*,SamplerElement>> m_samplers;
+        std::vector<std::pair<Image*, TextureElement>> m_textures;
         RHI::Pipeline* m_pipeline;
         Window* m_wnd;
         bool m_dirty = true;

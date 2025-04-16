@@ -11,6 +11,7 @@ namespace FCT {
             m_target = nullptr;
             m_prensentFinshSemphore = nullptr;
             m_needRecreated = false;
+            m_depthStencilImage = nullptr;
         }
 
         VK_Swapchain::~VK_Swapchain() {
@@ -136,6 +137,11 @@ namespace FCT {
                 dc.destroySwapchainKHR(oldSwapchain);
                 acquireFirstImage();
             }
+
+            if (m_depthStencilImage)
+            {
+                m_depthStencilImage->resize(m_width, m_height);
+            }
         }
 
         void VK_Swapchain::create()
@@ -244,6 +250,10 @@ namespace FCT {
             }
 
             m_fctImage->changeCurrentIndex(m_currentImageIndex);
+            if (m_depthStencilImage)
+            {
+                m_depthStencilImage->changeCurrentIndex(m_currentImageIndex);
+            }
         }
         void VK_Swapchain::acquireFirstImage() {
             auto dc = m_ctx->getDevice();
@@ -273,6 +283,10 @@ namespace FCT {
                 fence->release();
             }
             m_fctImage->changeCurrentIndex(m_currentImageIndex);
+            if (m_depthStencilImage)
+            {
+                m_depthStencilImage->changeCurrentIndex(m_currentImageIndex);
+            }
         }
 
         void VK_Swapchain::needRecreate()

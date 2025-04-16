@@ -9,7 +9,8 @@
 namespace FCT {
     class VK_ContextCommon {
     public:
-        VK_ContextCommon() {
+        VK_ContextCommon(Runtime* runtime) {
+            m_runtime = runtime;
             m_pickDeviceId = 0;
         }
         void addLayer(const char* layer) {
@@ -83,12 +84,17 @@ namespace FCT {
         auto getInstance() {
             return m_instance;
         }
+        auto runtime()
+        {
+            return m_runtime;
+        }
     private:
         size_t m_pickDeviceId;
         vk::Instance m_instance;
         std::vector<const char*> m_layers;
         std::vector<vk::PhysicalDevice> m_physicalDevices;
         vk::detail::DynamicLoader m_loader;
+        Runtime* m_runtime;
     };
 }
 #endif //FCT_VK_CONTEXTCOMMON_H

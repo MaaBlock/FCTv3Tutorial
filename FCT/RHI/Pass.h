@@ -45,6 +45,10 @@ namespace FCT
             {
                 m_depthStencil = depthStencil;
             }
+            FCT::Image* depthStencil() const
+            {
+                return m_depthStencil;
+            }
             virtual void create(PassGroup* group) = 0;//由PassGroup 调用
             /*auto& renderTargets()
             {

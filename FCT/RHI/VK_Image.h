@@ -14,11 +14,13 @@ namespace FCT
         public:
             VK_Image(VK_Context* ctx);
             void create() override;
+            void uploadInitialData();
             void create(vk::Image image); // 注意，格式信息还是给自己填
             vk::Image getVkImage();
         private:
             VK_Context* m_ctx;
             vk::Image m_image;
+            vk::DeviceMemory m_memory;
             bool m_owns;
         };
     }

@@ -9,6 +9,7 @@
 #define FCT_USE_VULKAN
 #define FCT_USE_SPIRV
 #define FCT_USE_SHADERC
+#define FCT_USE_FREEIMAGE
 #ifdef _WIN32
 	#define FCT_WIN32
 	#define NOMINMAX
@@ -20,6 +21,7 @@
 	#undef FCT_USE_GLAD
 	#undef FCT_USE_GLFW
 	#undef FCT_USE_PHYSX
+	#undef FCT_USE_FREEIMAGE
     #define FCT_ANDROID
     #define FCT_USE_JNICPP
 #endif
@@ -97,6 +99,10 @@ extern int main();
 
 #ifdef FCT_USE_SHADERC
 #include <shaderc/shaderc.hpp>
+#endif
+
+#ifdef FCT_USE_FREEIMAGE
+#include <FreeImage.h>
 #endif
 
 #if defined(_DEBUG) || defined(DEBUG)

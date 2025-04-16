@@ -76,7 +76,10 @@ namespace FCT
     }
 #endif
     Image::Image(Context* ctx) : m_ctx(ctx), m_behavior(nullptr), m_renderTargetType(RenderTargetType::ImageTarget),
-    m_width(0), m_height(0) {}
+    m_width(0), m_height(0)
+    {
+        m_samples = Samples::sample_1;
+    }
 
     Image::~Image() {
         if (m_behavior)

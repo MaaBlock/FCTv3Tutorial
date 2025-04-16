@@ -2,24 +2,24 @@
 using namespace FCT;
 using namespace std;
 static constexpr VertexLayout vertexLayout {
-    VertexElement{VtxType::Position2f},
+    VertexElement{VtxType::Position3f},
     VertexElement{VtxType::Color4f},
+    VertexElement{VtxType::TexCoord2f}
 };
 static constexpr PixelLayout pixelLayout {
     VertexElement{VtxType::Position4f},
     VertexElement{VtxType::Color4f},
+    VertexElement{VtxType::TexCoord2f}
 };
-static constexpr UniformLayout mvpUniform {
+static constexpr ConstLayout mvpUniform {
     "mvp",
-
-    UniformElement(UniformType::ModelMatrix),
-    UniformElement(UniformType::ViewMatrix),
-    UniformElement(UniformType::ProjectionMatrix)
-    /*
-    UniformElement(UniformType::Mat3,"modelMatrix"),
-    UniformElement(UniformType::Mat3,"viewMatrix"),
-    UniformElement(UniformType::Mat3,"projectionMatrix")
-*/
+    ConstElement(ConstType::ModelMatrix),
+    ConstElement(ConstType::ViewMatrix),
+    ConstElement(ConstType::ProjectionMatrix)
+};
+static constexpr ResourceLayout resourceLayout {
+    TextureElement{"testTexture"},
+    SamplerElement{"testSampler"}
 };
 
 std::vector<char> readFile(const std::string& filename) {
@@ -38,6 +38,58 @@ std::vector<char> readFile(const std::string& filename) {
     file.close();
     return buffer;
 }
+
+class AutoReviewport
+{
+public:
+    AutoReviewport()
+    {
+        needReviewport = false;
+        windowWidth = 800.0f;
+        windowHeight = 600.0f;
+        viewportWidth = 800.0f;
+        viewportHeight = 600.0f;
+        viewportOffsetX = 0.0f;
+        viewportOffsetY = 0.0f;
+    }
+    void resize(int width, int height)
+    {
+        windowWidth = static_cast<float>(width);
+        windowHeight = static_cast<float>(height);
+        needReviewport = true;
+    }
+    void computeViewport()
+    {
+        float targetAspect = 4.0f / 3.0f;
+        float windowAspect = windowWidth / windowHeight;
+
+        if (windowAspect > targetAspect) {
+            viewportHeight = windowHeight;
+            viewportWidth = windowHeight * targetAspect;
+            viewportOffsetX = (windowWidth - viewportWidth) / 2.0f;
+            viewportOffsetY = 0.0f;
+        } else {
+            viewportWidth = windowWidth;
+            viewportHeight = windowWidth / targetAspect;
+            viewportOffsetX = 0.0f;
+            viewportOffsetY = (windowHeight - viewportHeight) / 2.0f;
+        }
+    }
+    void onRenderTick(RHI::CommandBuffer* cmdBuf)
+    {
+        if (needReviewport) {
+            computeViewport();
+            needReviewport = false;
+        }
+        cmdBuf->viewport(Vec2(viewportOffsetX, viewportOffsetY), Vec2(viewportOffsetX + viewportWidth, viewportOffsetY + viewportHeight));
+        cmdBuf->scissor(Vec2(viewportOffsetX, viewportOffsetY), Vec2(viewportOffsetX + viewportWidth, viewportOffsetY + viewportHeight));
+    }
+private:
+    bool needReviewport;
+    float windowWidth, windowHeight;
+    float viewportWidth, viewportHeight;
+    float viewportOffsetX, viewportOffsetY;
+};
 class App
 {
 private:
@@ -58,6 +110,10 @@ private:
     int frameIndex;
     int maxFrameInFlight;
     float rotationAngle;
+    Image* texture;
+    RHI::Sampler* sampler;
+    AutoReviewport autoReviewport;
+    float rotationAngleY;
 public:
     App(Runtime& rt) : rt(rt)
     {
@@ -68,26 +124,34 @@ public:
         ctx->submitTicker(submitTick);
         ctx->create();
         wnd->bind(ctx);
+        wnd->enableDepthBuffer(Format::D32_SFLOAT_S8_UINT);
+        wnd->getCallBack()->addResizeCallback([this](Window* wnd,int width, int height)
+        {
+            autoReviewport.resize(width, height);
+        });
         ctx->maxFrameInFlight(5);
         init();
     }
     void init()
     {
         rotationAngle = 0.0f;
+        rotationAngleY = 0.0f;
         vs = ctx->createVertexShader();
         vs->addUniform(mvpUniform);
         vs->pixelLayout(pixelLayout);
         vs->addLayout(0,vertexLayout);
+        vs->resourceLayout(resourceLayout);
         vs->code(R"(
 ShaderOut main(ShaderIn vsIn) {
     ShaderOut vsOut;
 
-    float4 worldPos = mul(modelMatrix,float4(vsIn.pos,0.0f, 1.0f));
-    float4 viewPos = mul(viewMatrix,worldPos);
-    float4 clipPos = mul(projectionMatrix,viewPos);
+    float4 worldPos = mul(modelMatrix, float4(vsIn.pos, 1.0f));
+    float4 viewPos = mul(viewMatrix, worldPos);
+    float4 clipPos = mul(projectionMatrix, viewPos);
 
     vsOut.pos = clipPos;
     vsOut.color = vsIn.color;
+    vsOut.texcoord = vsIn.texcoord;
 
     return vsOut;
 }
@@ -97,27 +161,161 @@ ShaderOut main(ShaderIn vsIn) {
         ps = ctx->createPixelShader();
         ps->addUniform(mvpUniform);
         ps->pixelLayout(pixelLayout);
+        ps->resourceLayout(resourceLayout);
+        ps->code(R"(
+ShaderOut main(ShaderIn psIn) {
+    ShaderOut psOut;
+    float4 texColor = testTexture.Sample(testSampler, psIn.texcoord);
+    psOut.target0 = texColor * psIn.color;
+    return psOut;
+}
+)");
         ps->create();
 
         cpuVertexBuffer = new VertexBuffer(vertexLayout);
         cpuVertexBuffer->emplaceBack(
-            Vec2(-0.5f, -0.5f),
-            Vec4(1.0f, 0.0f, 0.0f, 1.0f)
+            Vec3(-0.5f, -0.5f, 0.5f),
+            Vec4(1.0f, 0.0f, 0.0f, 1.0f),
+            Vec2(0.0f, 1.0f)
         );
         cpuVertexBuffer->emplaceBack(
-            Vec2(0.5f, -0.5f),
-            Vec4(0.0f, 1.0f, 0.0f, 1.0f)
+            Vec3(0.5f, -0.5f, 0.5f),
+            Vec4(1.0f, 0.0f, 0.0f, 1.0f),
+            Vec2(1.0f, 1.0f)
         );
         cpuVertexBuffer->emplaceBack(
-            Vec2(0.5f, 0.5f),
-            Vec4(0.0f, 0.0f, 1.0f, 1.0f)
+            Vec3(0.5f, 0.5f, 0.5f),
+            Vec4(1.0f, 0.0f, 0.0f, 1.0f),
+            Vec2(1.0f, 0.0f)
         );
         cpuVertexBuffer->emplaceBack(
-            Vec2(-0.5f, 0.5f),
-            Vec4(1.0f, 1.0f, 1.0f, 1.0f)
+            Vec3(-0.5f, 0.5f, 0.5f),
+            Vec4(1.0f, 0.0f, 0.0f, 1.0f),
+            Vec2(0.0f, 0.0f)
+        );
+
+        // 后面 (z = -0.5)
+        cpuVertexBuffer->emplaceBack(
+            Vec3(-0.5f, -0.5f, -0.5f),
+            Vec4(0.0f, 1.0f, 0.0f, 1.0f),
+            Vec2(1.0f, 1.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec3(0.5f, -0.5f, -0.5f),
+            Vec4(0.0f, 1.0f, 0.0f, 1.0f),
+            Vec2(0.0f, 1.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec3(0.5f, 0.5f, -0.5f),
+            Vec4(0.0f, 1.0f, 0.0f, 1.0f),
+            Vec2(0.0f, 0.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec3(-0.5f, 0.5f, -0.5f),
+            Vec4(0.0f, 1.0f, 0.0f, 1.0f),
+            Vec2(1.0f, 0.0f)
+        );
+
+        // 上面 (y = 0.5)
+        cpuVertexBuffer->emplaceBack(
+            Vec3(-0.5f, 0.5f, -0.5f),
+            Vec4(0.0f, 0.0f, 1.0f, 1.0f),
+            Vec2(0.0f, 1.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec3(0.5f, 0.5f, -0.5f),
+            Vec4(0.0f, 0.0f, 1.0f, 1.0f),
+            Vec2(1.0f, 1.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec3(0.5f, 0.5f, 0.5f),
+            Vec4(0.0f, 0.0f, 1.0f, 1.0f),
+            Vec2(1.0f, 0.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec3(-0.5f, 0.5f, 0.5f),
+            Vec4(0.0f, 0.0f, 1.0f, 1.0f),
+            Vec2(0.0f, 0.0f)
+        );
+
+        // 下面 (y = -0.5)
+        cpuVertexBuffer->emplaceBack(
+            Vec3(-0.5f, -0.5f, -0.5f),
+            Vec4(1.0f, 1.0f, 0.0f, 1.0f),
+            Vec2(1.0f, 1.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec3(0.5f, -0.5f, -0.5f),
+            Vec4(1.0f, 1.0f, 0.0f, 1.0f),
+            Vec2(0.0f, 1.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec3(0.5f, -0.5f, 0.5f),
+            Vec4(1.0f, 1.0f, 0.0f, 1.0f),
+            Vec2(0.0f, 0.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec3(-0.5f, -0.5f, 0.5f),
+            Vec4(1.0f, 1.0f, 0.0f, 1.0f),
+            Vec2(1.0f, 0.0f)
+        );
+
+        // 右面 (x = 0.5)
+        cpuVertexBuffer->emplaceBack(
+            Vec3(0.5f, -0.5f, -0.5f),
+            Vec4(1.0f, 0.0f, 1.0f, 1.0f),
+            Vec2(0.0f, 1.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec3(0.5f, 0.5f, -0.5f),
+            Vec4(1.0f, 0.0f, 1.0f, 1.0f),
+            Vec2(1.0f, 1.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec3(0.5f, 0.5f, 0.5f),
+            Vec4(1.0f, 0.0f, 1.0f, 1.0f),
+            Vec2(1.0f, 0.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec3(0.5f, -0.5f, 0.5f),
+            Vec4(1.0f, 0.0f, 1.0f, 1.0f),
+            Vec2(0.0f, 0.0f)
+        );
+
+        // 左面 (x = -0.5)
+        cpuVertexBuffer->emplaceBack(
+            Vec3(-0.5f, -0.5f, -0.5f),
+            Vec4(0.0f, 1.0f, 1.0f, 1.0f),
+            Vec2(1.0f, 1.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec3(-0.5f, 0.5f, -0.5f),
+            Vec4(0.0f, 1.0f, 1.0f, 1.0f),
+            Vec2(0.0f, 1.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec3(-0.5f, 0.5f, 0.5f),
+            Vec4(0.0f, 1.0f, 1.0f, 1.0f),
+            Vec2(0.0f, 0.0f)
+        );
+        cpuVertexBuffer->emplaceBack(
+            Vec3(-0.5f, -0.5f, 0.5f),
+            Vec4(0.0f, 1.0f, 1.0f, 1.0f),
+            Vec2(1.0f, 0.0f)
         );
         std::vector<uint16_t> indices = {
-            0, 1, 2, 2, 3, 0
+            // 前面
+            0, 1, 2, 2, 3, 0,
+            // 后面
+            4, 7, 6, 6, 5, 4,
+            // 上面
+            8, 9, 10, 10, 11, 8,
+            // 下面
+            12, 15, 14, 14, 13, 12,
+            // 右面
+            16, 19, 18, 18, 17, 16,
+            // 左面
+            20, 21, 22, 22, 23, 20
         };
         indexBuffer = ctx->createIndexBuffer();
         indexBuffer->indexBuffer(indices);
@@ -130,14 +328,17 @@ ShaderOut main(ShaderIn vsIn) {
 
         pass = ctx->createPass();
         pass->bindTarget(0,wnd->getCurrentTarget()->targetImage());
+        pass->depthStencil(wnd->getCurrentTarget()->depthStencilBuffer());
         passGroup = ctx->createPassGroup();
         passGroup->addPass(pass);
         passGroup->create();
         pipeline = ctx->createTraditionPipeline();
         pipeline->pixelLayout(pixelLayout);
         pipeline->vertexLayout(vertexLayout);
+        pipeline->resourceLayout(resourceLayout);
         pipeline->bindPass(pass);
         pipeline->addResources(vs);
+        pipeline->addResources(ps);
         pipeline->create();
 
         Mat4 view = Mat4::LookAt(Vec3(2,2,-2), Vec3(0,0,0), Vec3(0,0,1));
@@ -166,9 +367,17 @@ ShaderOut main(ShaderIn vsIn) {
         passResource->addConstBuffer(constBuffer);
         passResource->bind(wnd);
         passResource->pipeline(pipeline);
-        passResource->create();
 
         ctx->allocBaseCommandBuffers(wnd);
+
+        sampler = ctx->createSampler();
+        sampler->setAnisotropic();
+        sampler->create();
+
+        texture = ctx->loadTexture("../img.png");
+        passResource->addTexture(texture,resourceLayout.findTexture("testTexture"));
+        passResource->addSampler(sampler, resourceLayout.findSampler("testSampler"));
+        passResource->create();
     }
     void logicTick()
     {
@@ -181,26 +390,30 @@ ShaderOut main(ShaderIn vsIn) {
         ss << "FCT Demo - Instant FPS: " << std::fixed << std::setprecision(1) << instantFPS;
         float rotationV = 90.0f; //90度/s
         rotationAngle += deltaTime * rotationV;
+        rotationAngleY += deltaTime * rotationV * 0.7f;
         wnd->title(ss.str());
         ctx->flush();
     }
     void submitTick()
     {
         Mat4 ratation;
-        ratation.rotateZ(rotationAngle);
+        ratation.rotateX(rotationAngle);
+        ratation.rotateY(rotationAngleY);
         buffer->setValue("modelMatrix", ratation);
         constBuffer->updataData();
         auto cmdBuf = ctx->getCmdBuf(wnd, 0);
         cmdBuf->reset();
         cmdBuf->begin();
+        /*
         cmdBuf->viewport(Vec2(0,0),Vec2(800,600));
-        cmdBuf->scissor(Vec2(0,0),Vec2(800,600));
+        cmdBuf->scissor(Vec2(0,0),Vec2(800,600));*/
+        autoReviewport.onRenderTick(cmdBuf);
         cmdBuf->bindPipieline(pipeline);
         passGroup->beginSubmit(cmdBuf);
         passResource->bind(cmdBuf);
         vertexBuffer->bind(cmdBuf);
         indexBuffer->bind(cmdBuf);
-        cmdBuf->drawIndex(0,0,6,1);
+        cmdBuf->drawIndex(0,0,36,1);
         passGroup->endSubmit(cmdBuf);
         cmdBuf->end();
         cmdBuf->submit();

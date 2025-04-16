@@ -1,6 +1,7 @@
 //
 // Created by Administrator on 2025/4/11.
 //
+#include "./ResourceLayout.h"
 #include "./ShaderGenerate.h"
 #ifndef FCT_SHADERGENERATOR_H
 #define FCT_SHADERGENERATOR_H
@@ -22,18 +23,20 @@ namespace FCT
     {
     public:
         ShaderGenerator() = default;
-
+        void ResourceLayoutToElements(ResourceLayout& resourceLayout,std::vector<TextureElement>& textureElements,std::vector<SamplerElement>& samplerElements);
         std::string generateVertexShader(
             const std::map<uint32_t, VertexLayout>& vertexLayouts,
             const PixelLayout& pixelLayout,
-            const std::vector<UniformLayout>& uniformLayouts,
+            const std::vector<ConstLayout>& uniformLayouts,
             RHI::ShaderBinary& binary,
+            ResourceLayout& resourceLayout,
             const std::string& userCode);
 
         std::string generatePixelShader(
             const PixelLayout& layout,
-            const std::vector<UniformLayout>& uniformLayouts,
+            const std::vector<ConstLayout>& uniformLayouts,
             RHI::ShaderBinary& binary,
+            ResourceLayout& resourceLayout,
             const std::string& userCode);
 
         std::string generateDefaultVertexMain(
@@ -42,10 +45,31 @@ namespace FCT
 
         std::string generateDefaultPixelMain(const PixelLayout& pixelLayout);
 
-        std::pair<uint32_t, uint32_t> getLayoutBinding(UniformLayout layout)
+        std::pair<uint32_t, uint32_t> getLayoutBinding(ConstLayout layout)
         {
             for (const auto& pair : m_layoutSetBindings) {
                 if (pair.first == layout) {
+                    return pair.second;
+                }
+            }
+            //todo:alloc new binding
+            return std::make_pair(0, 0);
+        }
+        std::pair<uint32_t, uint32_t> getTextureBinding(TextureElement texture)
+        {
+            for (const auto& pair : m_textureSetBindings) {
+                if (pair.first == texture) {
+                    return pair.second;
+                }
+            }
+            //todo:alloc new binding
+            return std::make_pair(0, 0);
+        }
+
+        std::pair<uint32_t, uint32_t> getSamplerBinding(SamplerElement sampler)
+        {
+            for (const auto& pair : m_samplerSetBindings) {
+                if (pair.first == sampler) {
                     return pair.second;
                 }
             }
@@ -70,14 +94,18 @@ namespace FCT
             const PixelLayout& pixelLayout);
 
         std::string generatePixelMain(const PixelLayout& pixelLayout);
+        std::string generateTexturesAndSamplers(RHI::ShaderBinary& binary, const std::vector<TextureElement>& textures,
+                                                const std::vector<SamplerElement>& samplers);
 
-        std::string uniformTypeToShaderType(UniformType type);
+        std::string uniformTypeToShaderType(ConstType type);
 
-        std::string generateConstBuffer(RHI::ShaderBinary& binary,const std::vector<UniformLayout>& uniforms);
+        std::string generateConstBuffer(RHI::ShaderBinary& binary,const std::vector<ConstLayout>& uniforms);
 
-        std::vector<std::pair<UniformLayout, std::pair<uint32_t, uint32_t>>> m_layoutSetBindings;
-        //key set value binding
+        std::vector<std::pair<ConstLayout, std::pair<uint32_t, uint32_t>>> m_layoutSetBindings;
         std::unordered_map<UpdateFrequency, uint32_t> m_frequencyBindingCount;
+
+        std::vector<std::pair<TextureElement, std::pair<uint32_t, uint32_t>>> m_textureSetBindings;
+        std::vector<std::pair<SamplerElement, std::pair<uint32_t, uint32_t>>> m_samplerSetBindings;
     };
 }
 #endif //FCT_SHADERGENERATOR_H

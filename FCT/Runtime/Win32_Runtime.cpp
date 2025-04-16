@@ -23,4 +23,9 @@ namespace FCT {
 	{
         return new VK_Context(g_common->vkContextCommon);
 	}
+
+	ImageLoader* Runtime::createImageLoader()
+	{
+		return new FreeImage_ImageLoader();
+	}
 }

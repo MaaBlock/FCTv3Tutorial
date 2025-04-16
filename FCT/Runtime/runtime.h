@@ -5,6 +5,9 @@
 #include "../ImageLoader/ImageLoader.h"
 #include "../Context/VK_ContextCommon.h"
 #include "../UI/GLFW_UICommon.h"
+#ifdef FCT_USE_FREEIMAGE
+        #include "../ImageLoader/FreeImage_ImageLoader.h"
+#endif
 namespace FCT
 {
     struct RuntimeCommon {
@@ -15,16 +18,26 @@ namespace FCT
     	GLFW_UICommon* glfwUICommon;
 #endif
     };
+	/*
+	 *todo:
+	 * 此处 runtime 是给用户包装用 的，允许有多个，
+	 * 应当在内部统一隐藏一个单例 内部Runtime 负责真正的Runtiem
+	 * 对于一些只能调用一次的Init的Init，term
+	 */
     class Runtime {
     public:
         Runtime(){
             init();
 #ifdef  FCT_USE_VULKAN
-            g_common->vkContextCommon = new VK_ContextCommon();
+            g_common->vkContextCommon = new VK_ContextCommon(this);
             g_common->vkContextCommon->init();
 #endif
 #ifdef  FCT_USE_GLFW
         	g_common->glfwUICommon = new GLFW_UICommon();
+#endif
+#ifdef FCT_USE_FREEIMAGE
+        	//todo:从FCTv2 直接迁移过来 的，应当改为common的模式
+			FreeImage_ImageLoader::Init();
 #endif
         }
         ~Runtime() {
@@ -55,6 +68,7 @@ namespace FCT
             return window;
         }
         Context* createContext();
+    	ImageLoader* createImageLoader();
     private:
         RuntimeCommon* g_common;
     	Runtime(const Runtime&) = delete;

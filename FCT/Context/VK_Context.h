@@ -13,7 +13,7 @@ namespace FCT {
         VK_Context(VK_ContextCommon* common);
         ~VK_Context() override;
         TextureArray *createTextureArray() override;
-
+        RHI::Sampler* createSampler() override;
         void clear(float r, float g, float b) override;
 
         void viewport(int x, int y, int width, int height) override;
@@ -25,7 +25,8 @@ namespace FCT {
         RHI::InputLayout* createInputLayout() override;
         DrawCall *createDrawCall(PrimitiveType primitiveType, uint32_t startVertex,
                                  uint32_t vertexCount) override;
-
+        RHI::TextureView* createTextureView() override;
+        RHI::Image* newRhiImage() override;
         RHI::ConstBuffer *createConstBuffer() override;
         RHI::RasterizationPipeline* createTraditionPipeline() override;
         Texture *createTexture() override;
@@ -59,7 +60,7 @@ namespace FCT {
         void beginCommandBuffer(int index);
         void endCommandBuffer(int index);
         void submitCommandBuffer();
-
+        RHI::DepthStencilView* createDepthStencilView() override;
         void clear(Vec4 color,float depth = 1.0,float stencil = 0.0){
 
         }
@@ -68,6 +69,17 @@ namespace FCT {
         {
             return m_graphicsQueue;
         }
+
+        vk::CommandBuffer beginSingleTimeCommands();
+        void endSingleTimeCommands(vk::CommandBuffer commandBuffer);
+        void transferDataToBuffer(vk::Buffer dstBuffer, size_t size, const void* data);
+        void transferDataToImage(vk::Image dstImage, uint32_t width, uint32_t height, vk::Format format,
+                                 const void* data,
+                                 size_t dataSize);
+        void transferDataToImage(vk::Image dstImage, uint32_t width, uint32_t height, uint32_t depth, vk::Format format,
+                                 uint32_t mipLevels, uint32_t arrayLayers, vk::ImageAspectFlags aspectMask,
+                                 const void* data,
+                                 size_t dataSize);
     private:
         void createCommandPoolAndBuffers();
         VK_ContextCommon* m_common;

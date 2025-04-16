@@ -6,6 +6,7 @@
 #include "./VK_InputLayout.h"
 #include "./VK_ViewportState.h"
 #include "./VK_RasterizationState.h"
+#include "./VK_DepthStencilState.h"
 #include "VK_PassGroup.h"
 #ifndef VK_RASTERIZATIONPIPELINE_H
 #define VK_RASTERIZATIONPIPELINE_H
@@ -45,6 +46,7 @@ namespace FCT
             VK_InputLayout* m_inputLayout;
             VK_ViewportState* m_viewportState;
             VK_RasterizationState* m_rasterizationState;
+            VK_DepthStencilState* m_depthStencilState;
             vk::GraphicsPipelineCreateInfo m_createInfo;
             VK_Pass* m_pass;
             vk::Pipeline m_pipeline;

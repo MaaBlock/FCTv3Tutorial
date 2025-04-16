@@ -16,10 +16,13 @@ namespace FCT
             void create(PassGroup* group) override;
             vk::SubpassDescription getDescription() { return m_desc; }
             std::map<uint32_t,uint32_t>& targetAttachmentIndices() { return m_targetAttachmentIndices; }
+            void setDepthStencilAttachmentIndex(uint32_t index) { m_depthStencilAttachmentIndex = index; }
         protected:
             VK_Context* m_ctx;
             vk::SubpassDescription m_desc;
             std::vector<vk::AttachmentReference> m_renderTargetRefs;
+            vk::AttachmentReference m_depthStencilRef;
+            uint32_t m_depthStencilAttachmentIndex;
             std::map<uint32_t,uint32_t> m_targetAttachmentIndices;//key is slot,value is attachment index
         };
     }

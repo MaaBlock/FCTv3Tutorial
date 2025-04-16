@@ -89,6 +89,11 @@ namespace FCT {
 		{
             m_behavior->title(title);
 		}
+
+		void enableDepthBuffer(Format format)
+		{
+			m_swapchain->enableDepthBuffer(format);
+		}
 	private:
 	protected:
 		CallBackEventHandler* m_callbackHandler;

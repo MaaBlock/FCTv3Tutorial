@@ -41,6 +41,12 @@ namespace FCT
         m_target->addRef();
     }
 
+    void ImageRenderTarget::setDepthStencilBuffer(Image* image)
+    {
+        m_depthStencilBuffer = image;
+        m_depthStencilBuffer->addRef();
+    }
+
     /*
     void ImageRenderTarget::addRenderTarget(Image* image)
     {

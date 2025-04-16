@@ -47,6 +47,8 @@ namespace FCT
             //vk::Framebuffer m_framebuffer;
             std::vector<vk::ClearValue> m_clearValues;
             std::unordered_map<RHI::CommandBuffer*,vk::Framebuffer> m_framebuffers;
+            std::map<uint32_t, AttachmentSlot> m_depthAttachments;
+
             //std::vector<FCT::Image*> m_targets;
         };
     }

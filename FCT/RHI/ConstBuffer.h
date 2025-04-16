@@ -7,7 +7,7 @@ namespace FCT {
         class ConstBuffer
         {
         public:
-            void layout(const UniformLayout& layout)
+            void layout(const ConstLayout& layout)
             {
                 m_layout = layout;
             }
@@ -22,9 +22,9 @@ namespace FCT {
                 m_buffer = buffer;
             }
             UniformBuffer* getBuffer() const { return m_buffer; }
-            UniformLayout layout() const { return m_layout; }
+            ConstLayout layout() const { return m_layout; }
         protected:
-            UniformLayout m_layout;
+            ConstLayout m_layout;
             UniformBuffer* m_buffer;
         };
     }

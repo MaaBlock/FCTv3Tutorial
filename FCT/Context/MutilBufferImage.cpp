@@ -27,8 +27,81 @@ namespace FCT
 
     void MutilBufferImage::create()
     {
-    }
+        for (uint32_t i = 0; i < m_imageCount; ++i)
+        {
+            auto image = m_ctx->newRhiImage();
+            image->width(m_width);
+            image->height(m_height);
+            image->format(m_format);
+            image->samples(m_samples);
+            image->usage(m_usage);
+            image->create();
+            m_images.push_back(image);
+        }
 
+        delete m_behavior;
+        m_behavior = new MutilBufferAffterCreateImageBehavior(this);
+
+        as(m_usage);
+
+        if (m_currentIndex >= m_images.size() && !m_images.empty())
+        {
+            m_currentIndex = 0;
+        }
+    }
+    void MutilBufferImage::resize(uint32_t width, uint32_t height)
+    {
+        if (m_width == width && m_height == height)
+        {
+            return;
+        }
+
+        Format currentFormat = m_format;
+        Samples currentSamples = m_samples;
+        ImageUsageFlags currentUsage = m_usage;
+        uint32_t currentImageCount = m_imageCount;
+
+        for (auto img : m_images)
+        {
+            FCT_SAFE_RELEASE(img);
+        }
+        m_images.clear();
+
+        for (auto rtv : m_rtvs)
+        {
+            rtv->release();
+        }
+        m_rtvs.clear();
+
+        for (auto dsv : m_dsvs)
+        {
+            dsv->release();
+        }
+        m_dsvs.clear();
+
+        m_width = width;
+        m_height = height;
+
+        for (uint32_t i = 0; i < currentImageCount; ++i)
+        {
+            auto image = m_ctx->newRhiImage();
+            image->width(m_width);
+            image->height(m_height);
+            image->format(currentFormat);
+            image->samples(currentSamples);
+            image->usage(currentUsage);
+            image->create();
+            m_images.push_back(image);
+        }
+
+        as(currentUsage);
+
+        if (m_currentIndex >= m_images.size() && !m_images.empty())
+        {
+            m_currentIndex = 0;
+        }
+
+    }
     void MutilBufferImage::create(std::vector<RHI::Image*> images)
     {
         for (auto img : m_images)
@@ -39,7 +112,12 @@ namespace FCT
         {
             rtv->release();
         }
+        for (auto dsv : m_dsvs)
+        {
+            dsv->release();
+        }
         m_rtvs.clear();
+        m_dsvs.clear();
         m_images = images;
         for (auto img : m_images)
         {
@@ -49,16 +127,7 @@ namespace FCT
         m_height = images[0]->height();
         delete m_behavior;
         m_behavior = new MutilBufferAffterCreateImageBehavior(this);
-        if (m_usage & ImageUsage::RenderTarget)
-        {
-            for (auto img : m_images)
-            {
-                auto rtv = m_ctx->createRenderTargetView();
-                rtv->image(img);
-                rtv->create();
-                m_rtvs.push_back(rtv);
-            }
-        }
+        as(m_usage);
     }
 
     void MutilBufferImage::as(ImageUsageFlags usage)
@@ -72,6 +141,16 @@ namespace FCT
                 rtv->image(img);
                 rtv->create();
                 m_rtvs.push_back(rtv);
+            }
+        }
+        if (usage & ImageUsage::DepthStencil && m_dsvs.empty())
+        {
+            for (auto img : m_images)
+            {
+                auto dsv = m_ctx->createDepthStencilView();
+                dsv->image(img);
+                dsv->create();
+                m_dsvs.push_back(dsv);
             }
         }
     }
@@ -92,5 +171,15 @@ namespace FCT
     RHI::RenderTargetView* MutilBufferImage::currentTargetView()
     {
         return m_rtvs[m_currentIndex];
+    }
+
+    RHI::TextureView* MutilBufferImage::currentTextureView()
+    {
+        return nullptr;
+    }
+
+    RHI::DepthStencilView* MutilBufferImage::currentDepthStencilView()
+    {
+        return m_dsvs[m_currentIndex];
     }
 }

@@ -50,7 +50,7 @@ namespace FCT {
         }
         void preprocess()
         {
-            m_source = m_ctx->getGenerator()->generatePixelShader(m_pixelLayout,m_uniformLayouts,m_binaryCode, m_userSource);
+            m_source = m_ctx->getGenerator()->generatePixelShader(m_pixelLayout,m_uniformLayouts,m_binaryCode,m_resourceLayout, m_userSource);
         }
         RHI::ShaderBinary binaryCode()
         {
@@ -64,9 +64,13 @@ namespace FCT {
         {
             m_pixelLayout = layout;
         }
-        void addUniform(UniformLayout layout)
+        void addUniform(ConstLayout layout)
         {
             m_uniformLayouts.push_back(layout);
+        }
+        void resourceLayout(ResourceLayout layout)
+        {
+            m_resourceLayout = layout;
         }
     protected:
         RHI::ShaderBinary m_binaryCode;
@@ -75,7 +79,8 @@ namespace FCT {
         RHI::PixelShader* m_pixelShader;
         std::string m_userSource;
         std::string m_source;
-        std::vector<UniformLayout> m_uniformLayouts;
+        std::vector<ConstLayout> m_uniformLayouts;
+        ResourceLayout m_resourceLayout;
     };
 
 }

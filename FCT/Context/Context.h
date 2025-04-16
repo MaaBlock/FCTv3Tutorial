@@ -27,11 +27,13 @@
 #include "./ShaderCompiler.h"
 #include "./ShaderGenerator.h"
 #include "PassResource.h"
+#include "../RHI/DepthStencilView.h"
 
 namespace FCT
 {
 	namespace RHI
 	{
+		class TextureView;
 		class ConstBuffer;
 		class IndexBuffer;
 	}
@@ -72,10 +74,11 @@ namespace FCT
 	 *2.作为RenderGraph系统
 	 *3.作为帧 管理器（合并在RenderGraph系统）
 	 */
+	class Runtime;
 	class Context : public RefCount
 	{
 	public:
-		Context();
+		Context(Runtime* runtime);
 		virtual ~Context();
 		virtual void clear(float r, float g, float b) = 0;
 		virtual void viewport(int x, int y, int width, int height) = 0;
@@ -89,6 +92,7 @@ namespace FCT
 		virtual Texture* createTexture() = 0;
 		virtual TextureArray* createTextureArray() = 0;
 		virtual Image* createImage() = 0;
+		virtual RHI::Image* newRhiImage() = 0;
 		virtual RHI::Swapchain* createSwapchain() = 0;
 		virtual RHI::PassGroup* createPassGroup() = 0;
 		virtual RHI::Pass* createPass() = 0;
@@ -102,7 +106,10 @@ namespace FCT
 		virtual RHI::VertexBuffer* createVertexBuffer() = 0;
 		virtual RHI::IndexBuffer* createIndexBuffer() = 0;
 		virtual RHI::DescriptorPool* createDescriptorPool() = 0;
+		virtual RHI::DepthStencilView* createDepthStencilView() = 0;
 		virtual PassResource* createPassResource() = 0;
+		virtual RHI::TextureView* createTextureView() = 0;
+		virtual RHI::Sampler* createSampler() = 0;
 		void flush()
 		{
 			FCT_WAIT_FOR(m_currentFlush);
@@ -181,7 +188,10 @@ namespace FCT
 		//todo: 考虑可能要变更为 [IRenderTarget*]<->[DescriptorPool*] map
 	protected:
 		void initWndFrameResources(Window* wnd);
-
+	public:
+		Image* loadTexture(const std::string& filename);
+	protected:
+		ImageLoader* m_imageLoader;
 	};
 }
 #include "../UI/Window.h"

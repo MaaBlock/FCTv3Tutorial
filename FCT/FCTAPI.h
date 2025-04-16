@@ -40,7 +40,11 @@
 #include "./RHI/VK_IndexBuffer.h"
 #include "./RHI/VK_ConstBuffer.h"
 #include "./RHI/VK_DescriptorPool.h"
+#include "./RHI/VK_TextureView.h"
 #include "./Context/VK_PassResource.h"
+#include "./RHI/VK_Sampler.h"
+#include "./RHI/VK_DepthStencilView.h"
+#include "./RHI/VK_DepthStencilState.h"
 //#include "./Context/VK_Image.h"
 #endif
 //#include "./Runtime/FCT_Runtime.h"
@@ -53,6 +57,9 @@
 #endif
 #ifdef FCT_USE_SHADERC
 #include "./Context/Shaderc_ShaderCompiler.h"
+#endif
+#ifdef FCT_USE_FREEIMAGE
+#include "./ImageLoader//FreeImage_ImageLoader.h"
 #endif
 
 #endif //TUTORIAL_FCTAPI_H

@@ -17,6 +17,13 @@ file(GLOB RUNTIME_ANDROID_MODULE_SOURCES
         CONFIGURE_DEPENDS
         "./Runtime/Android_*.cpp"
 )
+
+file(GLOB IMAGELOADER_FREETYPE_MODULE_SOURCES
+        LIST_DIRECTORIES false
+        CONFIGURE_DEPENDS
+        "./ImageLoader/FreeImage_*.cpp"
+)
+
 list(REMOVE_ITEM RUNTIME_MODULE_SOURCES ${RUNTIME_ANDROID_MODULE_SOURCES})
 
 file(GLOB RUNTIME_WIN32_MODULE_SOURCES
@@ -184,7 +191,11 @@ if (FCT_ANDROID)
 else()
     target_sources(FCT PRIVATE
             ${UI_GLFW_MODULE_SOURCES}
+            ${IMAGELOADER_FREETYPE_MODULE_SOURCES}
     )
+    find_package(freeimage CONFIG REQUIRED)
+    target_link_libraries(FCT PRIVATE freeimage::FreeImage freeimage::FreeImagePlus)
+
     find_package(glfw3 CONFIG REQUIRED)
     target_link_libraries(FCT PUBLIC glfw)
     

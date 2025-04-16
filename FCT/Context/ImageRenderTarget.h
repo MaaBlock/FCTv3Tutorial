@@ -21,7 +21,9 @@ namespace FCT
         int height(int height) { m_height = height; }
         void bindTarget(RHI::Image* image);
         void bindTarget(Image* image);
+        void setDepthStencilBuffer(Image* image);
         Image* targetImage() const { return m_target; }
+        Image* depthStencilBuffer() const { return m_depthStencilBuffer; }
 /*
         void bindRenderTarget(uint32_t index, Image* image);
         void bindRenderTarget(uint32_t index, RHI::Image* image);*/
@@ -49,6 +51,7 @@ namespace FCT
         int m_height;
         Context* m_ctx;
         Image* m_target;
+        Image* m_depthStencilBuffer;
         //std::map<uint32_t,Image*> m_renderTargetImages;
         //std::vector<Image*> m_renderTargetImages;
     };

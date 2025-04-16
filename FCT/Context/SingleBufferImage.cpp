@@ -20,6 +20,7 @@ namespace FCT
 
     SingleBufferImage::SingleBufferImage(Context* ctx) : Image(ctx), m_image(nullptr), m_rtv(nullptr) {
         m_behavior = new BeforeCreateImageBehavior(this);
+        m_srv = nullptr;
     }
 
     SingleBufferImage::~SingleBufferImage() {
@@ -29,10 +30,22 @@ namespace FCT
 
     void SingleBufferImage::create() {
         FCT_SAFE_RELEASE(m_image);
-        /*m_image = m_ctx->createImage(); // 假设 Context 有 createImage 方法
-        m_image->create(m_width, m_height, m_format, m_samples);
-        delete m_behavior;*/
-        //m_behavior = new AfterCreateImageBehavior(this);
+        m_image = m_ctx->newRhiImage();
+        m_image->width(m_width);
+        m_image->height(m_height);
+        m_image->format(m_format);
+        m_image->samples(m_samples);
+        m_image->initData(m_initData);
+        m_image->usage(m_usage);
+        m_image->create();
+        if (m_usage & ImageUsage::Texture && !m_srv)
+        {
+            m_srv = m_ctx->createTextureView();
+            m_srv->image(m_image);
+            m_srv->create();
+        }
+        delete m_behavior;
+        m_behavior = new SingleBufferAfterCreateImageBehavior(this);
     }
 
     void SingleBufferImage::create(RHI::Image* image) {
@@ -51,6 +64,7 @@ namespace FCT
             m_rtv->image(m_image);
             m_rtv->create();
         }
+        m_usage |= usage;
     }
 
     void SingleBufferImage::bind(Context* ctx) {
@@ -67,5 +81,15 @@ namespace FCT
     RHI::RenderTargetView* SingleBufferImage::currentTargetView()
     {
         return m_rtv;
+    }
+
+    RHI::TextureView* SingleBufferImage::currentTextureView()
+    {
+        return m_srv;
+    }
+
+    RHI::DepthStencilView* SingleBufferImage::currentDepthStencilView()
+    {
+        return nullptr;
     }
 }

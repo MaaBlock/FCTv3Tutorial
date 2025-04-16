@@ -26,6 +26,7 @@ namespace FCT{
             void acquireFirstImage();
             void needRecreate();
             bool processRecreate(bool waitFence = false);
+            void enableDepthBuffer(Format format) override;
             /*
             vk::Semaphore getImageAvailableSemaphore() const;
             vk::Semaphore getRenderFinishedSemaphore() const;*/
@@ -40,6 +41,7 @@ namespace FCT{
             bool m_recreated;
             bool m_needRecreated;
             MutilBufferImage* m_fctImage;
+            MutilBufferImage* m_depthStencilImage;
             std::vector<RHI::Image*> m_fctImages;
             ImageRenderTarget* m_target;
             vk::Format m_imageFormat;
@@ -57,6 +59,19 @@ namespace FCT{
             uint32_t m_currentImageIndex = 0;
             RHI::VK_Semaphore* m_prensentFinshSemphore;
         };
+
+        inline void VK_Swapchain::enableDepthBuffer(Format format)
+        {
+            m_depthStencilImage = new MutilBufferImage(m_ctx);
+            m_depthStencilImage->width(m_width);
+            m_depthStencilImage->height(m_height);
+            m_depthStencilImage->format(format);
+            m_depthStencilImage->samples(Samples::sample_1);
+            m_depthStencilImage->as(ImageUsage::DepthStencil);
+            m_depthStencilImage->imageCount(m_images.size());
+            m_depthStencilImage->create();
+            m_target->setDepthStencilBuffer(m_depthStencilImage);
+        }
     }
 }
 

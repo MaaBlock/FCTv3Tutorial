@@ -17,6 +17,14 @@
       "platform": "linux"
     },
     {
+      "name": "freeimage",
+      "platform": "windows"
+    },
+    {
+      "name": "freeimage",
+      "platform": "linux"
+    },
+    {
       "name": "physx",
       "platform": "windows"
     },

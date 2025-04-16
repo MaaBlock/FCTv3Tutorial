@@ -12,7 +12,7 @@
 namespace FCT
 {
     // Uniform类型枚举
-    enum class UniformType {
+    enum class ConstType {
         // 矩阵类型
         ModelMatrix,
         ViewMatrix,
@@ -116,102 +116,102 @@ namespace FCT
 #endif
 
     // 获取Uniform类型的大小
-    constexpr size_t GetUniformSize(UniformType type) {
+    constexpr size_t GetUniformSize(ConstType type) {
         switch (type) {
-        case UniformType::ModelMatrix:
-        case UniformType::ViewMatrix:
-        case UniformType::ProjectionMatrix:
-        case UniformType::MVPMatrix:
-        case UniformType::Mat4:
+        case ConstType::ModelMatrix:
+        case ConstType::ViewMatrix:
+        case ConstType::ProjectionMatrix:
+        case ConstType::MVPMatrix:
+        case ConstType::Mat4:
             return sizeof(Mat4);
-        case UniformType::Mat3:
+        case ConstType::Mat3:
             return sizeof(Mat3);
-        case UniformType::Vec4:
+        case ConstType::Vec4:
             return sizeof(Vec4);
-        case UniformType::Vec3:
+        case ConstType::Vec3:
             return sizeof(Vec3);
-        case UniformType::Vec2:
+        case ConstType::Vec2:
             return sizeof(Vec2);
-        case UniformType::Float:
+        case ConstType::Float:
             return sizeof(float);
-        case UniformType::Int:
-        case UniformType::Bool:
+        case ConstType::Int:
+        case ConstType::Bool:
             return sizeof(int);
-        case UniformType::Texture2D:
-        case UniformType::TextureCube:
+        case ConstType::Texture2D:
+        case ConstType::TextureCube:
             return sizeof(int); // 纹理句柄
-        case UniformType::Custom:
+        case ConstType::Custom:
         default:
             return 0;
         }
     }
 
     // 获取Uniform类型的对齐要求
-    constexpr size_t GetUniformAlignment(UniformType type)
+    constexpr size_t GetUniformAlignment(ConstType type)
     {
         switch (type) {
-        case UniformType::ModelMatrix:
-        case UniformType::ViewMatrix:
-        case UniformType::ProjectionMatrix:
-        case UniformType::MVPMatrix:
-        case UniformType::Mat4:
-        case UniformType::Mat3:
+        case ConstType::ModelMatrix:
+        case ConstType::ViewMatrix:
+        case ConstType::ProjectionMatrix:
+        case ConstType::MVPMatrix:
+        case ConstType::Mat4:
+        case ConstType::Mat3:
             return 16; // 矩阵对齐到16字节
-        case UniformType::Vec4:
-        case UniformType::Vec3:
+        case ConstType::Vec4:
+        case ConstType::Vec3:
             return 16; // 向量对齐到16字节
-        case UniformType::Vec2:
+        case ConstType::Vec2:
             return 8;  // Vec2对齐到8字节
-        case UniformType::Float:
-        case UniformType::Int:
-        case UniformType::Bool:
-        case UniformType::Texture2D:
-        case UniformType::TextureCube:
+        case ConstType::Float:
+        case ConstType::Int:
+        case ConstType::Bool:
+        case ConstType::Texture2D:
+        case ConstType::TextureCube:
             return 4;  // 标量和纹理句柄对齐到4字节
-        case UniformType::Custom:
+        case ConstType::Custom:
         default:
             return 16; // 默认对齐到16字节
         }
     }
-    inline constexpr const char* GetUniformDefaultName(UniformType type)
+    inline constexpr const char* GetUniformDefaultName(ConstType type)
     {
         switch (type)
         {
             // 标准类型 - 不生成警告
-        case UniformType::ModelMatrix:
+        case ConstType::ModelMatrix:
             return "modelMatrix";
-        case UniformType::ViewMatrix:
+        case ConstType::ViewMatrix:
             return "viewMatrix";
-        case UniformType::ProjectionMatrix:
+        case ConstType::ProjectionMatrix:
             return "projectionMatrix";
-        case UniformType::MVPMatrix:
+        case ConstType::MVPMatrix:
             return "mvpMatrix";
-        case UniformType::Mat4:
+        case ConstType::Mat4:
             return "u_Mat4";
-        case UniformType::Mat3:
+        case ConstType::Mat3:
             return "u_Mat3";
-        case UniformType::Vec4:
+        case ConstType::Vec4:
             return "u_Vec4";
-        case UniformType::Vec3:
+        case ConstType::Vec3:
             return "u_Vec3";
-        case UniformType::Vec2:
+        case ConstType::Vec2:
             return "u_Vec2";
-        case UniformType::Float:
+        case ConstType::Float:
             return "u_Float";
 
-        case UniformType::Int:
+        case ConstType::Int:
             return "u_Int";
 
-        case UniformType::Bool:
+        case ConstType::Bool:
             return "u_Bool";
 
-        case UniformType::Texture2D:
+        case ConstType::Texture2D:
             return "u_Texture2D";
 
-        case UniformType::TextureCube:
+        case ConstType::TextureCube:
             return "u_TextureCube";
 
-        case UniformType::Custom:
+        case ConstType::Custom:
         default:
             return "u_Custom";
         }
@@ -224,40 +224,40 @@ namespace FCT
         Dynamic     // 频繁更新（如动画数据）
     };
 
-    class UniformElement {
+    class ConstElement {
     public:
-        constexpr UniformElement() noexcept
-            : m_type(UniformType::Custom), m_name("") {}
+        constexpr ConstElement() noexcept
+            : m_type(ConstType::Custom), m_name("") {}
 
-        constexpr UniformElement(UniformType type) noexcept
+        constexpr ConstElement(ConstType type) noexcept
             : m_type(type),m_name(GetUniformDefaultName(type)) {}
 
-        constexpr UniformElement(UniformType type, const char* name) noexcept
+        constexpr ConstElement(ConstType type, const char* name) noexcept
             : m_type(type), m_name(name) {}
 
-        constexpr UniformType getType() const noexcept { return m_type; }
+        constexpr ConstType getType() const noexcept { return m_type; }
         constexpr const char* getName() const noexcept { return m_name; }
         constexpr size_t getSize() const noexcept { return GetUniformSize(m_type); }
         constexpr size_t getAlignment() const noexcept { return GetUniformAlignment(m_type); }
 
     private:
-        UniformType m_type;
+        ConstType m_type;
         const char* m_name;
     };
 
-    class UniformLayout {
+    class ConstLayout {
     public:
-        constexpr UniformLayout() noexcept
+        constexpr ConstLayout() noexcept
         : m_name(""), m_shaderStages(ShaderStage::All), m_updateFrequency(UpdateFrequency::PerFrame),
           m_elementCount(0), m_size(0)
         {
             for (size_t i = 0; i < MaxElements; ++i) {
-                m_elements[i] = UniformElement();
+                m_elements[i] = ConstElement();
                 m_offsets[i] = 0;
             }
         }
         template<typename... Args>
-        constexpr UniformLayout(const char* layoutName, Args&&... args) noexcept
+        constexpr ConstLayout(const char* layoutName, Args&&... args) noexcept
         : m_name(layoutName), m_updateFrequency(UpdateFrequency::PerFrame)
         {
             processArgs(std::forward<Args>(args)...);
@@ -269,7 +269,7 @@ namespace FCT
 
         constexpr ShaderStages getShaderStages() const noexcept { return m_shaderStages; }
 
-        constexpr void addElement(const UniformElement& element) noexcept {
+        constexpr void addElement(const ConstElement& element) noexcept {
             if (m_elementCount < MaxElements) {
                 size_t alignment = element.getAlignment();
                 m_size = (m_size + alignment - 1) & ~(alignment - 1);
@@ -279,7 +279,7 @@ namespace FCT
                 m_size += element.getSize();
             }
         }
-        bool operator==(const UniformLayout& other) const noexcept {
+        bool operator==(const ConstLayout& other) const noexcept {
 
             if (!StringEquals(m_name, other.m_name)) {
                 return false;
@@ -298,7 +298,7 @@ namespace FCT
 
         constexpr size_t getElementCount() const noexcept { return m_elementCount; }
 
-        constexpr const UniformElement& getElement(size_t index) const noexcept {
+        constexpr const ConstElement& getElement(size_t index) const noexcept {
             return (index < m_elementCount) ? m_elements[index] : m_elements[0];
         }
 
@@ -315,7 +315,7 @@ namespace FCT
             return -1;
         }
 
-        constexpr int findElementIndex(UniformType type) const noexcept {
+        constexpr int findElementIndex(ConstType type) const noexcept {
             for (size_t i = 0; i < m_elementCount; ++i) {
                 if (m_elements[i].getType() == type) {
                     return static_cast<int>(i);
@@ -333,7 +333,7 @@ namespace FCT
             return (index >= 0) ? m_offsets[index] : 0;
         }
 
-        constexpr size_t getElementOffset(UniformType type) const noexcept {
+        constexpr size_t getElementOffset(ConstType type) const noexcept {
             int index = findElementIndex(type);
             return (index >= 0) ? m_offsets[index] : 0;
         }
@@ -350,7 +350,7 @@ namespace FCT
         }
 
         template<typename... Rest>
-        constexpr void processArgs(const UniformElement& element, Rest&&... rest) noexcept {
+        constexpr void processArgs(const ConstElement& element, Rest&&... rest) noexcept {
             addElement(element);
             processArgs(std::forward<Rest>(rest)...);
         }
@@ -365,47 +365,47 @@ namespace FCT
         const char* m_name = "";
         ShaderStages m_shaderStages = ShaderStage::All;
         UpdateFrequency m_updateFrequency = UpdateFrequency::PerFrame;
-        UniformElement m_elements[MaxElements]{};
+        ConstElement m_elements[MaxElements]{};
         size_t m_offsets[MaxElements]{};
         size_t m_elementCount = 0;
         size_t m_size = 0;
     };
 
     namespace PredefinedUniforms {
-        static constexpr UniformLayout MVP = {
+        static constexpr ConstLayout MVP = {
             "transform",
             UpdateFrequency::PerFrame,
-            UniformElement(UniformType::ModelMatrix),
-            UniformElement(UniformType::ViewMatrix),
-            UniformElement(UniformType::ProjectionMatrix)
+            ConstElement(ConstType::ModelMatrix),
+            ConstElement(ConstType::ViewMatrix),
+            ConstElement(ConstType::ProjectionMatrix)
         };
 
-        static constexpr UniformLayout SingleMVP = {
+        static constexpr ConstLayout SingleMVP = {
             "mvpTransform",
-            UniformElement(UniformType::MVPMatrix),
+            ConstElement(ConstType::MVPMatrix),
             UpdateFrequency::PerFrame
         };
 
-        static constexpr UniformLayout ModelViewProj = {
+        static constexpr ConstLayout ModelViewProj = {
             "combinedTransform",
-            UniformElement(UniformType::ModelMatrix),
+            ConstElement(ConstType::ModelMatrix),
             UpdateFrequency::PerObject,
-            UniformElement(UniformType::MVPMatrix)
+            ConstElement(ConstType::MVPMatrix)
         };
 
-        static constexpr UniformLayout BasicPBRMaterial = {
+        static constexpr ConstLayout BasicPBRMaterial = {
             "pbrMaterial",
             UpdateFrequency::Static,
-            UniformElement(UniformType::Vec4, "baseColorFactor"),
-            UniformElement(UniformType::Float, "metallicFactor"),
-            UniformElement(UniformType::Float, "roughnessFactor"),
-            UniformElement(UniformType::Vec3, "emissiveFactor")
+            ConstElement(ConstType::Vec4, "baseColorFactor"),
+            ConstElement(ConstType::Float, "metallicFactor"),
+            ConstElement(ConstType::Float, "roughnessFactor"),
+            ConstElement(ConstType::Vec3, "emissiveFactor")
         };
     }
 
     class UniformBuffer {
     public:
-        explicit UniformBuffer(const UniformLayout& layout)
+        explicit UniformBuffer(const ConstLayout& layout)
             : m_layout(layout), m_size(layout.getTotalSize()), m_dirty(true) {
             m_data.resize(m_size, 0);
         }
@@ -427,7 +427,7 @@ namespace FCT
         }
 
         template<typename T>
-        void setValue(UniformType type, const T& value) {
+        void setValue(ConstType type, const T& value) {
             int index = m_layout.findElementIndex(type);
             if (index >= 0) {
                 size_t offset = m_layout.getElementOffset(index);
@@ -459,13 +459,13 @@ namespace FCT
 
         size_t getSize() const { return m_size; }
 
-        const UniformLayout& getLayout() const { return m_layout; }
+        const ConstLayout& getLayout() const { return m_layout; }
 
         bool isDirty() const { return m_dirty; }
 
         void clearDirty() { m_dirty = false; }
     private:
-        UniformLayout m_layout;
+        ConstLayout m_layout;
         std::vector<uint8_t> m_data;
         size_t m_size;
         bool m_dirty;

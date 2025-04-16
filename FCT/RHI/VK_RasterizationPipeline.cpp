@@ -13,6 +13,7 @@ namespace FCT::RHI
         m_rasterizationState = nullptr;
         m_viewportState = nullptr;
         m_inputLayout = nullptr;
+        m_depthStencilState = nullptr;
     }
 
     VK_RasterizationPipeline::~VK_RasterizationPipeline()
@@ -72,7 +73,7 @@ namespace FCT::RHI
         m_inputAssemblyState.primitiveRestartEnable = VK_FALSE;
         m_createInfo.pInputAssemblyState = &m_inputAssemblyState;
         m_createInfo.pViewportState = &m_viewportState->viewportStateCreateInfo();
-        m_createInfo.pDepthStencilState = nullptr;
+        m_createInfo.pDepthStencilState = &m_depthStencilState->getCreateInfo();
         m_createInfo.pColorBlendState = &m_blendState->colorBlendStateCreateInfo();
 
         m_createInfo.stageCount = m_shaderStages.size();
@@ -106,6 +107,11 @@ namespace FCT::RHI
         {
             m_inputLayout = new VK_InputLayout(m_ctx);
             m_inputLayout->create();
+        }
+        if (!m_depthStencilState)
+        {
+            m_depthStencilState = new VK_DepthStencilState(m_ctx);
+            m_depthStencilState->create();
         }
     }
 }

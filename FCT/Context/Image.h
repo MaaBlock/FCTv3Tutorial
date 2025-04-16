@@ -5,21 +5,16 @@
 #include "../Base/Flags.h"
 #include "./IRenderTarget.h"
 #include "./Format.h"
+#include "../RHI/DepthStencilView.h"
 #include "../RHI/Image.h"
 #include "../RHI/RenderTargetView.h"
+#include "../RHI/TextureView.h"
 
 #ifndef FCT_IMAGE_H
 #define FCT_IMAGE_H
 
 namespace FCT {
     class Context;
-    enum class ImageUsage : unsigned int
-    {
-        RenderTarget = 0x1,
-        DepthStencil = 0x2,
-        Texture      = 0x4,
-    };
-    using ImageUsageFlags = Flags<ImageUsage>;
     /*
     struct ImageUsageFlags
     {
@@ -63,60 +58,6 @@ namespace FCT {
 
     };
 #ifdef FCT_DEPRECATED
-    class Image : public RefCount, public IRenderTarget {
-    public:
-        friend class BeforeCreateImageBehavior;
-        friend class AfterCreateImageBehavior;
-        Image(Context* ctx);
-        RenderTargetType getType() const override
-        {
-            return m_renderTargetType;
-        }
-        void renderTargetType(RenderTargetType type)
-        {
-            m_renderTargetType = type;
-        }
-        virtual ~Image();
-        void create();
-        void create(RHI::Image* image);
-        void as(ImageUsageFlags usage);
-        void bind(Context* ctx)
-        {
-
-        }
-        Format format() const
-        {
-            return m_behavior->format();
-        }
-        Samples samples() const
-        {
-            return m_behavior->samples();
-        }
-        Image* getImage() const
-        {
-            return nullptr;
-        }
-        std::vector<Image*> getTargetImages() override
-        {
-            if (m_rtv)
-            {
-                std::vector<Image*> ret;
-                ret.push_back(this);
-                return ret;
-            }
-            return {};
-        }
-    protected:
-        ImageBehavior* m_behavior;
-        RHI::Image* m_image;
-        RHI::RenderTargetView* m_rtv;
-        Context* m_ctx;
-        int m_width;
-        int m_height;
-        Format m_format;
-        Samples m_samples;
-        RenderTargetType m_renderTargetType;
-    };
 
 #endif // FCT_DEPRECATED
     class Image : public RefCount, public IRenderTarget {
@@ -140,8 +81,14 @@ namespace FCT {
         virtual Image* getImage() const { return nullptr; }
         virtual std::vector<Image*> getTargetImages() = 0;
         virtual RHI::RenderTargetView* currentTargetView() = 0;
+        virtual RHI::TextureView* currentTextureView() = 0;
+        virtual RHI::DepthStencilView* currentDepthStencilView() = 0;
         int width() const { return m_width; }
         int height() const { return m_height; }
+        void width(int width) { m_width = width; }
+        void height(int height) { m_height = height; }
+        void format(Format format) { m_format = format; }
+        void samples(Samples samples) { m_samples = samples; }
     protected:
         ImageBehavior* m_behavior;
         Context* m_ctx;

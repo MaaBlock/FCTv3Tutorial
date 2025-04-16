@@ -31,6 +31,7 @@ namespace FCT
                 m_width = width;
                 m_height = height;
             }
+            virtual void enableDepthBuffer(Format format) = 0;
             virtual void create() = 0;
             virtual void present() = 0;
             virtual Format getFormat() const = 0;

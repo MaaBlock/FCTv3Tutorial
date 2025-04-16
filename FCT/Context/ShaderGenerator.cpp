@@ -3,21 +3,40 @@
 
 namespace FCT
 {
-    std::string ShaderGenerator::generateVertexShader(
-        const std::map<uint32_t, VertexLayout>& vertexLayouts,
-        const PixelLayout& pixelLayout,
-        const std::vector<UniformLayout>& uniformLayouts,
-        RHI::ShaderBinary& binary,
-        const std::string& userCode)
+    void ShaderGenerator::ResourceLayoutToElements(ResourceLayout& resourceLayout,
+    std::vector<TextureElement>& textureElements, std::vector<SamplerElement>& samplerElements)
+    {
+        textureElements.clear();
+        samplerElements.clear();
+        size_t textureCount = resourceLayout.getTextureCount();
+        size_t samplerCount = resourceLayout.getSamplerCount();
+        textureElements.reserve(textureCount);
+        samplerElements.reserve(samplerCount);
+        for (size_t i = 0; i < textureCount; ++i) {
+            textureElements.push_back(resourceLayout.getTexture(i));
+        }
+        for (size_t i = 0; i < samplerCount; ++i) {
+            samplerElements.push_back(resourceLayout.getSampler(i));
+        }
+    }
+
+    std::string ShaderGenerator::generateVertexShader(const std::map<uint32_t, VertexLayout>& vertexLayouts,
+                                                      const PixelLayout& pixelLayout, const std::vector<ConstLayout>& uniformLayouts, RHI::ShaderBinary& binary,
+                                                      ResourceLayout& resourceLayout, const std::string& userCode)
     {
         std::map<std::string, uint32_t> locations;
         std::map<std::string, std::pair<uint32_t, uint32_t>> uniformsLocations;
         std::map<std::string, std::pair<uint32_t, uint32_t>> constBufferLocations;
 
+        std::vector<TextureElement> texturesElements;
+        std::vector<SamplerElement> samplersElements;
+        ResourceLayoutToElements(resourceLayout, texturesElements, samplersElements);
+
         std::stringstream ss;
         ss << generateShaderIn(vertexLayouts, locations);
         ss << generateShaderOut(pixelLayout);
         ss << generateConstBuffer(binary,uniformLayouts);
+        ss << generateTexturesAndSamplers(binary,texturesElements, samplersElements);
         ss << generateVertexMain(vertexLayouts, pixelLayout);
         ss << userCode;
 
@@ -26,24 +45,22 @@ namespace FCT
         return ss.str();
     }
 
-    std::string ShaderGenerator::generatePixelShader(
-        const PixelLayout& layout,
-        const std::vector<UniformLayout>& uniformLayouts,
-        RHI::ShaderBinary& binary,
+    std::string ShaderGenerator::generatePixelShader(const PixelLayout& layout,
+        const std::vector<ConstLayout>& uniformLayouts, RHI::ShaderBinary& binary, ResourceLayout& resourceLayout,
         const std::string& userCode)
     {
         std::stringstream ss;
-        std::map<std::string, std::pair<uint32_t, uint32_t>> uniformsLocations;
-        std::map<std::string, std::pair<uint32_t, uint32_t>> constBufferLocations;
+        std::vector<TextureElement> texturesElements;
+        std::vector<SamplerElement> samplersElements;
+        ResourceLayoutToElements(resourceLayout, texturesElements, samplersElements);
 
         ss << generateShaderIn(layout);
         ss << generateShaderOut();
         ss << generateConstBuffer(binary,uniformLayouts);
+        ss << generateTexturesAndSamplers(binary,texturesElements, samplersElements);
         ss << generatePixelMain(layout);
         ss << userCode;
 
-        binary.uniformLocation(uniformsLocations);
-        binary.constBufferLocation(constBufferLocations);
 
         return ss.str();
     }
@@ -267,16 +284,15 @@ namespace FCT
         bool hasPosition = false;
         const VertexElement* posElement = nullptr;
 
-        // 首先检查Position4f类型
         posElement = pixelLayout.getElementByType(VtxType::Position4f);
         if (posElement) {
             hasPosition = true;
         }
-        // 然后检查Position3f类型
+
         else if ((posElement = pixelLayout.getElementByType(VtxType::Position3f))) {
             hasPosition = true;
         }
-        // 最后检查Position2f类型
+
         else if ((posElement = pixelLayout.getElementByType(VtxType::Position2f))) {
             hasPosition = true;
         }
@@ -320,38 +336,165 @@ namespace FCT
         return ss.str();
     }
 
-    std::string ShaderGenerator::uniformTypeToShaderType(UniformType type)
+    std::string ShaderGenerator::generateTexturesAndSamplers(RHI::ShaderBinary& binary,
+    const std::vector<TextureElement>& textures, const std::vector<SamplerElement>& samplers)
+    {
+        std::stringstream ss;
+        ss << "//FCT Textures and Samplers\n";
+
+        for (const auto& texture : textures) {
+            UpdateFrequency frequency = texture.getUpdateFrequency();
+            ShaderStages stages = texture.getShaderStages();
+
+            uint32_t set;
+            switch (frequency) {
+            case UpdateFrequency::Static:
+                set = 0;
+                break;
+            case UpdateFrequency::PerFrame:
+                set = 1;
+                break;
+            case UpdateFrequency::PerObject:
+                set = 2;
+                break;
+            case UpdateFrequency::Dynamic:
+                set = 3;
+                break;
+            default:
+                set = 0;
+                break;
+            }
+
+            uint32_t binding;
+            bool found = false;
+
+            for (const auto& [storedTexture, setBinding] : m_textureSetBindings) {
+                if (storedTexture == texture) {
+                    set = setBinding.first;
+                    binding = setBinding.second;
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                binding = m_frequencyBindingCount[frequency]++;
+                m_textureSetBindings.push_back({texture, {set, binding}});
+            }
+
+            binary.addTextureLocation(texture, set, binding);
+
+            std::string textureType;
+            switch (texture.getType()) {
+            case TextureType::Texture2D:
+                textureType = "Texture2D";
+                break;
+            case TextureType::Texture3D:
+                textureType = "Texture3D";
+                break;
+            case TextureType::TextureCube:
+                textureType = "TextureCube";
+                break;
+            case TextureType::Texture2DArray:
+                textureType = "Texture2DArray";
+                break;
+            case TextureType::DepthTexture:
+                textureType = "Texture2D";
+                break;
+            default:
+                textureType = "Texture2D";
+                break;
+            }
+
+            ss << "[[vk::binding(" << binding << ", " << set << ")]] ";
+            ss << textureType << "<float4> " << texture.getName()
+               << " : register(t" << binding << ", space" << set << ");\n";
+        }
+
+        ss << "\n";
+
+        for (const auto& sampler : samplers) {
+            UpdateFrequency frequency = sampler.getUpdateFrequency();
+            ShaderStages stages = sampler.getShaderStages();
+
+            uint32_t set;
+            switch (frequency) {
+            case UpdateFrequency::Static:
+                set = 0;
+                break;
+            case UpdateFrequency::PerFrame:
+                set = 1;
+                break;
+            case UpdateFrequency::PerObject:
+                set = 2;
+                break;
+            case UpdateFrequency::Dynamic:
+                set = 3;
+                break;
+            default:
+                set = 0;
+                break;
+            }
+
+            uint32_t binding;
+            bool found = false;
+
+            for (const auto& [storedSampler, setBinding] : m_samplerSetBindings) {
+                if (storedSampler == sampler) {
+                    set = setBinding.first;
+                    binding = setBinding.second;
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                binding = m_frequencyBindingCount[frequency]++;
+                m_samplerSetBindings.push_back({sampler, {set, binding}});
+            }
+
+            binary.addSamplerLocation(sampler, set, binding);
+
+            ss << "[[vk::binding(" << binding << ", " << set << ")]] ";
+            ss << "SamplerState " << sampler.getName()
+               << " : register(s" << binding << ", space" << set << ");\n";
+        }
+
+        return ss.str();
+    }
+
+    std::string ShaderGenerator::uniformTypeToShaderType(ConstType type)
     {
         switch (type) {
-        case UniformType::ModelMatrix:
-        case UniformType::ViewMatrix:
-        case UniformType::ProjectionMatrix:
-        case UniformType::MVPMatrix:
-        case UniformType::Mat4:
+        case ConstType::ModelMatrix:
+        case ConstType::ViewMatrix:
+        case ConstType::ProjectionMatrix:
+        case ConstType::MVPMatrix:
+        case ConstType::Mat4:
             return "float4x4";
-        case UniformType::Mat3:
+        case ConstType::Mat3:
             return "float3x3";
-        case UniformType::Vec4:
+        case ConstType::Vec4:
             return "float4";
-        case UniformType::Vec3:
+        case ConstType::Vec3:
             return "float3";
-        case UniformType::Vec2:
+        case ConstType::Vec2:
             return "float2";
-        case UniformType::Float:
+        case ConstType::Float:
             return "float";
-        case UniformType::Int:
+        case ConstType::Int:
             return "int";
-        case UniformType::Bool:
+        case ConstType::Bool:
             return "bool";
-        case UniformType::Texture2D:
-        case UniformType::TextureCube:
-        case UniformType::Custom:
+        case ConstType::Texture2D:
+        case ConstType::TextureCube:
+        case ConstType::Custom:
         default:
             return "float4";
         }
     }
     std::string ShaderGenerator::generateConstBuffer(RHI::ShaderBinary& binary,
-        const std::vector<UniformLayout>& uniforms)
+        const std::vector<ConstLayout>& uniforms)
     {
         std::stringstream ss;
         ss << "//FCT Constant Buffers\n";
@@ -399,11 +542,11 @@ namespace FCT
             binary.addConstBufferLocation(layout, set, binding);
 
             ss << "[[vk::binding(" << binding << ", " << set << ")]] ";
-           // ss << "[[vk::set(" << set << ")]] ";
+            // ss << "[[vk::set(" << set << ")]] ";
             ss << "cbuffer " << layout.getName() << " : register(b" << binding << ", space" << set << ") {\n";
 
             for (size_t i = 0; i < layout.getElementCount(); i++) {
-                const UniformElement& element = layout.getElement(i);
+                const ConstElement& element = layout.getElement(i);
                 std::string typeStr = uniformTypeToShaderType(element.getType());
                 const char* name = element.getName();
 
