@@ -48,7 +48,7 @@ namespace FCT
 
     void VK_PassResource::create()
     {
-        if (m_constBuffers.empty()) {
+        if (m_constBuffers.empty() && m_samplers.empty() && m_textures.empty()) {
             return;
         }
 
@@ -124,17 +124,25 @@ namespace FCT
             m_dirtyFlags[frameIdx] = false;
         }
     */
-    void VK_PassResource::updateDescriptorSetsIfNeeded(uint32_t frameIdx)
-    {
+   void VK_PassResource::updateDescriptorSetsIfNeeded(uint32_t frameIdx) {
         if (frameIdx >= m_dirtyFlags.size() || !m_dirtyFlags[frameIdx]) {
             return;
         }
 
         vk::Device device = m_ctx->getDevice();
+
+        // 预先分配足够的空间，避免扩容导致的指针失效
         std::vector<vk::WriteDescriptorSet> descriptorWrites;
+        descriptorWrites.reserve(m_constBuffers.size() + m_textures.size() + m_samplers.size());
+
         std::vector<vk::DescriptorBufferInfo> bufferInfos;
-        std::vector<vk::DescriptorImageInfo> imageInfos;
+        bufferInfos.reserve(m_constBuffers.size());
+
+        std::vector<vk::DescriptorImageInfo> textureInfos;
+        textureInfos.reserve(m_textures.size());
+
         std::vector<vk::DescriptorImageInfo> samplerInfos;
+        samplerInfos.reserve(m_samplers.size());
 
         // 处理常量缓冲区
         for (size_t i = 0; i < m_constBuffers.size(); ++i) {
@@ -147,15 +155,17 @@ namespace FCT
                 continue;
             }
 
+            // 添加缓冲区信息
             bufferInfos.push_back(constBuffer->currentBufferInfoWithoutUpdata());
 
+            // 创建描述符写入
             vk::WriteDescriptorSet descriptorWrite;
             descriptorWrite.setDstSet(m_descriptorSets[frameIdx][setIndex]);
             descriptorWrite.setDstBinding(binding);
             descriptorWrite.setDstArrayElement(0);
             descriptorWrite.setDescriptorType(vk::DescriptorType::eUniformBuffer);
             descriptorWrite.setDescriptorCount(1);
-            descriptorWrite.setPBufferInfo(&bufferInfos.back());
+            descriptorWrite.setPBufferInfo(&bufferInfos[bufferInfos.size() - 1]);
 
             descriptorWrites.push_back(descriptorWrite);
         }
@@ -166,20 +176,16 @@ namespace FCT
             auto* vkTexture = static_cast<RHI::VK_TextureView*>(texture->currentTextureView());
             auto [setIndex, binding] = m_ctx->getGenerator()->getTextureBinding(element);
 
-            if (setIndex >= m_descriptorSets[frameIdx].size()) {
+            if (setIndex >= m_descriptorSets[frameIdx].size() || !vkTexture) {
                 continue;
             }
 
-            // 获取纹理的图像视图
-            vk::ImageView imageView = vkTexture->view();
-
-            // 创建描述符图像信息
+            // 添加纹理信息
             vk::DescriptorImageInfo imageInfo;
             imageInfo.setImageLayout(vk::ImageLayout::eShaderReadOnlyOptimal);
-            imageInfo.setImageView(imageView);
-            imageInfo.setSampler(nullptr); // 纹理和采样器分开绑定
-
-            imageInfos.push_back(imageInfo);
+            imageInfo.setImageView(vkTexture->view());
+            imageInfo.setSampler(nullptr);
+            textureInfos.push_back(imageInfo);
 
             // 创建描述符写入
             vk::WriteDescriptorSet descriptorWrite;
@@ -188,7 +194,7 @@ namespace FCT
             descriptorWrite.setDstArrayElement(0);
             descriptorWrite.setDescriptorType(vk::DescriptorType::eSampledImage);
             descriptorWrite.setDescriptorCount(1);
-            descriptorWrite.setPImageInfo(&imageInfos.back());
+            descriptorWrite.setPImageInfo(&textureInfos[textureInfos.size() - 1]);
 
             descriptorWrites.push_back(descriptorWrite);
         }
@@ -199,19 +205,15 @@ namespace FCT
             auto* vkSampler = static_cast<RHI::VK_Sampler*>(sampler);
             auto [setIndex, binding] = m_ctx->getGenerator()->getSamplerBinding(element);
 
-            if (setIndex >= m_descriptorSets[frameIdx].size()) {
+            if (setIndex >= m_descriptorSets[frameIdx].size() || !vkSampler) {
                 continue;
             }
 
-            // 获取采样器
-            vk::Sampler vkSamplerHandle = vkSampler->getSampler();
-
-            // 创建描述符采样器信息
+            // 添加采样器信息
             vk::DescriptorImageInfo samplerInfo;
-            samplerInfo.setSampler(vkSamplerHandle);
-            samplerInfo.setImageView(nullptr); // 纹理和采样器分开绑定
+            samplerInfo.setSampler(vkSampler->getSampler());
+            samplerInfo.setImageView(nullptr);
             samplerInfo.setImageLayout(vk::ImageLayout::eUndefined);
-
             samplerInfos.push_back(samplerInfo);
 
             // 创建描述符写入
@@ -221,11 +223,12 @@ namespace FCT
             descriptorWrite.setDstArrayElement(0);
             descriptorWrite.setDescriptorType(vk::DescriptorType::eSampler);
             descriptorWrite.setDescriptorCount(1);
-            descriptorWrite.setPImageInfo(&samplerInfos.back());
+            descriptorWrite.setPImageInfo(&samplerInfos[samplerInfos.size() - 1]);
 
             descriptorWrites.push_back(descriptorWrite);
         }
 
+        // 更新描述符集
         if (!descriptorWrites.empty()) {
             device.updateDescriptorSets(descriptorWrites, nullptr);
         }

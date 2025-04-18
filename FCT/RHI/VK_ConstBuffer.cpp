@@ -16,11 +16,11 @@ namespace FCT
             if (!m_buffer) {
                 return;
             }
-
+/*
             if (!m_buffer->isDirty()) {
                 return;
             }
-
+*/
             const void* data = m_buffer->getData();
             size_t size = m_buffer->getSize();
 

@@ -70,7 +70,7 @@ namespace FCT {
         protected:
             bool m_depthTestEnable = true;
             bool m_depthWriteEnable = true;
-            CompareOp m_depthCompareOp = CompareOp::Less;
+            CompareOp m_depthCompareOp = CompareOp::LessOrEqual;
             bool m_depthBoundsTestEnable = false;
             bool m_stencilTestEnable = false;
             StencilOpState m_front;

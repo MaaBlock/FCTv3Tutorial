@@ -473,11 +473,11 @@ namespace FCT
             assert(index < getVertexCount() && "Vertex index out of range");
             return Vertex(m_data.data() + (index * m_stride), m_layout);
         }
-
+/*
         ConstVertex operator[](size_t index) const noexcept {
             assert(index < getVertexCount() && "Vertex index out of range");
             return ConstVertex(Vertex(const_cast<uint8_t*>(m_data.data()) + (index * m_stride), m_layout));
-        }
+        }*/
 
         Vertex front() noexcept {
             assert(!m_data.empty() && "Vertex buffer is empty");

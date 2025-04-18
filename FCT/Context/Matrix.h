@@ -94,6 +94,16 @@ namespace FCT
 			ret.m[9] += y;
 			return ret;
 		}
+		static Mat4 Translate(float x, float y,float z)
+		{
+			Mat4 ret = {
+				1, 0, 0, 0,
+				0, 1, 0, 0,
+				0, 0, 1, 0,
+				x, y, z, 1};
+
+			return ret;
+		}
 		static Mat4 LookAt(const Vec3& eye, const Vec3& center, const Vec3& up)
 		{
 			Vec3 f = (center - eye).normalize();
@@ -130,6 +140,15 @@ namespace FCT
 				scaleX, 0, 0, 0,
 				0, scaleY, 0, 0,
 				0, 0, 1, 0,
+				0, 0, 0, 1};
+			return ret;
+		}
+		static Mat4 Scale(float scaleX, float scaleY,float scaleZ)
+		{
+			Mat4 ret = {
+				scaleX, 0, 0, 0,
+				0, scaleY, 0, 0,
+				0, 0, scaleZ, 0,
 				0, 0, 0, 1};
 			return ret;
 		}
