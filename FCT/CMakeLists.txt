@@ -227,6 +227,7 @@ else()
 endif()
 
 
+find_package(assimp CONFIG REQUIRED)
 find_package(unofficial-shaderc CONFIG REQUIRED)
 find_package(spirv_cross_core CONFIG REQUIRED)
 find_package(spirv_cross_glsl CONFIG REQUIRED)
@@ -240,6 +241,7 @@ target_link_libraries(FCT PUBLIC
         spirv-cross-cpp
         spirv-cross-reflect
         unofficial::shaderc::shaderc
+        assimp::assimp
 )
 
 #target_link_libraries(FCT PUBLIC

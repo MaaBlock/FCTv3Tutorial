@@ -54,11 +54,8 @@ else()
     project("tutorial")
     
     add_subdirectory(FCT)
-    add_subdirectory(Snake)
     add_executable(${CMAKE_PROJECT_NAME}
-            main.cpp
-            Snake/main.cpp
-            Snake/common.h)
+            main.cpp)
     
     target_link_libraries(${CMAKE_PROJECT_NAME}
             FCT)

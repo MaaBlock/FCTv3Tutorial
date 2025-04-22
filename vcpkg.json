@@ -8,6 +8,7 @@
     "bullet3",
     "spirv-cross",
     "shaderc",
+    "assimp",
     {
       "name": "vulkan",
       "platform": "windows"

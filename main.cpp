@@ -21,24 +21,6 @@ static constexpr ResourceLayout resourceLayout {
     TextureElement{"testTexture"},
     SamplerElement{"testSampler"}
 };
-
-std::vector<char> readFile(const std::string& filename) {
-    std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-    if (!file.is_open()) {
-        throw std::runtime_error("failed to open file!");
-    }
-
-    size_t fileSize = (size_t) file.tellg();
-    std::vector<char> buffer(fileSize);
-
-    file.seekg(0);
-    file.read(buffer.data(), fileSize);
-
-    file.close();
-    return buffer;
-}
-
 class AutoReviewport
 {
 public:
@@ -101,9 +83,9 @@ private:
     RHI::PassGroup* passGroup;
     PixelShader* ps;
     RHI::RasterizationPipeline* pipeline;
-    RHI::IndexBuffer* indexBuffer;
-    RHI::VertexBuffer* vertexBuffer;
-    VertexBuffer* cpuVertexBuffer;
+    RHI::IndexBuffer* gpuIndex;
+    RHI::VertexBuffer* gpuVertex;
+    VertexBuffer* cpuVertex;
     RHI::ConstBuffer* constBuffer;
     UniformBuffer* buffer;
     PassResource* passResource;
@@ -172,133 +154,133 @@ ShaderOut main(ShaderIn psIn) {
 )");
         ps->create();
 
-        cpuVertexBuffer = new VertexBuffer(vertexLayout);
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex = new VertexBuffer(vertexLayout);
+        cpuVertex->emplaceBack(
             Vec3(-0.5f, -0.5f, 0.5f),
             Vec4(1.0f, 0.0f, 0.0f, 1.0f),
             Vec2(0.0f, 1.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(0.5f, -0.5f, 0.5f),
             Vec4(1.0f, 0.0f, 0.0f, 1.0f),
             Vec2(1.0f, 1.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(0.5f, 0.5f, 0.5f),
             Vec4(1.0f, 0.0f, 0.0f, 1.0f),
             Vec2(1.0f, 0.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(-0.5f, 0.5f, 0.5f),
             Vec4(1.0f, 0.0f, 0.0f, 1.0f),
             Vec2(0.0f, 0.0f)
         );
 
         // 后面 (z = -0.5)
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(-0.5f, -0.5f, -0.5f),
             Vec4(0.0f, 1.0f, 0.0f, 1.0f),
             Vec2(1.0f, 1.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(0.5f, -0.5f, -0.5f),
             Vec4(0.0f, 1.0f, 0.0f, 1.0f),
             Vec2(0.0f, 1.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(0.5f, 0.5f, -0.5f),
             Vec4(0.0f, 1.0f, 0.0f, 1.0f),
             Vec2(0.0f, 0.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(-0.5f, 0.5f, -0.5f),
             Vec4(0.0f, 1.0f, 0.0f, 1.0f),
             Vec2(1.0f, 0.0f)
         );
 
         // 上面 (y = 0.5)
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(-0.5f, 0.5f, -0.5f),
             Vec4(0.0f, 0.0f, 1.0f, 1.0f),
             Vec2(0.0f, 1.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(0.5f, 0.5f, -0.5f),
             Vec4(0.0f, 0.0f, 1.0f, 1.0f),
             Vec2(1.0f, 1.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(0.5f, 0.5f, 0.5f),
             Vec4(0.0f, 0.0f, 1.0f, 1.0f),
             Vec2(1.0f, 0.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(-0.5f, 0.5f, 0.5f),
             Vec4(0.0f, 0.0f, 1.0f, 1.0f),
             Vec2(0.0f, 0.0f)
         );
 
         // 下面 (y = -0.5)
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(-0.5f, -0.5f, -0.5f),
             Vec4(1.0f, 1.0f, 0.0f, 1.0f),
             Vec2(1.0f, 1.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(0.5f, -0.5f, -0.5f),
             Vec4(1.0f, 1.0f, 0.0f, 1.0f),
             Vec2(0.0f, 1.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(0.5f, -0.5f, 0.5f),
             Vec4(1.0f, 1.0f, 0.0f, 1.0f),
             Vec2(0.0f, 0.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(-0.5f, -0.5f, 0.5f),
             Vec4(1.0f, 1.0f, 0.0f, 1.0f),
             Vec2(1.0f, 0.0f)
         );
 
         // 右面 (x = 0.5)
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(0.5f, -0.5f, -0.5f),
             Vec4(1.0f, 0.0f, 1.0f, 1.0f),
             Vec2(0.0f, 1.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(0.5f, 0.5f, -0.5f),
             Vec4(1.0f, 0.0f, 1.0f, 1.0f),
             Vec2(1.0f, 1.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(0.5f, 0.5f, 0.5f),
             Vec4(1.0f, 0.0f, 1.0f, 1.0f),
             Vec2(1.0f, 0.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(0.5f, -0.5f, 0.5f),
             Vec4(1.0f, 0.0f, 1.0f, 1.0f),
             Vec2(0.0f, 0.0f)
         );
 
         // 左面 (x = -0.5)
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(-0.5f, -0.5f, -0.5f),
             Vec4(0.0f, 1.0f, 1.0f, 1.0f),
             Vec2(1.0f, 1.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(-0.5f, 0.5f, -0.5f),
             Vec4(0.0f, 1.0f, 1.0f, 1.0f),
             Vec2(0.0f, 1.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(-0.5f, 0.5f, 0.5f),
             Vec4(0.0f, 1.0f, 1.0f, 1.0f),
             Vec2(0.0f, 0.0f)
         );
-        cpuVertexBuffer->emplaceBack(
+        cpuVertex->emplaceBack(
             Vec3(-0.5f, -0.5f, 0.5f),
             Vec4(0.0f, 1.0f, 1.0f, 1.0f),
             Vec2(1.0f, 0.0f)
@@ -317,14 +299,14 @@ ShaderOut main(ShaderIn psIn) {
             // 左面
             20, 21, 22, 22, 23, 20
         };
-        indexBuffer = ctx->createIndexBuffer();
-        indexBuffer->indexBuffer(indices);
-        indexBuffer->create();
-        indexBuffer->updataBuffer();
-        vertexBuffer = ctx->createVertexBuffer();
-        vertexBuffer->vertexBuffer(cpuVertexBuffer);
-        vertexBuffer->create();
-        vertexBuffer->updataBuffer();
+        gpuIndex = ctx->createIndexBuffer();
+        gpuIndex->indexBuffer(indices);
+        gpuIndex->create();
+        gpuIndex->updataBuffer();
+        gpuVertex = ctx->createVertexBuffer();
+        gpuVertex->vertexBuffer(cpuVertex);
+        gpuVertex->create();
+        gpuVertex->updataBuffer();
 
         pass = ctx->createPass();
         pass->bindTarget(0,wnd->getCurrentTarget()->targetImage());
@@ -411,8 +393,8 @@ ShaderOut main(ShaderIn psIn) {
         cmdBuf->bindPipieline(pipeline);
         passGroup->beginSubmit(cmdBuf);
         passResource->bind(cmdBuf);
-        vertexBuffer->bind(cmdBuf);
-        indexBuffer->bind(cmdBuf);
+        gpuVertex->bind(cmdBuf);
+        gpuIndex->bind(cmdBuf);
         cmdBuf->drawIndex(0,0,36,1);
         passGroup->endSubmit(cmdBuf);
         cmdBuf->end();
