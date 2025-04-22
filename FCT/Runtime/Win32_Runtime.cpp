@@ -28,4 +28,5 @@ namespace FCT {
 	{
 		return new FreeImage_ImageLoader();
 	}
+
 }

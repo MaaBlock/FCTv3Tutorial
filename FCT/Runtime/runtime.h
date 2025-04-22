@@ -4,6 +4,7 @@
 #include "../UI/Android_WindowShareData.h"
 #include "../ImageLoader/ImageLoader.h"
 #include "../Context/VK_ContextCommon.h"
+#include "../ModelLoader/ModelLoader.h"
 #include "../UI/GLFW_UICommon.h"
 #ifdef FCT_USE_FREEIMAGE
         #include "../ImageLoader/FreeImage_ImageLoader.h"
@@ -69,6 +70,7 @@ namespace FCT
         }
         Context* createContext();
     	ImageLoader* createImageLoader();
+    	ModelLoader* createModelLoader();
     private:
         RuntimeCommon* g_common;
     	Runtime(const Runtime&) = delete;

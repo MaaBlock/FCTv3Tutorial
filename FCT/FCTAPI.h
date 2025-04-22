@@ -61,5 +61,8 @@
 #ifdef FCT_USE_FREEIMAGE
 #include "./ImageLoader//FreeImage_ImageLoader.h"
 #endif
+#ifdef FCT_USE_ASSIMP
+#include "./ModelLoader/Assimp_ModelLoader.h"
+#endif
 
 #endif //TUTORIAL_FCTAPI_H

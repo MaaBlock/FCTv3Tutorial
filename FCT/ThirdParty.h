@@ -10,6 +10,7 @@
 #define FCT_USE_SPIRV
 #define FCT_USE_SHADERC
 #define FCT_USE_FREEIMAGE
+#define FCT_USE_ASSIMP
 #ifdef _WIN32
 	#define FCT_WIN32
 	#define NOMINMAX
@@ -103,6 +104,11 @@ extern int main();
 
 #ifdef FCT_USE_FREEIMAGE
 #include <FreeImage.h>
+#endif
+#ifdef FCT_USE_ASSIMP
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 #endif
 
 #if defined(_DEBUG) || defined(DEBUG)

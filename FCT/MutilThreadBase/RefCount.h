@@ -27,6 +27,7 @@ namespace FCT {
 		if (obj) obj->release();
         obj = nullptr;
 	}
+
 #define FCT_SAFE_RELEASE(obj) if (obj) obj->release(); obj = nullptr;
 #define FCT_SAFE_ADDREF(p) if (p) { p->addRef(); }
 }

@@ -11,6 +11,11 @@ namespace FCT
 		m_compiler = new Shaderc_ShaderCompiler;
 #endif
 	}
+
+	ModelLoader* Runtime::createModelLoader()
+	{
+		return new Assimp_ModelLoader;
+	}
     /*
 	Runtime *CreateRuntime()
 	{

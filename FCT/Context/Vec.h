@@ -175,5 +175,12 @@ namespace FCT {
         Vec4(float x = 0.0f, float y = 0.0f, float z = 0.0f, float w = 0.0f)
             : x(x), y(y), z(z), w(w) {}
     };
+    template<typename T>
+    struct Vector4
+    {
+        T x, y, z, w;
+        Vector4(T x = 0, T y = 0, T z = 0, T w = 0) : x(x), y(y), z(z), w(w) {}
+    };
+
 }
 #endif //VEC_H

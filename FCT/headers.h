@@ -47,6 +47,7 @@
 #include "./RHI/Sampler.h"
 #include "./RHI/DepthStencilState.h"
 #include "./Context/RenderGraph.h"
+#include "./ModelLoader/ModelLoader.h"
 //#include "MutilThreadBase/RefCount.h"
 //#include "MutilThreadBase/TlsPtr.h"
 //#include "Context/Context.h"

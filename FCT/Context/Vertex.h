@@ -2,6 +2,7 @@
 // Created by Administrator on 2025/4/5.
 //
 #include "./Format.h"
+#include "./DataTypes.h"
 #include "../Base/string.h"
 #ifndef VERTEX_H
 #define VERTEX_H
@@ -19,6 +20,58 @@ namespace FCT
         Color4f,
         Custom
     };
+
+    enum class ModelVertexAttribute {
+        Position,       // 对应 position
+        Normal,         // 对应 normal
+        TexCoord0,      // 对应 texCoords[0]
+        TexCoord1,      // 对应 texCoords[1]
+        TexCoord2,
+        TexCoord3,
+        TexCoord4,
+        TexCoord5,
+        TexCoord6,
+        TexCoord7,
+        Color0,         // 对应 colors[0]
+        Color1,         // 对应 colors[1]
+        Color2,
+        Color3,
+        Color4,
+        Color5,
+        Color6,
+        Color7,
+        Tangent,        // 对应 tangent
+        Bitangent,      // 对应 bitangent
+        None            // 不对应任何ModelVertex属性
+    };
+    constexpr ModelVertexAttribute GetDefaultModelAttribute(VtxType type) noexcept {
+        switch (type) {
+        case VtxType::Position2f:
+        case VtxType::Position3f:
+        case VtxType::Position4f:
+            return ModelVertexAttribute::Position;
+
+        case VtxType::Normal3f:
+            return ModelVertexAttribute::Normal;
+
+        case VtxType::Tangent3f:
+            return ModelVertexAttribute::Tangent;
+
+        case VtxType::Bitangent3f:
+            return ModelVertexAttribute::Bitangent;
+
+        case VtxType::TexCoord2f:
+            return ModelVertexAttribute::TexCoord0;
+
+        case VtxType::Color3f:
+        case VtxType::Color4f:
+            return ModelVertexAttribute::Color0;
+
+        case VtxType::Custom:
+        default:
+            return ModelVertexAttribute::None;
+        }
+    }
 
     constexpr bool isPositionType(VtxType type) noexcept
     {
@@ -78,19 +131,14 @@ namespace FCT
     class VertexElement {
     public:
         constexpr VertexElement() noexcept
-       : m_type(VtxType::Custom), m_format(Format::UNDEFINED), m_semantic("") {}
-
-        constexpr VertexElement(VtxType type) noexcept
-            : m_type(type), m_format(GetDefaultFormat(type)), m_semantic(GetDefaultSemantic(type)) {}
-
-        constexpr VertexElement(VtxType type, const char* semantic) noexcept
-            : m_type(type), m_format(GetDefaultFormat(type)), m_semantic(semantic) {}
-
-        constexpr VertexElement(VtxType type, Format format, const char* semantic) noexcept
-            : m_type(type), m_format(format), m_semantic(semantic) {}
-
-        constexpr VertexElement(Format format, const char* semantic) noexcept
-            : m_type(VtxType::Custom), m_format(format), m_semantic(semantic) {}
+       : m_type(VtxType::Custom), m_format(Format::UNDEFINED), m_semantic(""),m_modelAttribute(ModelVertexAttribute::None) {}
+        template<typename... Args>
+        constexpr VertexElement(Args&&... args) noexcept
+           : m_type(VtxType::Custom), m_format(Format::UNDEFINED), m_semantic(""),
+             m_modelAttribute(ModelVertexAttribute::None) {
+            processArgs(std::forward<Args>(args)...);
+        }
+        constexpr ModelVertexAttribute getModelAttribute() const noexcept { return m_modelAttribute; }
 
         constexpr VtxType getType() const noexcept { return m_type; }
 
@@ -103,9 +151,41 @@ namespace FCT
         }
 
     private:
+        constexpr void processArgs() noexcept {}
+        constexpr void processArgs(VtxType type) noexcept {
+            m_type = type;
+            if (m_format == Format::UNDEFINED) {
+                m_format = GetDefaultFormat(type);
+            }
+            if (StringEquals(m_semantic, "")) {
+                m_semantic = GetDefaultSemantic(type);
+            }
+            if (m_modelAttribute == ModelVertexAttribute::None) {
+                m_modelAttribute = GetDefaultModelAttribute(type);
+            }
+        }
+
+        constexpr void processArgs(Format format) noexcept {
+            m_format = format;
+        }
+
+        constexpr void processArgs(const char* semantic) noexcept {
+            m_semantic = semantic;
+        }
+
+        constexpr void processArgs(ModelVertexAttribute attr) noexcept {
+            m_modelAttribute = attr;
+        }
+
+        template<typename First, typename... Rest>
+        constexpr void processArgs(First&& first, Rest&&... rest) noexcept {
+            processArgs(std::forward<First>(first));
+            processArgs(std::forward<Rest>(rest)...);
+        }
         VtxType m_type;
         Format m_format;
         const char* m_semantic;
+        ModelVertexAttribute m_modelAttribute;
     };
 
     class VertexLayout
