@@ -71,6 +71,7 @@ namespace FCT {
         m_frameIndex = 0;
         m_maxFrameInFlight = 3;
         m_imageLoader = runtime->createImageLoader();
+        m_modelLoader = runtime->createModelLoader();
     }
 
     Context::~Context() {

@@ -26,8 +26,11 @@
 #include "../RHI/DescriptorPool.h"
 #include "./ShaderCompiler.h"
 #include "./ShaderGenerator.h"
+#include "Mesh.h"
 #include "PassResource.h"
 #include "../RHI/DepthStencilView.h"
+#include "../ModelLoader/ModelLoader.h"
+#include "./Mesh.h"
 
 namespace FCT
 {
@@ -110,6 +113,42 @@ namespace FCT
 		virtual PassResource* createPassResource() = 0;
 		virtual RHI::TextureView* createTextureView() = 0;
 		virtual RHI::Sampler* createSampler() = 0;
+	protected:
+		ModelLoader* m_modelLoader;
+	public:
+		Mesh<uint32_t>* createMesh(const ModelMesh* modelMesh, const VertexLayout& layout)
+		{
+			if (!modelMesh) {
+				return nullptr;
+			}
+
+			Mesh<uint32_t>* mesh = new Mesh<uint32_t>(this, layout);
+			VertexBuffer* vertexBuffer = mesh->getVertexBuffer();
+			vertexBuffer->resize(modelMesh->vertices.size());
+			for (uint32_t i = 0; i < modelMesh->vertices.size(); ++i) {
+				const auto& modelVertex = modelMesh->vertices[i];
+				Vertex vertex = (*vertexBuffer)[i];
+
+				for (size_t j = 0; j < layout.getElementCount(); ++j) {
+					const VertexElement& element = layout.getElement(j);
+					setVertexAttributeFromModel(vertex, j, element, modelVertex);
+				}
+			}
+
+			std::vector<uint32_t> indices = modelMesh->indices;
+			mesh->setIndices(indices);
+
+			mesh->create();
+
+			return mesh;
+		}
+		Mesh<uint32_t>* loadMesh(const std::string& filename,const std::string& meshName, const VertexLayout& layout)
+		{
+			auto md = m_modelLoader->loadModel(filename);
+			auto mMesh =  md->findMesh("teapot");
+			return createMesh(mMesh,layout);
+		}
+	public:
 		void flush()
 		{
 			FCT_WAIT_FOR(m_currentFlush);

@@ -9,6 +9,7 @@
 #include "./Base/Flags.h"
 #include "Runtime/Runtime.h"
 #include "./Context/Vertex.h"
+#include "./Context/Mesh.h"
 #include "./Context/ResourceLayout.h"
 #include "./Context/ShaderGenerator.h"
 #include "./Context/VertexShader.h"
