@@ -412,6 +412,7 @@ ShaderOut main(ShaderIn psIn) {
     }
 };
 int main(){
+    fout << "当前工作目录: " << std::filesystem::current_path().string() << endl;
     Runtime rt;
     App app(rt);
     app.run();

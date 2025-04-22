@@ -15,11 +15,22 @@ namespace FCT
 
         void VK_DescriptorPool::create()
         {
-            vk::DescriptorPoolSize size;
-            size.descriptorCount = m_ctx->maxFrameInFlight();
+            std::vector<vk::DescriptorPoolSize> poolSizes = {
+                {vk::DescriptorType::eUniformBuffer, m_ctx->maxFrameInFlight() * 100},
+
+                {vk::DescriptorType::eCombinedImageSampler, m_ctx->maxFrameInFlight() * 100},
+                {vk::DescriptorType::eStorageBuffer, m_ctx->maxFrameInFlight() * 50},
+                {vk::DescriptorType::eStorageImage, m_ctx->maxFrameInFlight() * 50},
+                {vk::DescriptorType::eSampledImage, m_ctx->maxFrameInFlight() * 100},
+                {vk::DescriptorType::eSampler, m_ctx->maxFrameInFlight() * 50}
+            };
+
             vk::DescriptorPoolCreateInfo poolInfo{};
             poolInfo.maxSets = 1000;
-            poolInfo.setPoolSizes(size);
+            poolInfo.setPoolSizes(poolSizes);
+
+            poolInfo.flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
+
             m_descriptorPool = m_ctx->device().createDescriptorPool(poolInfo);
         }
     }
