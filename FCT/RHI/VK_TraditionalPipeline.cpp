@@ -19,6 +19,8 @@ namespace FCT
 
         void VK_TraditionalPipeline::addResources(IPipelineResource* resource)
         {
+            if (!resource)
+                return;
             switch (resource->getType())
             {
             case PipelineResourceType::VertexShader:

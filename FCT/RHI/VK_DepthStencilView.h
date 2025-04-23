@@ -19,7 +19,7 @@ namespace FCT
         public:
             VK_DepthStencilView(VK_Context* ctx);
             ~VK_DepthStencilView() override;
-            void create() override;
+            bool create() override;
             vk::ImageView getImageView() const { return m_view; }
 
         private:

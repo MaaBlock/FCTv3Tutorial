@@ -26,6 +26,8 @@ namespace FCT::RHI
 
     void VK_RasterizationPipeline::addResources(IPipelineResource* resource)
     {
+        if (!resource)
+            return;
         switch (resource->getType())
         {
         case PipelineResourceType::BlendState:

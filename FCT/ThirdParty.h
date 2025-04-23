@@ -11,6 +11,7 @@
 #define FCT_USE_SHADERC
 #define FCT_USE_FREEIMAGE
 #define FCT_USE_ASSIMP
+#define FCT_USE_ENTT
 #ifdef _WIN32
 	#define FCT_WIN32
 	#define NOMINMAX
@@ -109,6 +110,13 @@ extern int main();
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#endif
+
+#ifdef FCT_USE_ENTT
+#include "./ThirdParty/entt.hpp"
+namespace FCT {
+	namespace ECS = entt;
+}
 #endif
 
 #if defined(_DEBUG) || defined(DEBUG)

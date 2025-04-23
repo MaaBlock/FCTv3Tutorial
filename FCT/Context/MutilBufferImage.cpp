@@ -149,7 +149,7 @@ namespace FCT
             {
                 auto dsv = m_ctx->createDepthStencilView();
                 dsv->image(img);
-                dsv->create();
+                while (!dsv->create());
                 m_dsvs.push_back(dsv);
             }
         }

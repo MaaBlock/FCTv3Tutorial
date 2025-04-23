@@ -23,7 +23,7 @@ namespace FCT
                 return m_image;
             }
 
-            virtual void create() = 0;
+            virtual bool create() = 0;
 
         protected:
             RHI::Image* m_image = nullptr;

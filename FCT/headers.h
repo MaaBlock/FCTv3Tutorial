@@ -6,6 +6,7 @@
 #define FCT_HEADER_H
 #include "ThirdParty.h"
 #include "ToolDefine.h"
+#include "./DebugTools/MemoryCheak.h"
 #include "./Base/Flags.h"
 #include "Runtime/Runtime.h"
 #include "./Context/Vertex.h"
@@ -20,6 +21,7 @@
 #include "./Context/MutilBufferImage.h"
 #include "./Context/Uniform.h"
 #include "./Context/PassResource.h"
+#include "./Context/Object.h"
 #include "DebugTools/OutStream.h"
 #include "./RHI/ViewportState.h"
 #include "./RHI/RasterizationState.h"
@@ -54,5 +56,4 @@
 //#include "Context/Context.h"
 //#include "Context/Image.h"
 //#include "UI/Window.h"
-
 #endif //FCT_HEADER_H

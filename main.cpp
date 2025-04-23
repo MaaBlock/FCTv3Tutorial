@@ -150,6 +150,57 @@ private:
     float viewportWidth, viewportHeight;
     float viewportOffsetX, viewportOffsetY;
 };
+class Pass;
+class PassResourceManager
+{
+protected:
+    std::unordered_map<std::string, Image*> m_images;
+    std::unordered_map<std::string, Pass*> m_passes;
+
+public:
+
+};
+struct ResourceRef
+{
+    std::string m_fullDesc;
+    std::string m_targetName;
+    std::string m_passName;
+    bool m_isValid;
+    ResourceRef(const std::string& desc) : m_fullDesc(desc) {
+        parse(desc);
+    }
+
+    void parse(const std::string& desc) {
+        m_fullDesc = desc;
+        m_passName.clear();
+        m_targetName.clear();
+        m_isValid = false;
+
+        size_t dotPos = desc.find('.');
+
+        if (dotPos != std::string::npos) {
+            m_passName = desc.substr(0, dotPos);
+            m_targetName = desc.substr(dotPos + 1);
+            m_isValid = !m_passName.empty() && !m_targetName.empty();
+        } else {
+            m_targetName = desc;
+            m_isValid = !m_targetName.empty();
+        }
+    }
+};
+
+class Pass
+{
+protected:
+
+public:
+    void setTarget(uint32_t index)
+    {
+
+    }
+
+};
+
 class App
 {
 private:
@@ -329,13 +380,10 @@ ShaderOut main(ShaderIn psIn) {
         passGroup->beginSubmit(cmdBuf);
         passResource->bind(cmdBuf);
 
-
         teapotMesh->bind(cmdBuf);
         teapotMesh->draw(cmdBuf, 1);
-        /*
         cubeMesh->bind(cmdBuf);
         cubeMesh->draw(cmdBuf, 1);
-*/
         passGroup->endSubmit(cmdBuf);
         cmdBuf->end();
         cmdBuf->submit();
@@ -355,5 +403,6 @@ int main(){
     Runtime rt;
     App app(rt);
     app.run();
+    _output_object(fout);
     return 0;
 }

@@ -21,17 +21,17 @@ namespace FCT
             }
         }
 
-        void VK_DepthStencilView::create()
+        bool VK_DepthStencilView::create()
         {
             if (!m_image) {
                 ferr << "Cannot create depth stencil view: no image set" << std::endl;
-                return;
+                return false;
             }
 
             VK_Image* vkImage = dynamic_cast<VK_Image*>(m_image);
             if (!vkImage) {
                 ferr << "Cannot create depth stencil view: image is not a VK_Image" << std::endl;
-                return;
+                return false;
             }
 
             vk::ImageViewType viewType = vk::ImageViewType::e2D;
@@ -44,10 +44,15 @@ namespace FCT
                 vkFormat == vk::Format::eD32SfloatS8Uint ||
                 vkFormat == vk::Format::eD16UnormS8Uint) {
                 aspectMask |= vk::ImageAspectFlagBits::eStencil;
-            }
+                }
 
             vk::ImageViewCreateInfo viewInfo;
             viewInfo.setImage(vkImage->getVkImage());
+            if (viewInfo.image == nullptr)
+            {
+                m_view = nullptr;
+                return false;
+            }
             viewInfo.setViewType(viewType);
             viewInfo.setFormat(vkFormat);
 
@@ -68,7 +73,9 @@ namespace FCT
             catch (const std::exception& e) {
                 ferr << "Failed to create depth stencil view: " << e.what() << std::endl;
                 m_view = nullptr;
+                return false;
             }
+            return true;
         }
     }
 }

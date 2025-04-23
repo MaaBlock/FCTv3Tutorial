@@ -30,11 +30,11 @@ namespace FCT
         Runtime(){
             init();
 #ifdef  FCT_USE_VULKAN
-            g_common->vkContextCommon = new VK_ContextCommon(this);
+            g_common->vkContextCommon = FCT_NEW(VK_ContextCommon,this);
             g_common->vkContextCommon->init();
 #endif
 #ifdef  FCT_USE_GLFW
-        	g_common->glfwUICommon = new GLFW_UICommon();
+        	g_common->glfwUICommon = FCT_NEW(GLFW_UICommon);
 #endif
 #ifdef FCT_USE_FREEIMAGE
         	//todo:从FCTv2 直接迁移过来 的，应当改为common的模式
