@@ -1,7 +1,7 @@
 //
 // Created by Administrator on 2025/2/19.
 //
-
+#define FCT_USE_MEMORY_CHECK
 #ifndef FCT_HEADER_H
 #define FCT_HEADER_H
 #include "ThirdParty.h"

@@ -15,7 +15,7 @@ namespace FCT
             inited = true;
             while (m_running)
             {
-                while (!m_taskQueue.empty()) {
+                while (!m_taskQueue.empty() && m_running) {
                     UITaskTrans trans;
                     m_taskQueue.pop(trans);
                     UiTaskData* task = trans.data;

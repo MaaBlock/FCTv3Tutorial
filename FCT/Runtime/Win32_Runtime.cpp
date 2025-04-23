@@ -5,28 +5,28 @@ namespace FCT {
 	
 	};
 	void Runtime::init() {
-		g_common = new Win32_RuntimeCommon();
+		g_common = FCT_NEW(Win32_RuntimeCommon);
 	}
 	void Runtime::term() {
-	    delete g_common;
+	    FCT_DELETE(g_common);
 	}
 
 	Window* Runtime::createWindow()
 	{
 #ifdef FCT_USE_GLFW
-		Window* window = new GLFW_Window(g_common->glfwUICommon,this);
+		Window* window = FCT_NEW(GLFW_Window,g_common->glfwUICommon,this);
 		return window;
 #endif
 	}
 
 	Context* Runtime::createContext()
 	{
-        return new VK_Context(g_common->vkContextCommon);
+        return FCT_NEW(VK_Context,g_common->vkContextCommon);
 	}
 
 	ImageLoader* Runtime::createImageLoader()
 	{
-		return new FreeImage_ImageLoader();
+		return FCT_NEW(FreeImage_ImageLoader);
 	}
 
 }

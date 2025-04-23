@@ -12,7 +12,7 @@ namespace FCT
 
     RHI::Sampler* VK_Context::createSampler()
     {
-        return new RHI::VK_Sampler(this);
+        return FCT_NEW(RHI::VK_Sampler,this);
     }
 
     void FCT::VK_Context::clear(float r, float g, float b) {
@@ -25,7 +25,7 @@ namespace FCT
 
     RHI::DescriptorPool* VK_Context::createDescriptorPool()
     {
-        return new RHI::VK_DescriptorPool(this);
+        return FCT_NEW(RHI::VK_DescriptorPool,this);
     }
 
     VertexShader* VK_Context::createVertexShader()

@@ -347,6 +347,8 @@ ShaderOut main(ShaderIn psIn) {
         if (buffer) {
             delete buffer;
         }
+        wnd->release();
+        ctx->release();
     }
 
     void logicTick()

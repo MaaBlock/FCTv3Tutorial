@@ -57,9 +57,11 @@ namespace FCT
         }
         void title(const std::string& title)
         {
+            m_wnd->addRef();
             m_wnd->m_common->postUiTask([this, title](void*)
             {
                 glfwSetWindowTitle(m_wnd->m_window, title.c_str());
+                m_wnd->release();
             },nullptr,false);
         }
     private:

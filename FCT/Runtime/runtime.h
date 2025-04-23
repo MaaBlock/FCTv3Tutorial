@@ -45,10 +45,10 @@ namespace FCT
 #ifdef  FCT_USE_VULKAN
             g_common->vkContextCommon->term();
 #endif
-        	term();
 #ifdef  FCT_USE_GLFW
         	delete g_common->glfwUICommon;
 #endif
+        	term();
         }
         void init();
         void term();

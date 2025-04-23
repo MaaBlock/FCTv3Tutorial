@@ -15,7 +15,8 @@ namespace FCT {
 		class Swapchain;
 	}
 
-	class WindowBehavior {
+	class WindowBehavior
+	{
     public:
         virtual void pos(int x,int y) = 0;
         virtual void size(int w, int h) = 0;
