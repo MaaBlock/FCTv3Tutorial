@@ -8,9 +8,6 @@
 #define DEPTHSTENCILSTATE_H
 
 namespace FCT {
-    namespace RHI
-    {
-
         enum class StencilOp {
             Keep,
             Zero,
@@ -78,7 +75,6 @@ namespace FCT {
             float m_minDepthBounds = 0.0f;
             float m_maxDepthBounds = 1.0f;
         };
-    }
 }
 
 #endif //DEPTHSTENCILSTATE_H

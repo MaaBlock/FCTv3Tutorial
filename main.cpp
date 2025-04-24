@@ -201,6 +201,24 @@ public:
 
 };
 
+struct TraditionPipelineState
+{
+    TraditionPipelineState()
+    {
+        vertexShader = nullptr;
+        pixelShader = nullptr;
+        blendState = nullptr;
+        rasterizationState = nullptr;
+        depthStencilState = nullptr;
+    }
+    VertexShader* vertexShader;
+    PixelShader* pixelShader;
+    BlendState* blendState;
+    RasterizationState* rasterizationState;
+    DepthStencilState* depthStencilState;
+};
+
+
 class App
 {
 private:
@@ -220,7 +238,7 @@ private:
     int maxFrameInFlight;
     float rotationAngle;
     Image* texture;
-    RHI::Sampler* sampler;
+    PSampler sampler;
     AutoReviewport autoReviewport;
     float rotationAngleY;
     Mesh<uint32_t>* teapotMesh;

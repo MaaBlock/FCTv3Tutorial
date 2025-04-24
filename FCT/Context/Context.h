@@ -21,6 +21,7 @@
 #include "../RHI/Fence.h"
 #include "../RHI/Semaphore.h"
 #include "../RHI/PassGroup.h"
+#include "../RHI/Sampler.h"
 #include "../RHI/RasterizationPipeline.h"
 #include "../RHI/InputLayout.h"
 #include "../RHI/DescriptorPool.h"
@@ -112,7 +113,7 @@ namespace FCT
 		virtual RHI::DepthStencilView* createDepthStencilView() = 0;
 		virtual PassResource* createPassResource() = 0;
 		virtual RHI::TextureView* createTextureView() = 0;
-		virtual RHI::Sampler* createSampler() = 0;
+		virtual Sampler* createSampler() = 0;
 	protected:
 		ModelLoader* m_modelLoader;
 	public:

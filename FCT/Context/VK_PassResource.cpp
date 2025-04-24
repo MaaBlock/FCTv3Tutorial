@@ -17,7 +17,7 @@ namespace FCT
         }
     }
 
-    void VK_PassResource::addSampler(RHI::Sampler* sampler, SamplerElement element)
+    void VK_PassResource::addSampler(Sampler* sampler, SamplerElement element)
     {
         if (sampler) {
             m_samplers.emplace_back(sampler, element);

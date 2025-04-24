@@ -6,6 +6,7 @@
 #define FCT_HEADER_H
 #include "ThirdParty.h"
 #include "ToolDefine.h"
+#include "./predefine.h"
 #include "./DebugTools/MemoryCheak.h"
 #include "./Base/Flags.h"
 #include "Runtime/Runtime.h"
@@ -41,6 +42,7 @@
 #include "./RHI/Fence.h"
 #include "./RHI/DepthStencilView.h"
 #include "./RHI/ShaderBinary.h"
+#include "./RHI/BlendState.h"
 #include "./RHI/VertexBuffer.h"
 #include "./RHI/IndexBuffer.h"
 #include "./RHI/ConstBuffer.h"

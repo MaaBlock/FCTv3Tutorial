@@ -10,7 +10,7 @@ namespace FCT
         return nullptr;
     }
 
-    RHI::Sampler* VK_Context::createSampler()
+    Sampler* VK_Context::createSampler()
     {
         return FCT_NEW(RHI::VK_Sampler,this);
     }

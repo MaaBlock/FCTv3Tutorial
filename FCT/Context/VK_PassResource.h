@@ -10,7 +10,7 @@ namespace FCT
     public:
         VK_PassResource(VK_Context* ctx);
         void addConstBuffer(RHI::ConstBuffer* buffer) override;
-        void addSampler(RHI::Sampler* sampler, SamplerElement element) override;
+        void addSampler(Sampler* sampler, SamplerElement element) override;
         void addTexture(Image* texture, TextureElement element) override;
         void markAllDescriptorSetsDirty();
         void markDescriptorSetDirty(uint32_t frameIdx);

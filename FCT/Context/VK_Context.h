@@ -13,7 +13,7 @@ namespace FCT {
         VK_Context(VK_ContextCommon* common);
         ~VK_Context() override;
         TextureArray *createTextureArray() override;
-        RHI::Sampler* createSampler() override;
+        Sampler* createSampler() override;
         void clear(float r, float g, float b) override;
 
         void viewport(int x, int y, int width, int height) override;

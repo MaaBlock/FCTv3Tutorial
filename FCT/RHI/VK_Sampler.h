@@ -12,7 +12,7 @@ namespace FCT
     class VK_Context;
     namespace RHI
     {
-        class VK_Sampler : public Sampler {
+        class VK_Sampler : public FCT::Sampler {
         public:
             VK_Sampler(VK_Context* ctx);
             ~VK_Sampler();
