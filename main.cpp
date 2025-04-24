@@ -217,6 +217,30 @@ struct TraditionPipelineState
     RasterizationState* rasterizationState;
     DepthStencilState* depthStencilState;
 };
+struct Object
+{
+
+};
+struct Job
+{
+    PassResource* resource;
+    TraditionPipelineState* state;
+    std::vector<Mesh<uint16_t>> meshes16;
+    std::vector<Mesh<uint32_t>> meshes32;
+    std::vector<Mat4> transforms16;
+    std::vector<Mat4> transforms32;
+    bool needsUpdate;
+    bool isCreated;
+    Job()
+      : resource(nullptr)
+      , state(nullptr)
+      , needsUpdate(false)
+      , isCreated(false)
+    {
+    }
+
+
+};
 
 
 class App
@@ -342,7 +366,6 @@ ShaderOut main(ShaderIn psIn) {
         passResource = ctx->createPassResource();
         passResource->addConstBuffer(constBuffer);
         passResource->bind(wnd);
-        passResource->pipeline(pipeline);
 
         ctx->allocBaseCommandBuffers(wnd);
 
@@ -398,7 +421,7 @@ ShaderOut main(ShaderIn psIn) {
         autoReviewport.onRenderTick(cmdBuf);
         cmdBuf->bindPipieline(pipeline);
         passGroup->beginSubmit(cmdBuf);
-        passResource->bind(cmdBuf);
+        passResource->bind(cmdBuf,pipeline);
 
         teapotMesh->bind(cmdBuf);
         teapotMesh->draw(cmdBuf, 1);

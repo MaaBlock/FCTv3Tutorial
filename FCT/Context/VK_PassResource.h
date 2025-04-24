@@ -17,7 +17,7 @@ namespace FCT
         void create() override;
         void updateDescriptorSetsIfNeeded(uint32_t frameIdx);
         vk::DescriptorSet getDescriptorSet(uint32_t frameIdx, uint32_t setIndex);
-        void bind(RHI::CommandBuffer* cmdBuf) override;
+        void bind(RHI::CommandBuffer* cmdBuf, RHI::Pipeline* pipeline) override;
         void update() override
         {
             
@@ -26,6 +26,7 @@ namespace FCT
         VK_Context* m_ctx;
         std::vector<std::vector<vk::DescriptorSet>> m_descriptorSets;
         std::vector<bool> m_dirtyFlags;
+        std::vector<vk::DescriptorSetLayout> m_descriptorSetLayouts;
     };
 }
 #endif //VK_PASSRESOURCE_H

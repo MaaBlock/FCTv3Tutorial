@@ -46,7 +46,7 @@ namespace FCT
         }
     }
 
-    void VK_PassResource::create()
+   void VK_PassResource::create()
     {
         if (m_constBuffers.empty() && m_samplers.empty() && m_textures.empty()) {
             return;
@@ -54,16 +54,75 @@ namespace FCT
 
         vk::Device device = m_ctx->getDevice();
         uint32_t maxFrames = m_ctx->maxFrameInFlight();
-
-        auto pipeline = static_cast<RHI::VK_RasterizationPipeline*>(m_pipeline);
         auto descriptorPool = static_cast<RHI::VK_DescriptorPool*>(m_ctx->getDescriptorPool(m_wnd));
 
-        const uint32_t maxSets = 4;
+        std::map<uint32_t, std::vector<vk::DescriptorSetLayoutBinding>> setBindings;
 
-        std::vector<vk::DescriptorSetLayout> layouts = pipeline->descriptorSetLayouts();
+        for (auto* constBuffer : m_constBuffers) {
+            auto* vkConstBuffer = static_cast<RHI::VK_ConstBuffer*>(constBuffer);
+            auto uniformLayout = vkConstBuffer->layout();
+            auto [setIndex, binding] = m_ctx->getGenerator()->getLayoutBinding(uniformLayout);
 
-        if (layouts.empty()) {
+            vk::DescriptorSetLayoutBinding layoutBinding;
+            layoutBinding.setBinding(binding);
+            layoutBinding.setDescriptorType(vk::DescriptorType::eUniformBuffer);
+            layoutBinding.setDescriptorCount(1);
+            layoutBinding.setStageFlags(ConvertToVkShaderStageFlags(uniformLayout.getShaderStages()));
+
+            setBindings[setIndex].push_back(layoutBinding);
+        }
+
+        for (auto& [texture, element] : m_textures) {
+            auto [setIndex, binding] = m_ctx->getGenerator()->getTextureBinding(element);
+
+            vk::DescriptorSetLayoutBinding layoutBinding;
+            layoutBinding.setBinding(binding);
+            layoutBinding.setDescriptorType(vk::DescriptorType::eSampledImage);
+            layoutBinding.setDescriptorCount(1);
+            layoutBinding.setStageFlags(ConvertToVkShaderStageFlags(element.getShaderStages()));
+
+            setBindings[setIndex].push_back(layoutBinding);
+        }
+
+        for (auto& [sampler, element] : m_samplers) {
+            auto [setIndex, binding] = m_ctx->getGenerator()->getSamplerBinding(element);
+
+            vk::DescriptorSetLayoutBinding layoutBinding;
+            layoutBinding.setBinding(binding);
+            layoutBinding.setDescriptorType(vk::DescriptorType::eSampler);
+            layoutBinding.setDescriptorCount(1);
+            layoutBinding.setStageFlags(ConvertToVkShaderStageFlags(element.getShaderStages()));
+
+            setBindings[setIndex].push_back(layoutBinding);
+        }
+
+        if (setBindings.empty()) {
             return;
+        }
+
+        std::vector<vk::DescriptorSetLayout> layouts;
+        m_descriptorSetLayouts.clear();
+
+        uint32_t maxSetIndex = setBindings.rbegin()->first;
+        layouts.resize(maxSetIndex + 1);
+        m_descriptorSetLayouts.resize(maxSetIndex + 1);
+
+        for (const auto& [setIndex, bindings] : setBindings) {
+            vk::DescriptorSetLayoutCreateInfo layoutInfo;
+            layoutInfo.setBindingCount(static_cast<uint32_t>(bindings.size()));
+            layoutInfo.setPBindings(bindings.data());
+
+            try {
+                layouts[setIndex] = m_descriptorSetLayouts[setIndex] = device.createDescriptorSetLayout(layoutInfo);
+            } catch (const vk::SystemError& e) {
+                for (auto& layout : m_descriptorSetLayouts) {
+                    if (layout) {
+                        device.destroyDescriptorSetLayout(layout);
+                        layout = nullptr;
+                    }
+                }
+                throw std::runtime_error("Failed to create descriptor set layout: " + std::string(e.what()));
+            }
         }
 
         m_descriptorSets.resize(maxFrames);
@@ -83,47 +142,6 @@ namespace FCT
             }
         }
     }
-    /*
-        void VK_PassResource::updateDescriptorSetsIfNeeded(uint32_t frameIdx)
-        {
-            if (frameIdx >= m_dirtyFlags.size() || !m_dirtyFlags[frameIdx]) {
-                return;
-            }
-
-            vk::Device device = m_ctx->getDevice();
-            std::vector<vk::WriteDescriptorSet> descriptorWrites;
-            std::vector<vk::DescriptorBufferInfo> bufferInfos;
-
-            for (size_t i = 0; i < m_constBuffers.size(); ++i) {
-                auto* srcConstBuffer = m_constBuffers[i];
-                auto* constBuffer = static_cast<RHI::VK_ConstBuffer*>(srcConstBuffer);
-                auto uniformLayout = constBuffer->layout();
-                auto [setIndex, binding] = m_ctx->getGenerator()->getLayoutBinding(uniformLayout);
-
-                if (setIndex >= m_descriptorSets[frameIdx].size()) {
-                    continue;
-                }
-
-                bufferInfos.push_back(constBuffer->currentBufferInfoWithoutUpdata());
-
-                vk::WriteDescriptorSet descriptorWrite;
-                descriptorWrite.setDstSet(m_descriptorSets[frameIdx][setIndex]);
-                descriptorWrite.setDstBinding(binding);
-                descriptorWrite.setDstArrayElement(0);
-                descriptorWrite.setDescriptorType(vk::DescriptorType::eUniformBuffer);
-                descriptorWrite.setDescriptorCount(1);
-                descriptorWrite.setPBufferInfo(&bufferInfos.back());
-
-                descriptorWrites.push_back(descriptorWrite);
-            }
-
-            if (!descriptorWrites.empty()) {
-                device.updateDescriptorSets(descriptorWrites, nullptr);
-            }
-
-            m_dirtyFlags[frameIdx] = false;
-        }
-    */
    void VK_PassResource::updateDescriptorSetsIfNeeded(uint32_t frameIdx) {
         if (frameIdx >= m_dirtyFlags.size() || !m_dirtyFlags[frameIdx]) {
             return;
@@ -246,9 +264,10 @@ namespace FCT
         return nullptr;
     }
 
-    void VK_PassResource::bind(RHI::CommandBuffer* cmdBuf)
+    void VK_PassResource::bind(RHI::CommandBuffer* cmdBuf, RHI::Pipeline* srcPipeline)
     {
-        if (!m_pipeline || m_descriptorSets.empty()) {
+
+        if (!srcPipeline || m_descriptorSets.empty()) {
             return;
         }
 
@@ -259,7 +278,7 @@ namespace FCT
         auto vkCmdBuf = static_cast<RHI::VK_CommandBuffer*>(cmdBuf);
         vk::CommandBuffer commandBuffer = vkCmdBuf->commandBuffer();
 
-        auto pipeline = static_cast<RHI::VK_RasterizationPipeline*>(m_pipeline);
+        auto pipeline = static_cast<RHI::VK_RasterizationPipeline*>(srcPipeline);
         vk::PipelineLayout pipelineLayout = pipeline->pipelineLayout();
 
         vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eGraphics;

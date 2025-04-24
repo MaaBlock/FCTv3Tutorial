@@ -14,28 +14,23 @@ namespace FCT
     public:
         PassResource()
         {
-            m_pipeline = nullptr;
+
         }
         //todo:整个系统变更成使用IRenderTarget
         void bind(Window* wnd)
         {
             m_wnd = wnd;
         }
-        virtual void bind(RHI::CommandBuffer* cmdBuf) = 0;
+        virtual void bind(RHI::CommandBuffer* cmdBuf,RHI::Pipeline* pipeline) = 0;
         virtual void addConstBuffer(RHI::ConstBuffer* buffer) = 0;
         virtual void addTexture(Image* texture,TextureElement element) = 0;
         virtual void addSampler(Sampler* sampler,SamplerElement element) = 0;
         virtual void create() = 0;
         virtual void update() = 0;
-        void pipeline(RHI::Pipeline* pipeline)
-        {
-            m_pipeline = pipeline;
-        }
     protected:
         std::vector<RHI::ConstBuffer*> m_constBuffers;
         std::vector<std::pair<Sampler*,SamplerElement>> m_samplers;
         std::vector<std::pair<Image*, TextureElement>> m_textures;
-        RHI::Pipeline* m_pipeline;
         Window* m_wnd;
         bool m_dirty = true;
     };
