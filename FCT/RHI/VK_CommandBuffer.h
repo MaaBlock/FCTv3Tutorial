@@ -27,6 +27,7 @@ namespace FCT
                 vk::CommandBufferBeginInfo beginInfo{};
                 m_commandBuffer.begin(beginInfo);
             }
+
             void viewport(Vec2 lt, Vec2 rb) override
             {
                 vk::Viewport viewport{};

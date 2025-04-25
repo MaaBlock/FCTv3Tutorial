@@ -36,6 +36,7 @@ namespace FCT
         RHI::RenderTargetView* currentTargetView() override;
         RHI::TextureView* currentTextureView() override;
         RHI::DepthStencilView* currentDepthStencilView() override;
+        RHI::Image* currentImage() override;
     protected:
         RHI::Image* m_image;
         RHI::RenderTargetView* m_rtv;

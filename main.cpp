@@ -150,57 +150,6 @@ private:
     float viewportWidth, viewportHeight;
     float viewportOffsetX, viewportOffsetY;
 };
-class Pass;
-class PassResourceManager
-{
-protected:
-    std::unordered_map<std::string, Image*> m_images;
-    std::unordered_map<std::string, Pass*> m_passes;
-
-public:
-
-};
-struct ResourceRef
-{
-    std::string m_fullDesc;
-    std::string m_targetName;
-    std::string m_passName;
-    bool m_isValid;
-    ResourceRef(const std::string& desc) : m_fullDesc(desc) {
-        parse(desc);
-    }
-
-    void parse(const std::string& desc) {
-        m_fullDesc = desc;
-        m_passName.clear();
-        m_targetName.clear();
-        m_isValid = false;
-
-        size_t dotPos = desc.find('.');
-
-        if (dotPos != std::string::npos) {
-            m_passName = desc.substr(0, dotPos);
-            m_targetName = desc.substr(dotPos + 1);
-            m_isValid = !m_passName.empty() && !m_targetName.empty();
-        } else {
-            m_targetName = desc;
-            m_isValid = !m_targetName.empty();
-        }
-    }
-};
-
-class Pass
-{
-protected:
-
-public:
-    void setTarget(uint32_t index)
-    {
-
-    }
-
-};
-
 struct TraditionPipelineState
 {
     TraditionPipelineState()
@@ -211,24 +160,22 @@ struct TraditionPipelineState
         rasterizationState = nullptr;
         depthStencilState = nullptr;
     }
+    PixelLayout pixelLayout;
+    VertexLayout vertexLayout;
+    ResourceLayout resourceLayout;
     VertexShader* vertexShader;
     PixelShader* pixelShader;
     BlendState* blendState;
     RasterizationState* rasterizationState;
     DepthStencilState* depthStencilState;
 };
-struct Object
-{
 
-};
 struct Job
 {
     PassResource* resource;
     TraditionPipelineState* state;
     std::vector<Mesh<uint16_t>> meshes16;
     std::vector<Mesh<uint32_t>> meshes32;
-    std::vector<Mat4> transforms16;
-    std::vector<Mat4> transforms32;
     bool needsUpdate;
     bool isCreated;
     Job()
@@ -238,10 +185,91 @@ struct Job
       , isCreated(false)
     {
     }
-
-
 };
 
+/*
+ *1.在指定的CmdBuf运行
+ */
+class Pass
+{
+protected:
+    std::vector<Job*> m_jobs;
+    std::map<uint32_t,Image*> m_targets;
+    std::map<TraditionPipelineState*,RHI::RasterizationPipeline*> m_pipelineStates;
+    Context* m_ctx;
+    Image* m_depthStencil;
+    struct ClearData
+    {
+        bool enable;
+        Vec4 color;
+        float depth;
+        int stencil;
+    };
+    ClearData m_clearData;
+public:
+    void submit(RHI::CommandBuffer* cmdBuf)
+    {
+        for (auto& job : m_jobs)
+        {
+            auto pipeline = getOrCreateTraditionPipeline(job->state);
+            cmdBuf->bindPipieline(pipeline);
+            job->resource->bind(cmdBuf,pipeline);
+            for (auto& mesh : job->meshes16)
+            {
+                mesh.draw(cmdBuf);
+            }
+            for (auto& mesh : job->meshes32)
+            {
+                mesh.draw(cmdBuf);
+            }
+        }
+    }
+    RHI::RasterizationPipeline* getOrCreateTraditionPipeline(TraditionPipelineState* state)
+    {
+        auto it = m_pipelineStates.find(state);
+        if (it!= m_pipelineStates.end())
+            return it->second;
+        auto pipeline = m_ctx->createTraditionPipeline();
+        pipeline->pixelLayout(state->pixelLayout);
+        pipeline->vertexLayout(state->vertexLayout);
+        pipeline->resourceLayout(state->resourceLayout);
+        pipeline->addResources(state->vertexShader);
+        pipeline->addResources(state->pixelShader);
+        pipeline->addResources(state->blendState);
+        pipeline->addResources(state->rasterizationState);
+        pipeline->addResources(state->depthStencilState);
+        m_pipelineStates[state] = pipeline;
+        return pipeline;
+    }
+    void setTarget(uint32_t index, Image* target)
+    {
+        m_targets[index] = target;
+    }
+
+    void setDepthStencil(Image* depthStencil)
+    {
+        m_depthStencil = depthStencil;
+    }
+    void enableClear(bool enable, const Vec4& color, float depth, int stencil)
+    {
+        m_clearData.enable = enable;
+        m_clearData.color = color;
+        m_clearData.depth = depth;
+        m_clearData.stencil = stencil;
+    }
+};
+
+
+
+/*
+ *1.分配CmdBuf
+ *2.给Pass分组
+ *3.给每个pass创建rhiPass，并给每个组创建passGroup
+ */
+class RenderGraph
+{
+
+};
 
 class App
 {
@@ -327,6 +355,7 @@ ShaderOut main(ShaderIn psIn) {
         cubeMesh = createCube(ctx, 1.0f);
 
         pass = ctx->createPass();
+        pass->enableClear(ClearType::color | ClearType::depthStencil,Vec4(1,1,1,1));
         pass->bindTarget(0,wnd->getCurrentTarget()->targetImage());
         pass->depthStencil(wnd->getCurrentTarget()->depthStencilBuffer());
         passGroup = ctx->createPassGroup();
@@ -421,12 +450,14 @@ ShaderOut main(ShaderIn psIn) {
         autoReviewport.onRenderTick(cmdBuf);
         cmdBuf->bindPipieline(pipeline);
         passGroup->beginSubmit(cmdBuf);
+        pass->beginSubmit(cmdBuf);
         passResource->bind(cmdBuf,pipeline);
 
         teapotMesh->bind(cmdBuf);
         teapotMesh->draw(cmdBuf, 1);
         cubeMesh->bind(cmdBuf);
         cubeMesh->draw(cmdBuf, 1);
+        pass->endSubmit();
         passGroup->endSubmit(cmdBuf);
         cmdBuf->end();
         cmdBuf->submit();

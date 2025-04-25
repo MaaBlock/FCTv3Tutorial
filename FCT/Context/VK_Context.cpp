@@ -106,11 +106,14 @@ namespace FCT
         }
         vk::DeviceCreateInfo deviceCreateInfo;
         vk::DeviceQueueCreateInfo queueCreateInfo;
-        float queuePriority = 1.0f;
+
+
+        uint32_t maxQueuesAvailable = queueFamily[m_graphicsQueueFamilyIndex].queueCount;
+        std::vector<float> queuePriorities(maxQueuesAvailable, 1.0f);
 
         queueCreateInfo.setQueueFamilyIndex(m_graphicsQueueFamilyIndex)
-                       .setQueueCount(1)
-                       .setQueuePriorities(queuePriority);
+                       .setQueueCount(maxQueuesAvailable)
+                       .setQueuePriorities(queuePriorities);
 
         std::vector<const char*> deviceExtensions = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME

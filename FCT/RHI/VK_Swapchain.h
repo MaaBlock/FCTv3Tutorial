@@ -45,6 +45,7 @@ namespace FCT{
             std::vector<RHI::Image*> m_fctImages;
             ImageRenderTarget* m_target;
             vk::Format m_imageFormat;
+            std::vector<vk::Queue> m_presentQueues;
             vk::Queue m_presentQueue;
             uint32_t m_presentQueueFamilyIndex;
             VK_Context* m_ctx;

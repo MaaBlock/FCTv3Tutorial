@@ -1,12 +1,28 @@
 //
 // Created by Administrator on 2025/3/25.
 //
+#include "../Base/Flags.h"
 #include "../MutilThreadBase/RefCount.h"
 #include "../Context/Image.h"
 #ifndef FCT_RHI_PASS_H
 #define FCT_RHI_PASS_H
 namespace FCT
 {
+    enum class ClearType : uint32_t
+    {
+        color = 0x1,
+        depth = 0x2,
+        stencil = 0x4,
+        depthStencil = depth | stencil
+    };
+    FCT_DECLARE_FLAGS(ClearType);
+    struct PassClearValue
+    {
+        ClearTypes types;
+        Vec4 color;
+        float depth;
+        uint8_t stencil;
+    };
     namespace RHI
     {
         class PassGroup;
@@ -22,21 +38,6 @@ namespace FCT
             {
                 m_renderTargets[index] = target;
             }
-            /*
-            void addTarget(FCT::Image* target)
-            {
-                m_renderTargets.push_back(target);
-            }*/
-            /*
-            void addTargets(std::vector<FCT::Image*> targets)
-            {
-                m_renderTargets.insert(m_renderTargets.end(), targets.begin(), targets.end());
-            }*/
-            /*
-            void addTexture(FCT::Image* texture)
-            {
-                m_textures.push_back(texture);
-            }*/
             void bindTexture(uint32_t index, FCT::Image* texture)
             {
                 m_textures[index] = texture;
@@ -50,10 +51,17 @@ namespace FCT
                 return m_depthStencil;
             }
             virtual void create(PassGroup* group) = 0;//由PassGroup 调用
-            /*auto& renderTargets()
+            void enableClear(ClearTypes type,Vec4 color,float depth = 1.0f, uint8_t stencil = 0)
             {
-                return m_renderTargets;
-            }*/
+                m_clearValue.types = type;
+                m_clearValue.color = color;
+                m_clearValue.depth = depth;
+                m_clearValue.stencil = stencil;
+            }
+            void enableClear(PassClearValue clearValue)
+            {
+                m_clearValue = clearValue;
+            }
             auto passGroup() const
             {
                 return m_group;
@@ -62,15 +70,16 @@ namespace FCT
             {
                 return m_renderTargets;
             }
+            virtual void beginSubmit(CommandBuffer* cmdBuf) = 0;
+            virtual void endSubmit() = 0;
         protected:
-            //std::vector<FCT::Image*> m_renderTargets;
-            //std::vector<FCT::Image*> m_textures;
             FCT::Image* m_depthStencil;
             PassGroup* m_group;
 
             //傻逼Vulkan，这tm也要自己写
             std::map<uint32_t,FCT::Image*> m_renderTargets;
             std::map<uint32_t,FCT::Image*> m_textures;
+            PassClearValue m_clearValue;
         };
     }
 }

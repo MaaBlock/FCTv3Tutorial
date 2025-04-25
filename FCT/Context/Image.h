@@ -78,6 +78,8 @@ namespace FCT {
         Format format() const { return m_behavior->format(); }
         Samples samples() const { return m_behavior->samples(); }
 
+        virtual RHI::Image* currentImage() = 0;
+
         virtual Image* getImage() const { return nullptr; }
         virtual std::vector<Image*> getTargetImages() = 0;
         virtual RHI::RenderTargetView* currentTargetView() = 0;

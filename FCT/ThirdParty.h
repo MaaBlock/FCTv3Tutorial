@@ -60,6 +60,10 @@
 #endif
 
 #include <boost/lockfree/queue.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/topological_sort.hpp>
+#include <boost/graph/graphviz.hpp>
+
 #include <thread>
 #include <map>
 #include <functional>

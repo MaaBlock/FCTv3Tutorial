@@ -17,6 +17,8 @@ namespace FCT
             vk::SubpassDescription getDescription() { return m_desc; }
             std::map<uint32_t,uint32_t>& targetAttachmentIndices() { return m_targetAttachmentIndices; }
             void setDepthStencilAttachmentIndex(uint32_t index) { m_depthStencilAttachmentIndex = index; }
+            void beginSubmit(CommandBuffer* cmdBuf) override;
+            void endSubmit() override;
         protected:
             VK_Context* m_ctx;
             vk::SubpassDescription m_desc;

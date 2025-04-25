@@ -50,6 +50,15 @@ namespace FCT {
                 m_presentQueueFamilyIndex = graphicsQueueFamily;
             }
 
+            uint32_t maxPresentQueues = phyDc.getQueueFamilyProperties()[m_presentQueueFamilyIndex].queueCount;
+
+            m_presentQueues.clear();
+
+            for (uint32_t i = 0; i < maxPresentQueues; i++) {
+                m_presentQueues.push_back(dc.getQueue(m_presentQueueFamilyIndex, i));
+            }
+
+
             m_presentQueue = dc.getQueue(m_presentQueueFamilyIndex, 0);
 
             auto capabilities = phyDc.getSurfaceCapabilitiesKHR(surface);
@@ -67,7 +76,6 @@ namespace FCT {
             );
 
             auto imageCount = std::clamp(3u, capabilities.minImageCount, capabilities.maxImageCount);
-
             vk::SwapchainCreateInfoKHR createInfo{};
             createInfo.setSurface(surface)
                       .setMinImageCount(imageCount)
@@ -201,7 +209,7 @@ namespace FCT {
                     .setPSwapchains(&m_swapchain)
                     .setPImageIndices(&m_currentImageIndex);
             try {
-                auto result = m_presentQueue.presentKHR(presentInfo);
+                auto result = m_presentQueues[m_ctx->currentFrameIndex() % m_presentQueues.size()].presentKHR(presentInfo);
                 if (result == vk::Result::eSuboptimalKHR) {
                     m_needRecreated = true;
                 }

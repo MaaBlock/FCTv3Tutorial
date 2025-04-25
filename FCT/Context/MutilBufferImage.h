@@ -33,6 +33,7 @@ namespace FCT
         RHI::RenderTargetView* currentTargetView() override;
         RHI::TextureView* currentTextureView() override;
         RHI::DepthStencilView* currentDepthStencilView() override;
+        RHI::Image* currentImage() override;
         void changeCurrentIndex(int index)
         {
             m_currentIndex = index % m_images.size();

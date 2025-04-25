@@ -182,4 +182,9 @@ namespace FCT
     {
         return m_dsvs[m_currentIndex];
     }
+
+    RHI::Image* MutilBufferImage::currentImage()
+    {
+        return m_images[m_currentIndex];
+    }
 }

@@ -9,6 +9,9 @@
 
 namespace FCT
 {
+    template <typename BitType>
+    struct FlagTraits;
+
     //learning from vulkan-hpp
     template <typename BitType>
     class Flags {
@@ -45,5 +48,61 @@ namespace FCT
     private:
         MaskType m_mask;
     };
+
+    template <typename BitType>
+    struct FlagTraits
+    {
+        static constexpr bool isBitmask = false;
+    };
+
+    template <typename BitType, typename std::enable_if<FlagTraits<BitType>::isBitmask, bool>::type = true>
+    constexpr Flags<BitType> operator|(BitType lhs, BitType rhs) noexcept
+    {
+        return Flags<BitType>(lhs) | Flags<BitType>(rhs);
+    }
+
+    template <typename BitType, typename std::enable_if<FlagTraits<BitType>::isBitmask, bool>::type = true>
+    constexpr Flags<BitType> operator&(BitType lhs, BitType rhs) noexcept
+    {
+        return Flags<BitType>(lhs) & Flags<BitType>(rhs);
+    }
+
+    template <typename BitType, typename std::enable_if<FlagTraits<BitType>::isBitmask, bool>::type = true>
+    constexpr Flags<BitType> operator^(BitType lhs, BitType rhs) noexcept
+    {
+        return Flags<BitType>(lhs) ^ Flags<BitType>(rhs);
+    }
+
+    template <typename BitType, typename std::enable_if<FlagTraits<BitType>::isBitmask, bool>::type = true>
+    constexpr Flags<BitType> operator~(BitType bits) noexcept
+    {
+        return ~(Flags<BitType>(bits));
+    }
+
+    template <typename BitType>
+    constexpr Flags<BitType> operator|(BitType bit, Flags<BitType> const& flags) noexcept
+    {
+        return flags | bit;
+    }
+
+    template <typename BitType>
+    constexpr Flags<BitType> operator&(BitType bit, Flags<BitType> const& flags) noexcept
+    {
+        return flags & bit;
+    }
+
+    template <typename BitType>
+    constexpr Flags<BitType> operator^(BitType bit, Flags<BitType> const& flags) noexcept
+    {
+        return flags ^ bit;
+    }
+
+    #define FCT_DECLARE_FLAGS(BitType) \
+        template<> \
+        struct FCT::FlagTraits<BitType> \
+        { \
+            static constexpr bool isBitmask = true; \
+        }; \
+        using BitType##s = FCT::Flags<BitType>;
 }
 #endif //FLAGS_H

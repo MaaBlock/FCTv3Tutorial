@@ -92,4 +92,9 @@ namespace FCT
     {
         return nullptr;
     }
+
+    RHI::Image* SingleBufferImage::currentImage()
+    {
+        return m_image;
+    }
 }
