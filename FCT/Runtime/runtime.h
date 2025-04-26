@@ -71,6 +71,13 @@ namespace FCT
         Context* createContext();
     	ImageLoader* createImageLoader();
     	ModelLoader* createModelLoader();
+    	void postUiTask(UITaskFunction task,void* param = nullptr,bool waited = true)
+    	{
+
+#ifdef  FCT_USE_GLFW
+    		g_common->glfwUICommon->postUiTask(task,param, waited);
+#endif
+    	}
     private:
         RuntimeCommon* g_common;
     	Runtime(const Runtime&) = delete;

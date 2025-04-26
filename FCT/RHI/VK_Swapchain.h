@@ -37,6 +37,11 @@ namespace FCT{
             ImageRenderTarget* getCurrentTarget() override;
             void setPresentFinshSemaphore(RHI::Semaphore* semaphore) override;
             RHI::Semaphore* getImageAvailableSemaphore() override;
+            uint32_t getImageCount() const override
+            {
+                return m_fctImages.size();
+            }
+            Samples getSampleCount() const override;
         private:
             bool m_recreated;
             bool m_needRecreated;

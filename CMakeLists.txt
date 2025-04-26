@@ -36,27 +36,23 @@ if (VCPKG_TARGET_ANDROID)
     include_directories(Android_INCLUDES)
 endif()
 
-
 if (FCT_ANDROID)
     project("androidtutorial")
-    
-    add_subdirectory(FCT)
-    
-    add_library(${CMAKE_PROJECT_NAME} SHARED
-            main.cpp)
-    
+else()
+    project("tutorial")
+endif()
+add_subdirectory(FCT)
+add_subdirectory(FCT_IMGUI)
+add_subdirectory(MQEngine)
+add_executable(${CMAKE_PROJECT_NAME}
+        main.cpp)
+if (FCT_ANDROID)
     target_link_libraries(${CMAKE_PROJECT_NAME}
             -uJava_com_example_androidtutorial_FCTMainActivity_CPPEntry
             FCT
             android
             log)
 else()
-    project("tutorial")
-    
-    add_subdirectory(FCT)
-    add_executable(${CMAKE_PROJECT_NAME}
-            main.cpp)
-    
     target_link_libraries(${CMAKE_PROJECT_NAME}
             FCT)
 endif()

@@ -10,6 +10,16 @@
     "shaderc",
     "assimp",
     {
+      "name" : "imgui",
+      "features" : [ "docking-experimental", "glfw-binding", "vulkan-binding" ],
+      "platform": "windows"
+    },
+    {
+      "name" : "imgui",
+      "features" : [ "docking-experimental", "glfw-binding", "vulkan-binding" ],
+      "platform": "linux"
+    },
+    {
       "name": "vulkan",
       "platform": "windows"
     },

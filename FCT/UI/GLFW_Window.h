@@ -29,6 +29,7 @@ namespace FCT
         int getHeight() override;
         void setCursorPos(int x, int y) override;
         Image* getImage() const override;
+        GLFWwindow* getWindow() const { return m_window; }
     private:
         GLFWwindow* m_window;
         Runtime* m_rt;

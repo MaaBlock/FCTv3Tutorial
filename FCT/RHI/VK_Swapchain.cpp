@@ -353,6 +353,11 @@ namespace FCT {
         {
             return m_prensentFinshSemphore;
         }
+
+        Samples VK_Swapchain::getSampleCount() const
+        {
+            return Samples::sample_1;
+        }
     }
 }
 

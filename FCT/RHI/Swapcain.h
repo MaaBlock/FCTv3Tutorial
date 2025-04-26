@@ -21,6 +21,8 @@ namespace FCT
                 m_width = 0;
                 m_height = 0;
             }
+            virtual uint32_t getImageCount() const = 0;
+            virtual Samples getSampleCount() const = 0;
             virtual ~Swapchain() = default;
             void nativeHandle(void* handle)
             {

@@ -1,4 +1,6 @@
-#include "FCT/headers.h"
+#include "../FCT/headers.h"
+#include "../FCT_IMGUI/headers.h"
+#include "../FCT_IMGUI/FCTAPI.h"
 using namespace FCT;
 using namespace std;
 static constexpr VertexLayout vertexLayout {
@@ -298,6 +300,7 @@ private:
     AutoReviewport autoReviewport;
     float rotationAngleY;
     Mesh<uint32_t>* teapotMesh;
+    GLFW_VK_ImGuiContext* imguiCtx;
 public:
     App(Runtime& rt) : rt(rt)
     {
@@ -314,6 +317,13 @@ public:
             autoReviewport.resize(width, height);
         });
         ctx->maxFrameInFlight(5);
+
+        InitImgui();
+        ImGui::StyleColorsLight();
+
+        rt.postUiTask([this](void*)
+        {
+            },nullptr);
         init();
     }
     void init()
@@ -365,6 +375,7 @@ ShaderOut main(ShaderIn psIn) {
         passGroup = ctx->createPassGroup();
         passGroup->addPass(pass);
         passGroup->create();
+        imguiCtx = new GLFW_VK_ImGuiContext((GLFW_Window*)wnd,(VK_Context*)ctx,passGroup);
         pipeline = ctx->createTraditionPipeline();
         pipeline->pixelLayout(pixelLayout);
         pipeline->vertexLayout(vertexLayout);
@@ -406,11 +417,11 @@ ShaderOut main(ShaderIn psIn) {
         sampler->setAnisotropic();
         sampler->create();
 
-        texture = ctx->loadTexture("../img.png");
+        texture = ctx->loadTexture("../../img.png");
         passResource->addTexture(texture,resourceLayout.findTexture("testTexture"));
         passResource->addSampler(sampler, resourceLayout.findSampler("testSampler"));
         passResource->create();
-        teapotMesh = ctx->loadMesh("../teapot.obj","teapot",vertexLayout);
+        teapotMesh = ctx->loadMesh("../../teapot.obj","teapot",vertexLayout);
     }
 
     ~App()
@@ -451,6 +462,13 @@ ShaderOut main(ShaderIn psIn) {
         cmdBuf->reset();
         cmdBuf->begin();
 
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::Begin("FCT Debug");
+        ImGui::Text("Hello, FCT!");
+        ImGui::End();
+
         autoReviewport.onRenderTick(cmdBuf);
         cmdBuf->bindPipieline(pipeline);
         passGroup->beginSubmit(cmdBuf);
@@ -461,9 +479,13 @@ ShaderOut main(ShaderIn psIn) {
         teapotMesh->draw(cmdBuf, 1);
         cubeMesh->bind(cmdBuf);
         cubeMesh->draw(cmdBuf, 1);
+        imguiCtx->submitTick(cmdBuf);
         pass->endSubmit();
         passGroup->endSubmit(cmdBuf);
+
+
         cmdBuf->end();
+
         cmdBuf->submit();
         ctx->swapBuffers();
     }

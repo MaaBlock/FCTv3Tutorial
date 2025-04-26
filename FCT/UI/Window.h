@@ -95,6 +95,14 @@ namespace FCT {
 		{
 			m_swapchain->enableDepthBuffer(format);
 		}
+		uint32_t getSwapchainImageCount() const
+		{
+			return m_swapchain->getImageCount();
+		}
+		Samples getSwapchainSampleCount() const
+		{
+			return m_swapchain->getSampleCount();
+		}
 	private:
 	protected:
 		CallBackEventHandler* m_callbackHandler;
