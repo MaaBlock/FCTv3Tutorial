@@ -170,7 +170,7 @@ struct TraditionPipelineState
     DepthStencilState* depthStencilState;
 };
 
-struct Job
+struct TraditionRenderJob
 {
     PassResource* resource;
     TraditionPipelineState* state;
@@ -178,7 +178,7 @@ struct Job
     std::vector<Mesh<uint32_t>> meshes32;
     bool needsUpdate;
     bool isCreated;
-    Job()
+    TraditionRenderJob()
       : resource(nullptr)
       , state(nullptr)
       , needsUpdate(false)
@@ -193,7 +193,7 @@ struct Job
 class Pass
 {
 protected:
-    std::vector<Job*> m_jobs;
+    std::vector<TraditionRenderJob*> m_jobs;
     std::map<uint32_t,Image*> m_targets;
     std::map<TraditionPipelineState*,RHI::RasterizationPipeline*> m_pipelineStates;
     Context* m_ctx;

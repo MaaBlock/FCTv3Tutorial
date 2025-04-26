@@ -10,8 +10,10 @@ namespace FCT
     {
     protected:
         RHI::PassGroup* m_passGroup;
+        ImDrawData* drawData[2];
    public:
         GLFW_VK_ImGuiContext(GLFW_Window* wnd,VK_Context* ctx,RHI::PassGroup* passGroup);
+
         void submitTick(RHI::CommandBuffer* cmdBuffer);
         void logicTick();
     };
@@ -47,6 +49,10 @@ namespace FCT
 
         VkCommandBuffer vkCmdBuffer = static_cast<RHI::VK_CommandBuffer*>(cmdBuffer)->commandBuffer();
         ImGui_ImplVulkan_RenderDrawData(drawData, vkCmdBuffer);
+    }
+
+    inline void GLFW_VK_ImGuiContext::logicTick()
+    {
     }
 }
 #endif //VK_GLFW_IMGUICONTEXT_H

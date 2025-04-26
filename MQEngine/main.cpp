@@ -172,7 +172,7 @@ struct TraditionPipelineState
     DepthStencilState* depthStencilState;
 };
 
-struct Job
+struct TraditionRenderJob
 {
     PassResource* resource;
     TraditionPipelineState* state;
@@ -180,7 +180,7 @@ struct Job
     std::vector<Mesh<uint32_t>> meshes32;
     bool needsUpdate;
     bool isCreated;
-    Job()
+    TraditionRenderJob()
       : resource(nullptr)
       , state(nullptr)
       , needsUpdate(false)
@@ -189,13 +189,22 @@ struct Job
     }
 };
 
+struct SubmitJob
+{
+    virtual void submit(RHI::CommandBuffer* cmdBuf)
+    {
+
+    }
+};
+
+using ImguiTask = std::function<void()>;
 /*
  *1.在指定的CmdBuf运行
  */
 class Pass
 {
 protected:
-    std::vector<Job*> m_jobs;
+    std::vector<TraditionRenderJob*> m_jobs;
     std::map<uint32_t,Image*> m_targets;
     std::map<TraditionPipelineState*,RHI::RasterizationPipeline*> m_pipelineStates;
     Context* m_ctx;
@@ -258,7 +267,6 @@ public:
     {
         m_targets[index] = target;
     }
-
     void setDepthStencil(Image* depthStencil)
     {
         m_depthStencil = depthStencil;
@@ -454,6 +462,8 @@ ShaderOut main(ShaderIn psIn) {
         buffer->setValue("modelMatrix", ratation);
         constBuffer->updataData();
         wnd->title(ss.str());
+
+        imguiCtx->logicTick();
         ctx->flush();
     }
     void submitTick()
@@ -461,13 +471,6 @@ ShaderOut main(ShaderIn psIn) {
         auto cmdBuf = ctx->getCmdBuf(wnd, 0);
         cmdBuf->reset();
         cmdBuf->begin();
-
-        ImGui_ImplVulkan_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        ImGui::Begin("FCT Debug");
-        ImGui::Text("Hello, FCT!");
-        ImGui::End();
 
         autoReviewport.onRenderTick(cmdBuf);
         cmdBuf->bindPipieline(pipeline);
@@ -479,6 +482,12 @@ ShaderOut main(ShaderIn psIn) {
         teapotMesh->draw(cmdBuf, 1);
         cubeMesh->bind(cmdBuf);
         cubeMesh->draw(cmdBuf, 1);
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::Begin("FCT Debug");
+        ImGui::Text("Hello, FCT!");
+        ImGui::End();
         imguiCtx->submitTick(cmdBuf);
         pass->endSubmit();
         passGroup->endSubmit(cmdBuf);
