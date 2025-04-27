@@ -482,9 +482,7 @@ ShaderOut main(ShaderIn psIn) {
         teapotMesh->draw(cmdBuf, 1);
         cubeMesh->bind(cmdBuf);
         cubeMesh->draw(cmdBuf, 1);
-        ImGui_ImplVulkan_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+        imguiCtx->newFrame();
         ImGui::Begin("FCT Debug");
         ImGui::Text("Hello, FCT!");
         ImGui::End();

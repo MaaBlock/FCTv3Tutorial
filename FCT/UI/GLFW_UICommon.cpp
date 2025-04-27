@@ -10,6 +10,7 @@ namespace FCT
         bool inited = false;
         m_uiThread = std::thread([this,&inited]()
         {
+            m_uiThreadId = std::this_thread::get_id();
             glfwInit();
             glfwSwapInterval(0);
             inited = true;
@@ -22,6 +23,10 @@ namespace FCT
                     task->task(task->param);
                     *task->waiting = false;
                     delete task;
+                }
+                for (auto it : m_ticker)
+                {
+                    it.second.operator()();
                 }
                 glfwPollEvents();
             }
@@ -49,4 +54,5 @@ namespace FCT
             std::this_thread::sleep_for(std::chrono::milliseconds(0));
         }
     }
+
 }
