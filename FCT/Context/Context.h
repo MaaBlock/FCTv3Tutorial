@@ -33,6 +33,7 @@
 #include "../ModelLoader/ModelLoader.h"
 #include "./Mesh.h"
 #include "MutilBufferImage.h"
+#include "./RenderGraph.h"
 
 namespace FCT
 {
@@ -238,13 +239,19 @@ namespace FCT
 
 		//render graph部分
 	protected:
-
+		RenderGraph* m_defaultGraph;
+		RenderGraph* m_currentGraph;
 	public:
+		void setCurrentGraph(RenderGraph* graph)
+		{
 
+			m_currentGraph = graph;
+		}
 	};
 }
 #include "../UI/Window.h"
 namespace FCT {
+	//这部分代码是放出来看的， 用于，比如可以自己实现flush，然后调用里面的函数
 	inline void FrameResource::init(Context* ctx)
 	{
 		this->ctx = ctx;

@@ -11,6 +11,13 @@ namespace FCT {
             m_owns = false;
         }
 
+        VK_Image::~VK_Image()
+        {
+            if (m_owns) {
+                m_ctx->getDevice().destroyImage(m_image);
+            }
+        }
+
         void VK_Image::create()
         {
             vk::ImageCreateInfo imageInfo;

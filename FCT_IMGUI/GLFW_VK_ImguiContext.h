@@ -46,6 +46,10 @@ namespace FCT
                 newFrame_updateInput();
             });
         }
+        void attachPass(std::string name)
+        {
+
+        }
         void updateRenderPass(RHI::PassGroup* passGroup, RHI::Pass* pass)
         {
 

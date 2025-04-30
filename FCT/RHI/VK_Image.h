@@ -13,6 +13,7 @@ namespace FCT
         class VK_Image : public Image {
         public:
             VK_Image(VK_Context* ctx);
+            ~VK_Image();
             void create() override;
             void uploadInitialData();
             void create(vk::Image image); // 注意，格式信息还是给自己填
