@@ -15,11 +15,41 @@ namespace FCT
     protected:
         RHI::PassGroup* m_passGroup;
         GLFW_Window* m_wnd;
+        VK_Context* m_ctx;
    public:
-        GLFW_VK_ImGuiContext(GLFW_Window* wnd,VK_Context* ctx,RHI::PassGroup* passGroup);
+        GLFW_VK_ImGuiContext(GLFW_Window* wnd,VK_Context* ctx);
         void newFrame();
         void submitTick(RHI::CommandBuffer* cmdBuffer);
         void logicTick();
+        void create(RHI::PassGroup* passGroup,RHI::Pass* pass)
+        {
+            m_passGroup = passGroup;
+            ImGui_ImplGlfw_InitForVulkan(m_wnd->getWindow(),true);
+            ImGui_ImplVulkan_InitInfo init_info{};
+            init_info.Instance = m_ctx->getVkInstance();
+            init_info.PhysicalDevice = m_ctx->getPhysicalDevice();
+            init_info.Device = m_ctx->getDevice();
+            init_info.QueueFamily = m_ctx->getGraphicsQueueFamily();
+            init_info.Queue = m_ctx->getGraphicsQueue();
+            init_info.PipelineCache = nullptr;
+            init_info.DescriptorPool = static_cast<RHI::VK_DescriptorPool*>(m_ctx->getDescriptorPool(m_wnd))->getPool();
+            init_info.Allocator = nullptr;
+            init_info.MinImageCount = 2;
+            init_info.ImageCount = m_wnd->getSwapchainImageCount();
+            init_info.MSAASamples = static_cast<VkSampleCountFlagBits>(ToVkSampleCount(m_wnd->getSwapchainSampleCount()));
+            init_info.CheckVkResultFn = nullptr;
+            init_info.RenderPass = static_cast<RHI::VK_PassGroup*>(m_passGroup)->getRenderPass();
+            init_info.Subpass = pass->index();
+            ImGui_ImplVulkan_Init(&init_info);
+            m_wnd->postTicker([this]()
+            {
+                newFrame_updateInput();
+            });
+        }
+        void updateRenderPass(RHI::PassGroup* passGroup, RHI::Pass* pass)
+        {
+
+        }
     protected:
         void newFrame_updataSize();
         void newFrame_UpdateMouseData();
@@ -29,31 +59,10 @@ namespace FCT
         void newFrame_UpdateGamepads();
         void newFrame_updateInput();
     };
-    inline GLFW_VK_ImGuiContext::GLFW_VK_ImGuiContext(GLFW_Window* wnd, VK_Context* ctx,RHI::PassGroup* passGroup)
+    inline GLFW_VK_ImGuiContext::GLFW_VK_ImGuiContext(GLFW_Window* wnd, VK_Context* ctx)
     {
         m_wnd = wnd;
-        m_passGroup = passGroup;
-        ImGui_ImplGlfw_InitForVulkan(wnd->getWindow(),true);
-        ImGui_ImplVulkan_InitInfo init_info{};
-        init_info.Instance = ctx->getVkInstance();
-        init_info.PhysicalDevice = ctx->getPhysicalDevice();
-        init_info.Device = ctx->getDevice();
-        init_info.QueueFamily = ctx->getGraphicsQueueFamily();
-        init_info.Queue = ctx->getGraphicsQueue();
-        init_info.PipelineCache = nullptr;
-        init_info.DescriptorPool = static_cast<RHI::VK_DescriptorPool*>(ctx->getDescriptorPool(wnd))->getPool();
-        init_info.Allocator = nullptr;
-        init_info.MinImageCount = 2;
-        init_info.ImageCount = wnd->getSwapchainImageCount();
-        init_info.MSAASamples = static_cast<VkSampleCountFlagBits>(ToVkSampleCount(wnd->getSwapchainSampleCount()));
-        init_info.CheckVkResultFn = nullptr;
-        init_info.RenderPass = static_cast<RHI::VK_PassGroup*>(m_passGroup)->getRenderPass();
-        init_info.Subpass = 0;
-        ImGui_ImplVulkan_Init(&init_info);
-        m_wnd->postTicker([this]()
-        {
-            newFrame_updateInput();
-        });
+        m_ctx = ctx;
     }
 
 

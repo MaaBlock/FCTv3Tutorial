@@ -80,6 +80,7 @@ namespace FCT {
 
         virtual RHI::Image* currentImage() = 0;
 
+        virtual void resize(uint32_t width, uint32_t height) = 0;
         virtual Image* getImage() const { return nullptr; }
         virtual std::vector<Image*> getTargetImages() = 0;
         virtual RHI::RenderTargetView* currentTargetView() = 0;

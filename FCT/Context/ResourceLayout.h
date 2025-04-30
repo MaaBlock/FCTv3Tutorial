@@ -44,6 +44,10 @@ namespace FCT
             : m_type(TextureType::Texture2D), m_name(""),
               m_stages(ShaderStage::All), m_updateFrequency(UpdateFrequency::PerFrame) {}
 
+        constexpr TextureElement(const TextureElement& other) noexcept
+            : m_type(other.m_type), m_name(other.m_name),
+              m_stages(other.m_stages), m_updateFrequency(other.m_updateFrequency) {}
+
         constexpr TextureElement(const char* name) noexcept
             : m_type(TextureType::Texture2D), m_name(name),
               m_stages(ShaderStage::All), m_updateFrequency(UpdateFrequency::PerFrame) {}
@@ -81,6 +85,9 @@ namespace FCT
             return !(*this == other);
         }
 
+        constexpr explicit operator bool() const noexcept {
+            return m_name != nullptr && m_name[0] != '\0';
+        }
     private:
         TextureType m_type;
         const char* m_name;

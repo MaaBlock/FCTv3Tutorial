@@ -32,6 +32,7 @@
 #include "../RHI/DepthStencilView.h"
 #include "../ModelLoader/ModelLoader.h"
 #include "./Mesh.h"
+#include "MutilBufferImage.h"
 
 namespace FCT
 {
@@ -96,6 +97,7 @@ namespace FCT
 		virtual Texture* createTexture() = 0;
 		virtual TextureArray* createTextureArray() = 0;
 		virtual Image* createImage() = 0;
+		virtual MutilBufferImage* createMutilBufferImage() = 0;
 		virtual RHI::Image* newRhiImage() = 0;
 		virtual RHI::Swapchain* createSwapchain() = 0;
 		virtual RHI::PassGroup* createPassGroup() = 0;
@@ -196,14 +198,19 @@ namespace FCT
 		ShaderGenerator* getGenerator() { return m_generator; }
 		//maxFrameInFlight 是用来封装在RenerGraph系统里的（Context扮演RenderGraph的角色）
 		void setMaxFrameInFlights(size_t max) { m_maxFrameInFlights = max; }
+		void waitCurrentFlush()
+		{
+			FCT_WAIT_FOR(m_currentFlush);
+		}
+	public:
+		void nextFrame();
+		void currentFlush();
 	protected:
 		SumitTicker m_ticker;
 		size_t m_maxFrameInFlights;
 		std::vector<Window*> m_bindWindows;
 		bool m_nextFrame;
 		bool m_currentFlush;
-		void nextFrame();
-		void currentFlush();
 		std::unordered_map<std::string,Computation<Pass>*> m_passQueue0;
 		std::unordered_map<std::string,Computation<Pass>*> m_passQueue1;
 		std::unordered_map<std::string,Computation<Pass>*>* m_submitQueue;

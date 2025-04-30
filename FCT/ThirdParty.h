@@ -138,4 +138,5 @@ namespace FCT {
 #include <fstream>
 #include <filesystem>
 #include <set>
+#include <queue>
 #endif // FCT_THIRDPARTY_HEADER

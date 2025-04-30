@@ -221,6 +221,7 @@ namespace FCT {
     }
     enum class Samples
     {
+        sample_undefined = 0,
         sample_1,
         sample_2,
         sample_4,

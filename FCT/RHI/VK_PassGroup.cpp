@@ -130,7 +130,7 @@ namespace FCT
             m_framebufferInfo.pAttachments = m_framebufferViews.data();
 
             if (m_targetAttachments.empty() && m_depthAttachments.empty()) {
-                ferr << "No attachments for framebuffer!" << std::endl;
+                fout << "No attachments for framebuffer!" << std::endl;
                 return;
             }
 
@@ -178,6 +178,10 @@ namespace FCT
         void VK_PassGroup::endSubmit(CommandBuffer* cmdBuf)
         {
             auto vkCmdBuf = static_cast<VK_CommandBuffer*>(cmdBuf);
+            if (m_targetAttachments.empty() && m_depthAttachments.empty()) {
+                return;
+            }
+
             vkCmdBuf->commandBuffer().endRenderPass();
         }
 

@@ -193,7 +193,7 @@ struct TraditionRenderJob
 class Pass
 {
 protected:
-    std::vector<TraditionRenderJob*> m_jobs;
+    std::vector<TraditionRenderJob*> m_traditionRenderJobs;
     std::map<uint32_t,Image*> m_targets;
     std::map<TraditionPipelineState*,RHI::RasterizationPipeline*> m_pipelineStates;
     Context* m_ctx;
@@ -219,7 +219,7 @@ public:
     void submit(RHI::CommandBuffer* cmdBuf)
     {
         m_pass->beginSubmit(cmdBuf);
-        for (auto& job : m_jobs)
+        for (auto& job : m_traditionRenderJobs)
         {
             auto pipeline = getOrCreateTraditionPipeline(job->state);
             cmdBuf->bindPipieline(pipeline);
@@ -275,6 +275,7 @@ class RenderGraph
 
 };
 
+
 class App
 {
 private:
@@ -298,6 +299,7 @@ private:
     AutoReviewport autoReviewport;
     float rotationAngleY;
     Mesh<uint32_t>* teapotMesh;
+
 public:
     App(Runtime& rt) : rt(rt)
     {

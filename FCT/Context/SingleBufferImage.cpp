@@ -71,6 +71,45 @@ namespace FCT
 
     }
 
+    void SingleBufferImage::resize(uint32_t width, uint32_t height)
+    {
+        if (m_width == width && m_height == height)
+        {
+            return;
+        }
+
+        Format currentFormat = m_format;
+        Samples currentSamples = m_samples;
+        ImageUsageFlags currentUsage = m_usage;
+
+        FCT_SAFE_RELEASE(m_image);
+
+        if (m_rtv)
+        {
+            m_rtv->release();
+            m_rtv = nullptr;
+        }
+
+        if (m_srv)
+        {
+            m_srv->release();
+            m_srv = nullptr;
+        }
+
+        m_width = width;
+        m_height = height;
+
+        m_image = m_ctx->newRhiImage();
+        m_image->width(m_width);
+        m_image->height(m_height);
+        m_image->format(currentFormat);
+        m_image->samples(currentSamples);
+        m_image->usage(currentUsage);
+        m_image->create();
+
+        as(currentUsage);
+    }
+
     std::vector<Image*> SingleBufferImage::getTargetImages() {
         if (m_rtv) {
             return {this};

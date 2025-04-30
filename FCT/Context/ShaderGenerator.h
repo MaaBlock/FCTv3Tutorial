@@ -76,6 +76,15 @@ namespace FCT
             //todo:alloc new binding
             return std::make_pair(0, 0);
         }
+        TextureElement findTextureElementByName(std::string name)
+        {
+            for (const auto& pair : m_textureSetBindings) {
+                if (pair.first.getName() == name) {
+                    return pair.first;
+                }
+            }
+            return TextureElement();
+        }
     protected:
         std::string generateShaderIn(
             const std::map<uint32_t, VertexLayout>& layouts,

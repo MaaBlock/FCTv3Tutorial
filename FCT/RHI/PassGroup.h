@@ -27,6 +27,7 @@ namespace FCT
             virtual void create() = 0;
             void addPass(Pass* pass)
             {
+                pass->index(m_passes.size());
                 m_passes.push_back(pass);
             }
         protected:

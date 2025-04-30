@@ -72,10 +72,18 @@ namespace FCT
             }
             virtual void beginSubmit(CommandBuffer* cmdBuf) = 0;
             virtual void endSubmit() = 0;
+            uint32_t index() const
+            {
+                return m_index;
+            }
+            void index(uint32_t index)
+            {
+                m_index = index;
+            }
         protected:
             FCT::Image* m_depthStencil;
             PassGroup* m_group;
-
+            uint32_t m_index;
             //傻逼Vulkan，这tm也要自己写
             std::map<uint32_t,FCT::Image*> m_renderTargets;
             std::map<uint32_t,FCT::Image*> m_textures;
