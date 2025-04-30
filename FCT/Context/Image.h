@@ -57,9 +57,6 @@ namespace FCT {
     private:
 
     };
-#ifdef FCT_DEPRECATED
-
-#endif // FCT_DEPRECATED
     class Image : public RefCount, public IRenderTarget {
     public:
         friend class BeforeCreateImageBehavior;

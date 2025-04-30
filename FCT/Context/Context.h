@@ -211,10 +211,6 @@ namespace FCT
 		std::vector<Window*> m_bindWindows;
 		bool m_nextFrame;
 		bool m_currentFlush;
-		std::unordered_map<std::string,Computation<Pass>*> m_passQueue0;
-		std::unordered_map<std::string,Computation<Pass>*> m_passQueue1;
-		std::unordered_map<std::string,Computation<Pass>*>* m_submitQueue;
-		std::unordered_map<std::string,Computation<Pass>*>* m_pushQueue;
 		std::thread m_submitThread;
 		bool m_ctxRunning;
 		ShaderCompiler* m_compiler;
@@ -239,6 +235,12 @@ namespace FCT
 		Image* loadTexture(const std::string& filename);
 	protected:
 		ImageLoader* m_imageLoader;
+
+		//render graph部分
+	protected:
+
+	public:
+
 	};
 }
 #include "../UI/Window.h"
