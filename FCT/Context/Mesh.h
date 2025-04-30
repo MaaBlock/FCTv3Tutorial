@@ -4,6 +4,7 @@
 #include "./Vertex.h"
 #include "../RHI/IndexBuffer.h"
 #include "../RHI/VertexBuffer.h"
+#include "../RHI/CommandBuffer.h"
 #ifndef FCT_MESH_H
 #define FCT_MESH_H
 namespace FCT

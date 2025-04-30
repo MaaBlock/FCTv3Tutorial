@@ -8,6 +8,15 @@
 #include "../UI/Window.h"
 namespace FCT
 {
+    class Sampler;
+    class SamplerElement;
+    class TextureElement;
+
+    namespace RHI
+    {
+        class Pipeline;
+        class CommandBuffer;
+    }
 
     class PassResource
     {
