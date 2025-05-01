@@ -49,7 +49,6 @@ namespace FCT
             m_currentJob->addUI(task);
         }
         void submitTick(RHI::CommandBuffer* cmdBuffer);
-        void logicTick();
         void create(RHI::Pass* pass)
         {
             m_passGroup = pass->group();
@@ -145,9 +144,6 @@ namespace FCT
         ImGui_ImplVulkan_RenderDrawData(drawData, vkCmdBuffer);
     }
 
-    inline void GLFW_VK_ImGuiContext::logicTick()
-    {
-    }
 
     inline void GLFW_VK_ImGuiContext::newFrame_updataSize()
     {

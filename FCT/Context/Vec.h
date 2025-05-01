@@ -43,7 +43,14 @@ namespace FCT {
         {
             return (x == other.x) && (y == other.y);
         }
-
+        float length() const
+        {
+            return std::sqrt(x * x + y * y);
+        }
+        float distance(const Vec2 &other) const
+        {
+            return std::sqrt((x - other.x) * (x - other.x) + (y - other.y) * (y - other.y));
+        }
     };
 
     struct Vec3
