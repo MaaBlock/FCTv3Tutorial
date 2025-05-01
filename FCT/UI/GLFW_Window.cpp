@@ -188,6 +188,10 @@ void FCT::GLFW_Window::bind(Context* srcCtx)
         else {
             ferr << "没有受支持的context" << std::endl;
         }
+        if (m_needEnableDepthBuffer)
+        {
+            enableDepthBuffer(m_depthBufferFormat);
+        }
         m_ctx->addBindWindow(this);
 }
 

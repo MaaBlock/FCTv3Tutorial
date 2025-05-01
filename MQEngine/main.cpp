@@ -153,89 +153,6 @@ private:
     float viewportOffsetX, viewportOffsetY;
 };
 
-using ImguiTask = std::function<void()>;
-struct ImguiJob : public SubmitJob
-{
-    std::queue<ImguiTask> m_tasks;
-    void addUI(ImguiTask ui)
-    {
-        m_tasks.push(ui);
-    }
-    void submit(RHI::CommandBuffer* cmdBuf) override
-    {
-        while (!m_tasks.empty()) {
-            ImguiTask task = m_tasks.front();
-            m_tasks.pop();
-
-            if (task) {
-                task();
-            }
-        }
-    }
-};
-/*
- *1.在指定的CmdBuf运行
- */
-
-//只能有一个imgui pass，否则是未定义行为
-class ImguiRenderPass : public Pass
-{
-protected:
-    Context* m_ctx;
-    GLFW_VK_ImGuiContext*  m_imguiCtx;
-    std::vector<SubmitJob*> m_jobs[2];
-    //理论上应该只需要一个job，会合批为一个Job，不需要 vector，但也许 以后可以有多个job的 需求
-    std::vector<SubmitJob*>* m_renderJobs;
-    std::vector<SubmitJob*>* m_submitJobs;
-public:
-
-    ImguiRenderPass(Context* ctx,GLFW_VK_ImGuiContext* imguiCtx)
-    {
-        m_ctx = ctx;
-        m_imguiCtx = imguiCtx;
-        m_renderJobs = &m_jobs[0];
-        m_submitJobs = &m_jobs[1];
-    }
-    void submit(RHI::CommandBuffer* cmdBuf) override
-    {
-        m_imguiCtx->newFrame();
-        m_pass->beginSubmit(cmdBuf);
-        for (auto& job : *m_renderJobs)
-        {
-            job->submit(cmdBuf);
-        }
-        m_imguiCtx->submitTick(cmdBuf);
-        m_pass->endSubmit();
-    }
-    void submitJob(SubmitJob* job)
-    {
-        job->addRef();
-        m_submitJobs->push_back(job);
-    }
-    void submit(Job* job) override
-    {
-        switch (job->getType())
-        {
-        case JobType::Submit:
-            submitJob(static_cast<SubmitJob*>(job));
-            break;
-        default:
-            fout << "imgui pass被提交了不受支持的job" << std::endl;
-            break;
-        }
-    }
-    void swapJobQueue() override
-    {
-        std::swap(m_renderJobs, m_submitJobs);
-        m_submitJobs->clear();
-    }
-};
-
-inline void attachImguiToPass()
-{
-
-}
-
 class App
 {
 private:
@@ -260,7 +177,6 @@ private:
     float rotationAngleY;
     Mesh<uint32_t>* teapotMesh;
     GLFW_VK_ImGuiContext* imguiCtx;
-    RenderGraph* renderGraph;
     TraditionPipelineState* pso;
 public:
     App(Runtime& rt) : rt(rt)
@@ -271,8 +187,8 @@ public:
         std::function<void()> submitTick = std::bind(&App::submitTick,this);
         ctx->submitTicker(submitTick);
         ctx->create();
-        wnd->bind(ctx);
         wnd->enableDepthBuffer(Format::D32_SFLOAT_S8_UINT);
+        wnd->bind(ctx);
         wnd->getCallBack()->addResizeCallback([this](Window* wnd,int width, int height)
         {
             autoReviewport.resize(width, height);
@@ -285,15 +201,22 @@ public:
         rt.postUiTask([this](void*)
         {
             },nullptr);
-        ::Pass* pass = new ::TraditionRenderPass(ctx);
-        //::Pass* imguiPass = new ImguiRenderPass(ctx,imguiCtx);
+        Pass* pass = new ::TraditionRenderPass(ctx);
         pass->enableClear(ClearType::color | ClearType::depthStencil,Vec4(1,1,1,1));
-        renderGraph = new RenderGraph(ctx);
-        renderGraph->addWindowResource(wnd);
-        renderGraph->addPass("nomralObject",pass);
-
-        renderGraph->bindOutput("nomralObject",wnd);
-        renderGraph->compile();
+        ctx->addPass("nomralObject",pass);
+        pass->release();
+        pass = new ::TraditionRenderPass(ctx);
+        ctx->addPass("imguiPass",pass);
+        pass->release();
+        ctx->addPassDenpendency("nomralObject","imguiPass");
+        ctx->bindOutput("nomralObject",wnd);
+        ctx->bindOutput("imguiPass",wnd);
+        ctx->compilePasses();
+        imguiCtx = new GLFW_VK_ImGuiContext(
+            static_cast<GLFW_Window*>(wnd),
+            static_cast<VK_Context*>(ctx)
+        );
+        imguiCtx->attachPass("imguiPass");
         init();
     }
     void init()
@@ -338,23 +261,6 @@ ShaderOut main(ShaderIn psIn) {
 
         cubeMesh = createCube(ctx, 1.0f);
 
-        pass = ctx->createPass();
-        pass->enableClear(ClearType::color | ClearType::depthStencil,Vec4(1,1,1,1));
-        pass->bindTarget(0,wnd->getCurrentTarget()->targetImage());
-        pass->depthStencil(wnd->getCurrentTarget()->depthStencilBuffer());
-        passGroup = ctx->createPassGroup();
-        passGroup->addPass(pass);
-        passGroup->create();
-        imguiCtx = new GLFW_VK_ImGuiContext((GLFW_Window*)wnd,(VK_Context*)ctx);
-        imguiCtx->create(passGroup,pass);
-        pipeline = ctx->createTraditionPipeline();
-        pipeline->pixelLayout(pixelLayout);
-        pipeline->vertexLayout(vertexLayout);
-        pipeline->resourceLayout(resourceLayout);
-        pipeline->bindPass(pass);
-        pipeline->addResources(vs);
-        pipeline->addResources(ps);
-        pipeline->create();
         pso = new TraditionPipelineState();
         pso->vertexLayout = vertexLayout;
         pso->pixelLayout = pixelLayout;
@@ -436,47 +342,26 @@ ShaderOut main(ShaderIn psIn) {
             .addMesh(cubeMesh)
             .setPassResource(passResource)
             .setPipelineState(pso);
-        renderGraph->submit(job,"nomralObject");
+        ctx->submit(job,"nomralObject");
+        imguiCtx->addUi([]()
+        {
+            ImGui::Begin("FCT Debug");
+            ImGui::Text("Hello, FCT!");
+            ImGui::End();
+        });
+        imguiCtx->submitJob();
         job->release();
         imguiCtx->logicTick();
-        //ctx->flush();
-        ctx->waitCurrentFlush();
-        //同步时间
-        ctx->swapQueue();
-        renderGraph->swapJobQueue();
-        ctx->nextFrame();
+        ctx->flush();
     }
     void submitTick()
     {
-        renderGraph->updateFrameIndices();
-        renderGraph->checkAndUpdateResourceSizes();
         auto cmdBuf = ctx->getCmdBuf(wnd, 0);
         cmdBuf->reset();
         cmdBuf->begin();
         autoReviewport.onRenderTick(cmdBuf);
-        renderGraph->execute(cmdBuf);
-/*
-        cmdBuf->bindPipieline(pipeline);
-        passGroup->beginSubmit(cmdBuf);
-        pass->beginSubmit(cmdBuf);
-        passResource->bind(cmdBuf,pipeline);
-
-        teapotMesh->bind(cmdBuf);
-        teapotMesh->draw(cmdBuf, 1);
-        cubeMesh->bind(cmdBuf);
-        cubeMesh->draw(cmdBuf, 1);
-
-        imguiCtx->newFrame();
-        ImGui::Begin("FCT Debug");
-        ImGui::Text("Hello, FCT!");
-        ImGui::End();
-        imguiCtx->submitTick(cmdBuf);
-        pass->endSubmit();
-        passGroup->endSubmit(cmdBuf);
-*/
-
+        ctx->excutePasses(cmdBuf);
         cmdBuf->end();
-
         cmdBuf->submit();
         ctx->swapBuffers();
     }

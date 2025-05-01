@@ -17,6 +17,11 @@ namespace FCT
 
     void RenderGraph::addWindowResource(Window* wnd)
     {
+        if (std::find(m_bindedWindows.begin(), m_bindedWindows.end(), wnd) != m_bindedWindows.end())
+        {
+            return;;
+        }
+        m_bindedWindows.push_back(wnd);
         std::string name = "WndBackBuffer" + std::to_string(m_unnameWndBackBufferCount++);
         WindowImageResource res;
         res.wnd = wnd;

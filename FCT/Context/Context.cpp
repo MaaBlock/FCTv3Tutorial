@@ -58,6 +58,9 @@ namespace FCT {
     }
 
     Context::Context(Runtime* runtime) {
+        m_defaultGraph = new RenderGraph(this);
+        m_currentGraph = m_defaultGraph;
+        m_currentGraph->addRef();
         m_compiler = nullptr;
         m_ctxRunning = true;
         //m_flushWnd = nullptr;
@@ -75,6 +78,8 @@ namespace FCT {
 
     Context::~Context() {
         m_ctxRunning = false;
+        m_currentGraph->release();
+        m_defaultGraph->release();
         m_submitThread.join();
     }
 }

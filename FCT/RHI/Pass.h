@@ -80,6 +80,10 @@ namespace FCT
             {
                 m_index = index;
             }
+            PassGroup* group() const
+            {
+                return m_group;
+            }
         protected:
             FCT::Image* m_depthStencil;
             PassGroup* m_group;

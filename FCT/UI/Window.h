@@ -90,10 +90,18 @@ namespace FCT {
 		{
             m_behavior->title(title);
 		}
-
+		//目前只能在bind前 调用,bind后调用为未定义 行为
 		void enableDepthBuffer(Format format)
 		{
-			m_swapchain->enableDepthBuffer(format);
+			if (m_swapchain)
+			{
+				m_swapchain->enableDepthBuffer(format);
+				m_needEnableDepthBuffer = false;
+			} else
+			{
+				m_needEnableDepthBuffer = true;
+				m_depthBufferFormat = format;
+			}
 		}
 		uint32_t getSwapchainImageCount() const
 		{
@@ -110,6 +118,8 @@ namespace FCT {
         int m_x,m_y, m_width, m_height;
 		std::string m_title;
         RHI::Swapchain* m_swapchain;
+		bool m_needEnableDepthBuffer;
+		Format m_depthBufferFormat;
 	private:
 
 	};
@@ -132,6 +142,7 @@ namespace FCT {
         }
     };
     inline FCT::Window::Window() {
+    	m_needEnableDepthBuffer = false;
         m_behavior = new SetParamWindowBehavior(this);
         m_callbackHandler = new CallBackEventHandler();
     	m_callbackHandler->addResizeCallback([this](Window*,int w,int h)

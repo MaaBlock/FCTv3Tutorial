@@ -59,8 +59,6 @@ namespace FCT {
         }
         RHI::CommandPool* createCommandPool() override;
         vk::Instance getVkInstance();
-        void compilePasses() override;
-        void submitPasses() override;
         void beginCommandBuffer(int index);
         void endCommandBuffer(int index);
         void submitCommandBuffer();

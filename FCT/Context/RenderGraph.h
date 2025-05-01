@@ -105,6 +105,7 @@ namespace FCT
         std::unordered_map<std::string, Image*> m_images;
         std::unordered_map<Window*,std::string> m_windowBackBufferNames;
         std::unordered_map<Window*,std::string> m_windowDepthStencilNames;
+        std::vector<Window*> m_bindedWindows;
         std::unordered_map<std::string,ImageResourceDesc> m_imageResourceDescs;
         std::unordered_map<std::string, PassGraphType::vertex_descriptor> m_passVertex;
         std::unordered_map<std::string, TextureElement> m_textureLayouts;
@@ -148,6 +149,14 @@ namespace FCT
         bool isPassWritingToResource(const std::string& passName, const std::string& resourceName);
         bool isPassReadingFromResource(const std::string& passName, const std::string& resourceName);
         void execute(RHI::CommandBuffer* cmdBuf);
+        Pass* getPassByName(const std::string& name)
+        {
+            auto it = m_passVertex.find(name);
+            if (it!= m_passVertex.end()) {
+                return m_passGraph[it->second].pass;
+            }
+            return nullptr;
+        }
         void swapJobQueue();
     };
 

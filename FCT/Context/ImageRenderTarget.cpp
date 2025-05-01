@@ -14,6 +14,7 @@ namespace FCT
     {
         m_ctx = ctx;
         m_renderTargetType = RenderTargetType::ImageTarget;
+        m_depthStencilBuffer = nullptr;
     }
 
     ImageRenderTarget::~ImageRenderTarget()

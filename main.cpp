@@ -186,8 +186,8 @@ public:
         std::function<void()> submitTick = std::bind(&App::submitTick,this);
         ctx->submitTicker(submitTick);
         ctx->create();
-        wnd->bind(ctx);
         wnd->enableDepthBuffer(Format::D32_SFLOAT_S8_UINT);
+        wnd->bind(ctx);
         wnd->getCallBack()->addResizeCallback([this](Window* wnd,int width, int height)
         {
             autoReviewport.resize(width, height);

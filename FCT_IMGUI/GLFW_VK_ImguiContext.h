@@ -10,49 +10,78 @@ struct ImGui_ImplGlfw_Data;
 
 namespace FCT
 {
+    class GLFW_VK_ImGuiContext;
+    using ImguiTask = std::function<void()>;
+    struct ImguiJob : public SubmitJob
+    {
+        GLFW_VK_ImGuiContext* m_imguiCtx;
+        std::queue<ImguiTask> m_tasks;
+        ImguiJob(GLFW_VK_ImGuiContext* ctx)
+        {
+            m_imguiCtx = ctx;
+        }
+        void addUI(ImguiTask ui)
+        {
+            m_tasks.push(ui);
+        }
+        void submit(RHI::CommandBuffer* cmdBuf) override;
+    };
     class GLFW_VK_ImGuiContext
     {
     protected:
         RHI::PassGroup* m_passGroup;
         GLFW_Window* m_wnd;
         VK_Context* m_ctx;
+        std::string m_passName;
+        ImguiJob* m_currentJob;
    public:
         GLFW_VK_ImGuiContext(GLFW_Window* wnd,VK_Context* ctx);
+        ~GLFW_VK_ImGuiContext();
         void newFrame();
+        void submitJob()
+        {
+            m_ctx->submit(m_currentJob,m_passName);
+            m_currentJob->release();
+            m_currentJob = new ImguiJob(this);
+        }
+        void addUi(ImguiTask task)
+        {
+            m_currentJob->addUI(task);
+        }
         void submitTick(RHI::CommandBuffer* cmdBuffer);
         void logicTick();
-        void create(RHI::PassGroup* passGroup,RHI::Pass* pass)
+        void create(RHI::Pass* pass)
         {
-            m_passGroup = passGroup;
+            m_passGroup = pass->group();
             ImGui_ImplGlfw_InitForVulkan(m_wnd->getWindow(),true);
-            ImGui_ImplVulkan_InitInfo init_info{};
-            init_info.Instance = m_ctx->getVkInstance();
-            init_info.PhysicalDevice = m_ctx->getPhysicalDevice();
-            init_info.Device = m_ctx->getDevice();
-            init_info.QueueFamily = m_ctx->getGraphicsQueueFamily();
-            init_info.Queue = m_ctx->getGraphicsQueue();
-            init_info.PipelineCache = nullptr;
-            init_info.DescriptorPool = static_cast<RHI::VK_DescriptorPool*>(m_ctx->getDescriptorPool(m_wnd))->getPool();
-            init_info.Allocator = nullptr;
-            init_info.MinImageCount = 2;
-            init_info.ImageCount = m_wnd->getSwapchainImageCount();
-            init_info.MSAASamples = static_cast<VkSampleCountFlagBits>(ToVkSampleCount(m_wnd->getSwapchainSampleCount()));
-            init_info.CheckVkResultFn = nullptr;
-            init_info.RenderPass = static_cast<RHI::VK_PassGroup*>(m_passGroup)->getRenderPass();
-            init_info.Subpass = pass->index();
-            ImGui_ImplVulkan_Init(&init_info);
+            ImGui_ImplVulkan_InitInfo initInfo{};
+            initInfo.Instance = m_ctx->getVkInstance();
+            initInfo.PhysicalDevice = m_ctx->getPhysicalDevice();
+            initInfo.Device = m_ctx->getDevice();
+            initInfo.QueueFamily = m_ctx->getGraphicsQueueFamily();
+            initInfo.Queue = m_ctx->getGraphicsQueue();
+            initInfo.PipelineCache = nullptr;
+            initInfo.DescriptorPool = static_cast<RHI::VK_DescriptorPool*>(m_ctx->getDescriptorPool(m_wnd))->getPool();
+            initInfo.Allocator = nullptr;
+            initInfo.MinImageCount = 2;
+            initInfo.ImageCount = m_wnd->getSwapchainImageCount();
+            initInfo.MSAASamples = static_cast<VkSampleCountFlagBits>(ToVkSampleCount(m_wnd->getSwapchainSampleCount()));
+            initInfo.CheckVkResultFn = nullptr;
+            initInfo.RenderPass = static_cast<RHI::VK_PassGroup*>(m_passGroup)->getRenderPass();
+            initInfo.Subpass = pass->index();
+            ImGui_ImplVulkan_Init(&initInfo);
             m_wnd->postTicker([this]()
             {
                 newFrame_updateInput();
             });
         }
-        void attachPass(std::string name)
+        void attachPass(const std::string& name)
         {
-
-        }
-        void updateRenderPass(RHI::PassGroup* passGroup, RHI::Pass* pass)
-        {
-
+            m_passName = name;
+            Pass* pass = m_ctx->findPass(name);
+            RHI::Pass* rhiPass = pass->rhiPass();
+            create(rhiPass);
+            m_currentJob = new ImguiJob(this);
         }
     protected:
         void newFrame_updataSize();
@@ -63,12 +92,36 @@ namespace FCT
         void newFrame_UpdateGamepads();
         void newFrame_updateInput();
     };
+
+    inline void ImguiJob::submit(RHI::CommandBuffer* cmdBuf)
+    {
+        m_imguiCtx->newFrame();
+        while (!m_tasks.empty()) {
+            ImguiTask task = m_tasks.front();
+            m_tasks.pop();
+
+            if (task) {
+                task();
+            }
+        }
+        m_imguiCtx->submitTick(cmdBuf);
+    }
+
     inline GLFW_VK_ImGuiContext::GLFW_VK_ImGuiContext(GLFW_Window* wnd, VK_Context* ctx)
     {
         m_wnd = wnd;
         m_ctx = ctx;
+        m_currentJob = nullptr;
     }
 
+    inline GLFW_VK_ImGuiContext::~GLFW_VK_ImGuiContext()
+    {
+        if (m_currentJob)
+        {
+            m_currentJob->release();
+            m_currentJob = nullptr;
+        }
+    }
 
 
     inline void GLFW_VK_ImGuiContext::newFrame()

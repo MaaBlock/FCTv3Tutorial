@@ -108,8 +108,6 @@ namespace FCT
 		virtual RHI::Semaphore* createSemaphore() = 0;
 		virtual void create() = 0;
 		virtual RHI::CommandPool* createCommandPool() = 0;
-		virtual void compilePasses() = 0;
-		virtual void submitPasses() = 0;
 		virtual RHI::VertexBuffer* createVertexBuffer() = 0;
 		virtual RHI::IndexBuffer* createIndexBuffer() = 0;
 		virtual RHI::DescriptorPool* createDescriptorPool() = 0;
@@ -156,7 +154,7 @@ namespace FCT
 		void flush()
 		{
 			FCT_WAIT_FOR(m_currentFlush);
-			swapQueue();
+            m_currentGraph->swapJobQueue();
 			nextFrame();
 		}
 		virtual void swapQueue();
@@ -172,18 +170,19 @@ namespace FCT
 
 		void defaultTick()
 		{
-			compilePasses();
-			submitPasses();
 			swapBuffers();
 		}
 		virtual RHI::RenderTargetView* createRenderTargetView() = 0;
 		void addBindWindow(Window* wnd)
 		{
 			m_bindWindows.push_back(wnd);
+			m_currentGraph->addWindowResource(wnd);
 			initWndFrameResources(wnd);
 		}
 		void tick()
 		{
+			m_currentGraph->updateFrameIndices();
+			m_currentGraph->checkAndUpdateResourceSizes();
 			m_ticker();
 		}
 		/*
@@ -242,10 +241,58 @@ namespace FCT
 		RenderGraph* m_defaultGraph;
 		RenderGraph* m_currentGraph;
 	public:
+		//todo:这一系列转发函数想个办法优化
 		void setCurrentGraph(RenderGraph* graph)
 		{
-
+			m_currentGraph->release();
 			m_currentGraph = graph;
+			m_currentGraph->addRef();
+		}
+		void addPass(const std::string& name, Pass* pass)
+		{
+			pass->addRef();
+			m_currentGraph->addPass(name, pass);
+		}
+
+		void submit(Job* job,std::string name)
+		{
+			m_currentGraph->submit(job, name);
+		}
+		void compilePasses()
+		{
+			m_currentGraph->compile();
+		}
+		void addPassDenpendency(const std::string& from,const std::string& to)
+		{
+			m_currentGraph->addPassDenpendency(from,to);
+		}
+		void bindOutputImage(const std::string& name, std::string image,uint8_t slot = 0)
+		{
+			m_currentGraph->bindOutputImage(name, image, slot);
+		}
+		void bindTextureImage(const char* name, std::string image,uint32_t width = 0, uint32_t height = 0,Samples samples = Samples::sample_undefined)
+		{
+			m_currentGraph->bindTextureImage(name, image, width, height, samples);
+		}
+		void bindDepthStencil(const char* name, std::string image)
+		{
+			m_currentGraph->bindDepthStencil(name, image);
+		}
+		void bindOutput(const char* name, Window* wnd, uint8_t slot = 0)
+		{
+			m_currentGraph->bindOutput(name, wnd, slot);
+		}
+		void excutePasses(RHI::CommandBuffer* cmdBuf)
+		{
+			m_currentGraph->execute(cmdBuf);
+		}
+		void excute()
+		{
+
+		}
+		Pass* findPass(const std::string& name)
+		{
+			return m_currentGraph->getPassByName(name);
 		}
 	};
 }

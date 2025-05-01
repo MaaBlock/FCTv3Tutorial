@@ -15,7 +15,7 @@ namespace FCT {
     }
     class Context;
 
-    class Pass
+    class Pass : public RefCount
     {
     protected:
         std::map<uint32_t,Image*> m_targets;
@@ -24,6 +24,10 @@ namespace FCT {
         PassClearValue m_clearValue;
         RHI::Pass* m_pass;
     public:
+        RHI::Pass* rhiPass() const
+        {
+            return m_pass;
+        }
         void setRhiPass(RHI::Pass* pass)
         {
             m_pass = pass;

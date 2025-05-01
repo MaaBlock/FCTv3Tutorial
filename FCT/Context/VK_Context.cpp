@@ -439,14 +439,6 @@ namespace FCT
         return m_common->getInstance();
     }
 
-    void VK_Context::compilePasses() {
-
-    }
-
-    void VK_Context::submitPasses() {
-
-    }
-
     void VK_Context::beginCommandBuffer(int index) {
         vk::CommandBufferBeginInfo beginInfo;
         beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
