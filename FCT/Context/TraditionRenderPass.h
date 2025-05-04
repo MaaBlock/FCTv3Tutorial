@@ -51,6 +51,15 @@ public:
     void submit(RHI::CommandBuffer* cmdBuf) override
     {
         m_pass->beginSubmit(cmdBuf);
+        std::set<PassResource*> resources;
+        for (auto& job : m_submitQueue->m_traditionRenderJobs)
+        {
+            resources.insert(job->resource);
+        }
+        for (auto& res : resources)
+        {
+            m_addResourceCallback(res);
+        }
         for (auto& job : m_submitQueue->m_traditionRenderJobs)
         {
             auto pipeline = getOrCreateTraditionPipeline(job->state);

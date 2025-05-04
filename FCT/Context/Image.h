@@ -57,6 +57,20 @@ namespace FCT {
     private:
 
     };
+    struct UpdateResult
+    {
+        RHI::Fence* fence;
+        std::function<void()> cleanUpCallback;
+        void waitFor()
+        {
+            fence->waitFor();
+            fence->release();
+            if (cleanUpCallback) {
+                cleanUpCallback();
+            }
+            delete this;
+        }
+    };
     class Image : public RefCount, public IRenderTarget {
     public:
         friend class BeforeCreateImageBehavior;
@@ -89,6 +103,10 @@ namespace FCT {
         void height(int height) { m_height = height; }
         void format(Format format) { m_format = format; }
         void samples(Samples samples) { m_samples = samples; }
+        virtual UpdateResult* updateToCurrent(void* data,size_t size)
+        {
+            return nullptr;
+        };
     protected:
         ImageBehavior* m_behavior;
         Context* m_ctx;

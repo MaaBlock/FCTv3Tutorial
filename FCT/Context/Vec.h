@@ -181,6 +181,10 @@ namespace FCT {
         float x, y, z, w;
         Vec4(float x = 0.0f, float y = 0.0f, float z = 0.0f, float w = 0.0f)
             : x(x), y(y), z(z), w(w) {}
+        Vec4(Vec3 vec, float w = 0.0f)
+        : x(vec.x), y(vec.y), z(vec.z), w(w) {}
+        Vec4(Vec2 v, float z = 0.0f, float w = 0.0f)
+            : x(v.x), y(v.y), z(z), w(w) {}
     };
     template<typename T>
     struct Vector4

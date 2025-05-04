@@ -239,7 +239,9 @@ namespace FCT
         constexpr const char* getName() const noexcept { return m_name; }
         constexpr size_t getSize() const noexcept { return GetUniformSize(m_type); }
         constexpr size_t getAlignment() const noexcept { return GetUniformAlignment(m_type); }
-
+        constexpr explicit operator bool() const noexcept {
+            return (m_name && m_name[0] != '\0');
+        }
     private:
         ConstType m_type;
         const char* m_name;
@@ -300,6 +302,11 @@ namespace FCT
 
         constexpr const ConstElement& getElement(size_t index) const noexcept {
             return (index < m_elementCount) ? m_elements[index] : m_elements[0];
+        }
+
+        constexpr const ConstElement& getElement(ConstType type) const noexcept {
+            auto index = findElementIndex(type);
+            return (index >= 0) ? m_elements[index] : ConstElement();
         }
 
         constexpr size_t getTotalSize() const noexcept {

@@ -24,6 +24,10 @@ namespace FCT
             {
                 return m_fence;
             }
+            vk::Fence* fencePtr()
+            {
+                return &m_fence;
+            }
         private:
             VK_Context* m_ctx;
             vk::Fence m_fence;

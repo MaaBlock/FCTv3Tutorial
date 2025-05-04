@@ -15,6 +15,7 @@ namespace FCT {
     }
     class Context;
 
+    using RenderGraphPassResourceAddCallback = std::function<void(PassResource*)>;
     class Pass : public RefCount
     {
     protected:
@@ -23,7 +24,19 @@ namespace FCT {
         Image* m_depthStencil;
         PassClearValue m_clearValue;
         RHI::Pass* m_pass;
+        RenderGraphPassResourceAddCallback m_addResourceCallback;
     public:
+        Pass()
+        {
+            m_addResourceCallback = [](PassResource* resource)
+            {
+
+            };
+        }
+        void setPassResourceAddCallback(const RenderGraphPassResourceAddCallback& callback)
+        {
+            m_addResourceCallback = callback;
+        }
         RHI::Pass* rhiPass() const
         {
             return m_pass;

@@ -4,6 +4,7 @@
 
 #ifndef FCT_PASSRESOURCE_H
 #define FCT_PASSRESOURCE_H
+#include "ResourceLayout.h"
 #include "../RHI/ConstBuffer.h"
 #include "../UI/Window.h"
 namespace FCT
@@ -36,10 +37,14 @@ namespace FCT
         virtual void addSampler(Sampler* sampler,SamplerElement element) = 0;
         virtual void create() = 0;
         virtual void update() = 0;
+        bool isBound(const TextureElement& element) const {
+            return m_textures.find(element) != m_textures.end();
+        }
     protected:
         std::vector<RHI::ConstBuffer*> m_constBuffers;
+        std::unordered_map<TextureElement,Image*> m_textures;
         std::vector<std::pair<Sampler*,SamplerElement>> m_samplers;
-        std::vector<std::pair<Image*, TextureElement>> m_textures;
+        //std::vector<std::pair<Image*, TextureElement>> m_textures;
         Window* m_wnd;
         bool m_dirty = true;
     };

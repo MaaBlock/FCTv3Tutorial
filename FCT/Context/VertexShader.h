@@ -89,7 +89,8 @@ namespace FCT {
         }
         void addUniform(ConstLayout layout)
         {
-            m_uniformLayouts.push_back(layout);
+            if (std::find(m_uniformLayouts.begin(), m_uniformLayouts.end(), layout) == m_uniformLayouts.end())
+                m_uniformLayouts.push_back(layout);
         }
         void resourceLayout(ResourceLayout layout)
         {

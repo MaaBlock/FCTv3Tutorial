@@ -53,11 +53,12 @@ namespace FCT {
             uint32_t maxPresentQueues = phyDc.getQueueFamilyProperties()[m_presentQueueFamilyIndex].queueCount;
 
             m_presentQueues.clear();
-
+/*
             for (uint32_t i = 0; i < maxPresentQueues; i++) {
                 m_presentQueues.push_back(dc.getQueue(m_presentQueueFamilyIndex, i));
             }
-
+*/
+            m_presentQueues.push_back(dc.getQueue(m_presentQueueFamilyIndex, 0));
 
             m_presentQueue = dc.getQueue(m_presentQueueFamilyIndex, 0);
 
@@ -209,7 +210,7 @@ namespace FCT {
                     .setPSwapchains(&m_swapchain)
                     .setPImageIndices(&m_currentImageIndex);
             try {
-                auto result = m_presentQueues[m_ctx->currentFrameIndex() % m_presentQueues.size()].presentKHR(presentInfo);
+                auto result = m_presentQueues[m_ctx->currentSubmitFrameIndex() % m_presentQueues.size()].presentKHR(presentInfo);
                 if (result == vk::Result::eSuboptimalKHR) {
                     m_needRecreated = true;
                 }

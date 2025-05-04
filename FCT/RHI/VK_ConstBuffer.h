@@ -14,11 +14,11 @@ namespace FCT {
             void checkAndUpdateCurrentFrame();
             const vk::DescriptorBufferInfo& currentBufferInfo() {
                 checkAndUpdateCurrentFrame();
-                return m_bufferInfos[m_ctx->currentFrameIndex()];
+                return m_bufferInfos[m_ctx->currentSubmitFrameIndex()];
             }
             const vk::DescriptorBufferInfo& currentBufferInfoWithoutUpdata() const
             {
-                return m_bufferInfos[m_ctx->currentFrameIndex()];
+                return m_bufferInfos[m_ctx->currentSubmitFrameIndex()];
             }
             void create() override;
         protected:

@@ -78,6 +78,11 @@ namespace FCT
             dsv->release();
         }
         m_dsvs.clear();
+        for (auto tv : m_tvs)
+        {
+            tv->release();
+        }
+        m_tvs.clear();
 
         m_width = width;
         m_height = height;
@@ -116,8 +121,13 @@ namespace FCT
         {
             dsv->release();
         }
+        for (auto tv : m_tvs)
+        {
+            tv->release();
+        }
         m_rtvs.clear();
         m_dsvs.clear();
+        m_tvs.clear();
         m_images = images;
         for (auto img : m_images)
         {
@@ -153,6 +163,16 @@ namespace FCT
                 m_dsvs.push_back(dsv);
             }
         }
+        if (usage & ImageUsage::Texture && m_tvs.empty())
+        {
+            for (auto img : m_images)
+            {
+                auto tv = m_ctx->createTextureView();
+                tv->image(img);
+                tv->create();
+                m_tvs.push_back(tv);
+            }
+        }
     }
 
     void MutilBufferImage::bind(Context* ctx)
@@ -175,7 +195,7 @@ namespace FCT
 
     RHI::TextureView* MutilBufferImage::currentTextureView()
     {
-        return nullptr;
+        return m_tvs[m_currentIndex];
     }
 
     RHI::DepthStencilView* MutilBufferImage::currentDepthStencilView()
@@ -186,5 +206,13 @@ namespace FCT
     RHI::Image* MutilBufferImage::currentImage()
     {
         return m_images[m_currentIndex];
+    }
+
+    UpdateResult* MutilBufferImage::updateToCurrent(void* data, size_t size)
+    {
+        UpdateResult* res = new UpdateResult();
+        res->fence = m_ctx->createFence();
+        m_images[m_ctx->currentFrameIndex()]->updateData(data,size,res->fence,&res->cleanUpCallback);
+        return res;
     }
 }

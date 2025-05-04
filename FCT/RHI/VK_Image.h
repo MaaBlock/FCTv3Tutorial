@@ -16,6 +16,8 @@ namespace FCT
             ~VK_Image();
             void create() override;
             void uploadInitialData();
+            void updateData(const void* data, size_t dataSize);
+            void updateData(const void* data, size_t dataSize, Fence* fence, std::function<void()>* onCompletion);
             void create(vk::Image image); // 注意，格式信息还是给自己填
             vk::Image getVkImage();
         private:

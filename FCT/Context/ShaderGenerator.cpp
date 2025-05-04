@@ -336,6 +336,90 @@ namespace FCT
         return ss.str();
     }
 
+    std::pair<uint32_t, uint32_t> ShaderGenerator::allocateTextureBinding(const TextureElement& texture) {
+        UpdateFrequency frequency = texture.getUpdateFrequency();
+        ShaderStages stages = texture.getShaderStages();
+
+        uint32_t set;
+        switch (frequency) {
+        case UpdateFrequency::Static:
+            set = 0;
+            break;
+        case UpdateFrequency::PerFrame:
+            set = 1;
+            break;
+        case UpdateFrequency::PerObject:
+            set = 2;
+            break;
+        case UpdateFrequency::Dynamic:
+            set = 3;
+            break;
+        default:
+            set = 0;
+            break;
+        }
+
+        uint32_t binding;
+        bool found = false;
+
+        for (const auto& [storedTexture, setBinding] : m_textureSetBindings) {
+            if (storedTexture == texture) {
+                set = setBinding.first;
+                binding = setBinding.second;
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            binding = m_frequencyBindingCount[frequency]++;
+            m_textureSetBindings.push_back({texture, {set, binding}});
+        }
+
+        return {set, binding};
+    }
+    std::pair<uint32_t, uint32_t> ShaderGenerator::allocateSamplerBinding(const SamplerElement& sampler) {
+        UpdateFrequency frequency = sampler.getUpdateFrequency();
+        ShaderStages stages = sampler.getShaderStages();
+
+        uint32_t set;
+        switch (frequency) {
+        case UpdateFrequency::Static:
+            set = 0;
+            break;
+        case UpdateFrequency::PerFrame:
+            set = 1;
+            break;
+        case UpdateFrequency::PerObject:
+            set = 2;
+            break;
+        case UpdateFrequency::Dynamic:
+            set = 3;
+            break;
+        default:
+            set = 0;
+            break;
+        }
+
+        uint32_t binding;
+        bool found = false;
+
+        for (const auto& [storedSampler, setBinding] : m_samplerSetBindings) {
+            if (storedSampler == sampler) {
+                set = setBinding.first;
+                binding = setBinding.second;
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            binding = m_frequencyBindingCount[frequency]++;
+            m_samplerSetBindings.push_back({sampler, {set, binding}});
+        }
+
+        return {set, binding};
+    }
     std::string ShaderGenerator::generateTexturesAndSamplers(RHI::ShaderBinary& binary,
     const std::vector<TextureElement>& textures, const std::vector<SamplerElement>& samplers)
     {
@@ -343,44 +427,7 @@ namespace FCT
         ss << "//FCT Textures and Samplers\n";
 
         for (const auto& texture : textures) {
-            UpdateFrequency frequency = texture.getUpdateFrequency();
-            ShaderStages stages = texture.getShaderStages();
-
-            uint32_t set;
-            switch (frequency) {
-            case UpdateFrequency::Static:
-                set = 0;
-                break;
-            case UpdateFrequency::PerFrame:
-                set = 1;
-                break;
-            case UpdateFrequency::PerObject:
-                set = 2;
-                break;
-            case UpdateFrequency::Dynamic:
-                set = 3;
-                break;
-            default:
-                set = 0;
-                break;
-            }
-
-            uint32_t binding;
-            bool found = false;
-
-            for (const auto& [storedTexture, setBinding] : m_textureSetBindings) {
-                if (storedTexture == texture) {
-                    set = setBinding.first;
-                    binding = setBinding.second;
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                binding = m_frequencyBindingCount[frequency]++;
-                m_textureSetBindings.push_back({texture, {set, binding}});
-            }
+            auto [set, binding] = allocateTextureBinding(texture);
 
             binary.addTextureLocation(texture, set, binding);
 
@@ -414,44 +461,7 @@ namespace FCT
         ss << "\n";
 
         for (const auto& sampler : samplers) {
-            UpdateFrequency frequency = sampler.getUpdateFrequency();
-            ShaderStages stages = sampler.getShaderStages();
-
-            uint32_t set;
-            switch (frequency) {
-            case UpdateFrequency::Static:
-                set = 0;
-                break;
-            case UpdateFrequency::PerFrame:
-                set = 1;
-                break;
-            case UpdateFrequency::PerObject:
-                set = 2;
-                break;
-            case UpdateFrequency::Dynamic:
-                set = 3;
-                break;
-            default:
-                set = 0;
-                break;
-            }
-
-            uint32_t binding;
-            bool found = false;
-
-            for (const auto& [storedSampler, setBinding] : m_samplerSetBindings) {
-                if (storedSampler == sampler) {
-                    set = setBinding.first;
-                    binding = setBinding.second;
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                binding = m_frequencyBindingCount[frequency]++;
-                m_samplerSetBindings.push_back({sampler, {set, binding}});
-            }
+            auto [set, binding] = allocateSamplerBinding(sampler);
 
             binary.addSamplerLocation(sampler, set, binding);
 

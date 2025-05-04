@@ -23,6 +23,8 @@ namespace FCT
     using ImageUsageFlags = Flags<ImageUsage>;
     namespace RHI
     {
+        class Fence;
+
         class Image : public RefCount
         {
         public:
@@ -78,6 +80,8 @@ namespace FCT
             {
                 m_usage = usage;
             }
+            virtual void updateData(const void* data, size_t dataSize) = 0;
+            virtual void updateData(const void* data, size_t dataSize, Fence* fence, std::function<void()>* onCompletion) = 0;
         protected:
             Format m_format;
             Samples m_samples;

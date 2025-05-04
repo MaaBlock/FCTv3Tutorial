@@ -24,8 +24,8 @@ static constexpr ResourceLayout resourceLayout {
 
 
 template<typename IndexType = uint16_t>
-static Mesh<IndexType>* createCube(Context* ctx, float size = 1.0f) {
-    Mesh<IndexType>* mesh = new Mesh<IndexType>(ctx, vertexLayout);
+static StaticMesh<IndexType>* createCube(Context* ctx, float size = 1.0f) {
+    StaticMesh<IndexType>* mesh = new StaticMesh<IndexType>(ctx, vertexLayout);
 
     float halfSize = size * 0.5f;
 
@@ -164,7 +164,7 @@ private:
     RHI::PassGroup* passGroup;
     PixelShader* ps;
     RHI::RasterizationPipeline* pipeline;
-    Mesh<>* cubeMesh;
+    StaticMesh<>* cubeMesh;
     RHI::ConstBuffer* constBuffer;
     UniformBuffer* buffer;
     PassResource* passResource;
@@ -175,7 +175,7 @@ private:
     PSampler sampler;
     AutoReviewport autoReviewport;
     float rotationAngleY;
-    Mesh<uint32_t>* teapotMesh;
+    StaticMesh<uint32_t>* teapotMesh;
 
 public:
     App(Runtime& rt) : rt(rt)
@@ -244,14 +244,6 @@ ShaderOut main(ShaderIn psIn) {
         passGroup = ctx->createPassGroup();
         passGroup->addPass(pass);
         passGroup->create();
-        pipeline = ctx->createTraditionPipeline();
-        pipeline->pixelLayout(pixelLayout);
-        pipeline->vertexLayout(vertexLayout);
-        pipeline->resourceLayout(resourceLayout);
-        pipeline->bindPass(pass);
-        pipeline->addResources(vs);
-        pipeline->addResources(ps);
-        pipeline->create();
 
         Mat4 view = Mat4::LookAt(Vec3(20,20,-20), Vec3(0,0,0), Vec3(0,0,1));
         Mat4 proj = Mat4::Perspective(45.0f, 800.0f / 600.0f, 0.1f, 100.0);;

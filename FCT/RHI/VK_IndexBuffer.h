@@ -17,18 +17,20 @@ namespace FCT
             ~VK_IndexBuffer();
 
             void create() override;
+            void mapBuffer(void* data, uint32_t size, uint32_t frameIndex);
             void mapBuffer(void* data, uint32_t size) override;
 
             void destroy();
             void bind(CommandBuffer* cmdBuffer);
-
-            vk::Buffer getBuffer() const { return m_buffer; }
+            void checkAndResizeIfNeeded(uint32_t frameIndex);
             vk::IndexType getIndexType() const;
-
+            void resizeBuffer(size_t size, uint32_t frameIndex);
+            void resize(size_t size) override;
         private:
             VK_Context* m_ctx;
-            vk::Buffer m_buffer;
-            vk::DeviceMemory m_memory;
+            std::vector<vk::Buffer> m_buffers;
+            std::vector<vk::DeviceMemory> m_memories;
+            std::vector<uint8_t> m_dirtyFlags;
             bool m_isCreated = false;
         };
     }

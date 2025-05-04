@@ -36,7 +36,7 @@ namespace FCT
             case UpdateFrequency::PerFrame:
             case UpdateFrequency::Dynamic:
                 {
-                    uint32_t frameIndex = m_ctx->currentFrameIndex();
+                    uint32_t frameIndex = m_ctx->currentSubmitFrameIndex();
                     if (frameIndex < m_mappedData.size() && m_mappedData[frameIndex]) {
                         memcpy(m_mappedData[frameIndex], data, copySize);
                     }
@@ -47,7 +47,7 @@ namespace FCT
             case UpdateFrequency::PerObject:
                 {
                     // 对于静态或每对象数据，更新当前帧并标记其他帧需要更新
-                    uint32_t currentFrame = m_ctx->currentFrameIndex();
+                    uint32_t currentFrame = m_ctx->currentSubmitFrameIndex();
 
                     // 更新当前帧
                     if (currentFrame < m_mappedData.size() && m_mappedData[currentFrame]) {
@@ -78,7 +78,7 @@ namespace FCT
                 return;
             }
 
-            uint32_t currentFrame = m_ctx->currentFrameIndex();
+            uint32_t currentFrame = m_ctx->currentSubmitFrameIndex();
 
             if (currentFrame < m_frameNeedsUpdate.size() && m_frameNeedsUpdate[currentFrame]) {
                 if (currentFrame < m_mappedData.size() && m_mappedData[currentFrame]) {

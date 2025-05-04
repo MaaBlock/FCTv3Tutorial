@@ -118,13 +118,13 @@ namespace FCT
 	protected:
 		ModelLoader* m_modelLoader;
 	public:
-		Mesh<uint32_t>* createMesh(const ModelMesh* modelMesh, const VertexLayout& layout)
+		StaticMesh<uint32_t>* createMesh(const ModelMesh* modelMesh, const VertexLayout& layout)
 		{
 			if (!modelMesh) {
 				return nullptr;
 			}
 
-			Mesh<uint32_t>* mesh = new Mesh<uint32_t>(this, layout);
+			StaticMesh<uint32_t>* mesh = new StaticMesh<uint32_t>(this, layout);
 			VertexBuffer* vertexBuffer = mesh->getVertexBuffer();
 			vertexBuffer->resize(modelMesh->vertices.size());
 			for (uint32_t i = 0; i < modelMesh->vertices.size(); ++i) {
@@ -144,7 +144,7 @@ namespace FCT
 
 			return mesh;
 		}
-		Mesh<uint32_t>* loadMesh(const std::string& filename,const std::string& meshName, const VertexLayout& layout)
+		StaticMesh<uint32_t>* loadMesh(const std::string& filename,const std::string& meshName, const VertexLayout& layout)
 		{
 			auto md = m_modelLoader->loadModel(filename);
 			auto mMesh =  md->findMesh("teapot");
@@ -153,6 +153,7 @@ namespace FCT
 	public:
 		void flush()
 		{
+			advanceLogicFrame();
 			FCT_WAIT_FOR(m_currentFlush);
             m_currentGraph->swapJobQueue();
 			nextFrame();
@@ -160,6 +161,7 @@ namespace FCT
 		virtual void swapQueue();
 		void submitThread()
 		{
+
 			while (m_ctxRunning) {
 				FCT_WAIT_FOR(m_nextFrame);
 				tick();
@@ -197,7 +199,6 @@ namespace FCT
 		ShaderCompiler* getCompiler() { return m_compiler; }
 		ShaderGenerator* getGenerator() { return m_generator; }
 		//maxFrameInFlight 是用来封装在RenerGraph系统里的（Context扮演RenderGraph的角色）
-		void setMaxFrameInFlights(size_t max) { m_maxFrameInFlights = max; }
 		void waitCurrentFlush()
 		{
 			FCT_WAIT_FOR(m_currentFlush);
@@ -207,7 +208,6 @@ namespace FCT
 		void currentFlush();
 	protected:
 		SumitTicker m_ticker;
-		size_t m_maxFrameInFlights;
 		std::vector<Window*> m_bindWindows;
 		bool m_nextFrame;
 		bool m_currentFlush;
@@ -220,15 +220,38 @@ namespace FCT
 		std::map<Window*, std::vector<FrameResource>> m_frameResources;
 		std::map<Window*, RHI::DescriptorPool*> m_descriptorPools;
 		size_t m_frameIndex = 0;
+		size_t m_logicFrameIndex = 0; //逻辑帧index
+		std::thread::id m_submitThreadId;
+		//todo:未分离线程时，m_submitThreadId = 逻辑and提交线程 所在id
 	public:
 		RHI::CommandBuffer* getCmdBuf(Window* wnd,uint32_t index);
 		uint32_t allocBaseCommandBuffers(Window* wnd);
 		void maxFrameInFlight(uint32_t maxFrameInFlight);
 		uint32_t maxFrameInFlight() const { return m_maxFrameInFlight; }
 		void initFrameManager();
-		uint32_t currentFrameIndex() const { return m_frameIndex; }
+		uint32_t currentSubmitFrameIndex() const { return m_frameIndex; }
+		/*
+		 *分离了submit线程
+		 *逻辑线程返回逻辑帧index
+		 *提交线程返回提交帧index
+		 *未分离submit 线程
+		 *逻辑部分返回提交帧 index
+		 *提交帧部分返返回提交帧 index
+		 */
+		uint32_t currentFrameIndex()
+		{
+			if (m_submitThreadId == std::this_thread::get_id())
+			{
+				return m_frameIndex;
+			}
+			return m_logicFrameIndex;
+		}
 		RHI::DescriptorPool* getDescriptorPool(Window* wnd);
 		//todo: 考虑可能要变更为 [IRenderTarget*]<->[DescriptorPool*] map
+		void advanceLogicFrame()
+		{
+			m_logicFrameIndex = (m_logicFrameIndex + 1) % m_maxFrameInFlight;
+		}
 	protected:
 		void initWndFrameResources(Window* wnd);
 	public:
@@ -241,6 +264,10 @@ namespace FCT
 		RenderGraph* m_defaultGraph;
 		RenderGraph* m_currentGraph;
 	public:
+		Image* getResourceImage(std::string name)
+		{
+			return m_currentGraph->getResourceImage(name);
+		}
 		//todo:这一系列转发函数想个办法优化
 		void setCurrentGraph(RenderGraph* graph)
 		{
@@ -270,7 +297,7 @@ namespace FCT
 		{
 			m_currentGraph->bindOutputImage(name, image, slot);
 		}
-		void bindTextureImage(const char* name, std::string image,uint32_t width = 0, uint32_t height = 0,Samples samples = Samples::sample_undefined)
+		void bindTextureImage(std::string name, std::string image,uint32_t width = 0, uint32_t height = 0,Samples samples = Samples::sample_undefined)
 		{
 			m_currentGraph->bindTextureImage(name, image, width, height, samples);
 		}

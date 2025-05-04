@@ -14,18 +14,20 @@ namespace FCT
         void addTexture(Image* texture, TextureElement element) override;
         void markAllDescriptorSetsDirty();
         void markDescriptorSetDirty(uint32_t frameIdx);
+        bool createDescriptorSetsAndLayouts(uint32_t frameIdx, std::vector<vk::DescriptorSetLayout>& outLayouts,
+                                            std::vector<vk::DescriptorSet>& outDescriptorSets);
         void create() override;
         void updateDescriptorSetsIfNeeded(uint32_t frameIdx);
         vk::DescriptorSet getDescriptorSet(uint32_t frameIdx, uint32_t setIndex);
+        void markAllDescriptorSetsNeedRecreate();
+        bool recreateDescriptorSetsIfNeeded(uint32_t frameIdx);
+        void update() override;
         void bind(RHI::CommandBuffer* cmdBuf, RHI::Pipeline* pipeline) override;
-        void update() override
-        {
-            
-        }
     protected:
         VK_Context* m_ctx;
         std::vector<std::vector<vk::DescriptorSet>> m_descriptorSets;
-        std::vector<bool> m_dirtyFlags;
+        std::vector<uint8_t> m_dirtyFlags;
+        std::vector<uint8_t> m_needRecreate;
         std::vector<vk::DescriptorSetLayout> m_descriptorSetLayouts;
     };
 }

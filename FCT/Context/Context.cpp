@@ -66,7 +66,14 @@ namespace FCT {
         //m_flushWnd = nullptr;
         m_nextFrame = false;
         m_currentFlush = true;
-        m_submitThread = std::thread(&Context::submitThread, this);
+        bool isInited = false;
+        m_submitThread = std::thread([this,&isInited]
+        {
+            m_submitThreadId = std::this_thread::get_id();
+            isInited = true;
+            submitThread();
+        });
+        FCT_WAIT_FOR(isInited);
         m_ticker = std::bind(&Context::defaultTick,this);
         createCompiler();
         m_generator = new ShaderGenerator();

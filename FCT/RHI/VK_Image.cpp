@@ -89,6 +89,19 @@ namespace FCT {
 
         void VK_Image::uploadInitialData()
         {
+            if (m_initData.data && m_initData.size > 0) {
+                updateData(m_initData.data, m_initData.size);
+            }
+        }
+
+
+        void VK_Image::updateData(const void* data, size_t dataSize)
+        {
+            if (!data || dataSize == 0) {
+                ferr << "Invalid data for image update" << std::endl;
+                return;
+            }
+
             try {
                 vk::ImageAspectFlags aspectMask = vk::ImageAspectFlagBits::eColor;
 
@@ -107,16 +120,49 @@ namespace FCT {
                     1,
                     1,
                     aspectMask,
-                    m_initData.data,
-                    m_initData.size
+                    data,
+                    dataSize
                 );
-
             }
             catch (const std::exception& e) {
-                ferr << "Failed to upload image data: " << e.what() << std::endl;
+                ferr << "Failed to update image data: " << e.what() << std::endl;
             }
         }
+        void VK_Image::updateData(const void* data, size_t dataSize,Fence* fence,std::function<void()>* onCompletion)
+        {
+            if (!data || dataSize == 0) {
+                ferr << "Invalid data for image update" << std::endl;
+                return;
+            }
 
+            try {
+                vk::ImageAspectFlags aspectMask = vk::ImageAspectFlagBits::eColor;
+
+                if (m_usage & ImageUsage::DepthStencil) {
+                    aspectMask = vk::ImageAspectFlagBits::eDepth | vk::ImageAspectFlagBits::eStencil;
+                } else {
+                    aspectMask = vk::ImageAspectFlagBits::eColor;
+                }
+
+                m_ctx->transferDataToImage(
+                    m_image,
+                    m_width,
+                    m_height,
+                    1,
+                    ToVkFormat(m_format),
+                    1,
+                    1,
+                    aspectMask,
+                    data,
+                    dataSize,
+                    static_cast<VK_Fence*>(fence)->fencePtr(),
+                    onCompletion
+                );
+            }
+            catch (const std::exception& e) {
+                ferr << "Failed to update image data: " << e.what() << std::endl;
+            }
+        }
         void VK_Image::create(vk::Image image)
         {
             m_image = image;

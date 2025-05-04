@@ -13,6 +13,31 @@ namespace FCT
         v.pass = pass;
         PassGraphType::vertex_descriptor vd = boost::add_vertex(v, m_passGraph);
         m_passVertex[name] = vd;
+        auto& vertex = m_passGraph[vd];
+
+        auto passResourceCallback = [this, name](PassResource* resource) {
+            auto passVdIt = m_passVertex.find(name);
+            if (passVdIt == m_passVertex.end()) {
+                return;
+            }
+
+            PassGraphType::vertex_descriptor passVd = passVdIt->second;
+            PassGraphVertex& passData = m_passGraph[passVd];
+
+            for (const auto& textureName : passData.textures) {
+                auto textureIt = m_textureLayouts.find(textureName);
+                auto imageIt = m_images.find(textureName);
+
+                if (textureIt != m_textureLayouts.end() && imageIt != m_images.end()) {
+                    if (!resource->isBound(textureIt->second))
+                    {
+                        resource->addTexture(imageIt->second,textureIt->second);
+                        resource->update();
+                    }
+                }
+            }
+        };
+        pass->setPassResourceAddCallback(passResourceCallback);
     }
 
     void RenderGraph::addWindowResource(Window* wnd)
@@ -64,7 +89,7 @@ namespace FCT
         m_passGraph[m_passVertex[name]].target[slot] = image;
     }
 
-    void RenderGraph::bindTextureImage(const char* name, std::string image, uint32_t width, uint32_t height,
+    void RenderGraph::bindTextureImage(std::string name, std::string image, uint32_t width, uint32_t height,
         Samples samples)
     {
         ImageResourceDesc& desc = m_imageResourceDescs[image];
@@ -345,7 +370,7 @@ namespace FCT
 
     void RenderGraph::updateFrameIndices()
     {
-        uint32_t currentFrameIndex = m_ctx->currentFrameIndex();
+        uint32_t currentFrameIndex = m_ctx->currentSubmitFrameIndex();
         for (auto* img : m_needUpdataFramesIndexImages) {
             img->changeCurrentIndex(currentFrameIndex);
         }
@@ -380,7 +405,7 @@ namespace FCT
                 continue;
             }
 
-            Format format = Format::R8G8B8A8_UNORM;
+            Format format = Format::R32G32B32A32_SFLOAT;
             if (desc.usage & ImageUsage::DepthStencil) {
                 format = Format::D32_SFLOAT_S8_UINT;
             }
@@ -396,7 +421,7 @@ namespace FCT
                 img->create();
                 m_images[imageName] = img;
                 m_needUpdataFramesIndexImages.push_back(img);
-                img->changeCurrentIndex(m_ctx->currentFrameIndex());
+                img->changeCurrentIndex(m_ctx->currentSubmitFrameIndex());
             } else {
                 Image* img = m_ctx->createImage();
                 img->samples(desc.samples);
@@ -417,8 +442,7 @@ namespace FCT
                 } else
                 {
                     m_textureLayouts[imageName] = TextureElement(imageName.c_str());
-                    //todo: 暂时只支持使用现成的textureLayout，走这个分支是个未定义 行为
-                    //todo: 完善layout/着色器生成系统系统，以可以在这里动态添加 layout
+                    gen->allocateTextureBinding(m_textureLayouts[imageName]);
                 }
             }
         }

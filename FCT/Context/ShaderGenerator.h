@@ -62,6 +62,7 @@ namespace FCT
                     return pair.second;
                 }
             }
+            ferr << "getTextureBinding 返回过 (0,0)" << std::endl;
             //todo:alloc new binding
             return std::make_pair(0, 0);
         }
@@ -85,6 +86,9 @@ namespace FCT
             }
             return TextureElement();
         }
+        std::pair<uint32_t, uint32_t> allocateTextureBinding(const TextureElement& texture);
+        std::pair<uint32_t, uint32_t> allocateSamplerBinding(const SamplerElement& sampler);
+
     protected:
         std::string generateShaderIn(
             const std::map<uint32_t, VertexLayout>& layouts,

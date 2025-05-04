@@ -18,8 +18,18 @@ namespace FCT
         TexCoord2f,
         Color3f,
         Color4f,
+        VertexCoord2f,
+        CommandOffset,
+        CommandSize,
+        BatchID,
         Custom
     };
+    /*
+     *添加一个需要 添加
+     *              GetDefaultModelAttribute
+     *              GetDefaultFormat
+     *              GetDefaultSemantic
+     */
 
     enum class ModelVertexAttribute {
         Position,       // 对应 position
@@ -67,6 +77,15 @@ namespace FCT
         case VtxType::Color4f:
             return ModelVertexAttribute::Color0;
 
+        case VtxType::VertexCoord2f:
+            return ModelVertexAttribute::TexCoord1;
+
+        //None
+        case VtxType::BatchID:
+        case VtxType::CommandOffset:
+        case VtxType::CommandSize:
+            return ModelVertexAttribute::None;
+
         case VtxType::Custom:
         default:
             return ModelVertexAttribute::None;
@@ -79,52 +98,67 @@ namespace FCT
     }
 
     constexpr Format GetDefaultFormat(VtxType type) noexcept {
-        switch (type) {
-            case VtxType::Position2f:
-                return Format::R32G32_SFLOAT;
-            case VtxType::Position3f:
-                return Format::R32G32B32_SFLOAT;
-            case VtxType::Position4f:
-                return Format::R32G32B32A32_SFLOAT;
-            case VtxType::Normal3f:
-                return Format::R32G32B32_SFLOAT;
-            case VtxType::Tangent3f:
-                return Format::R32G32B32_SFLOAT;
-            case VtxType::Bitangent3f:
-                return Format::R32G32B32_SFLOAT;
-            case VtxType::TexCoord2f:
-                return Format::R32G32_SFLOAT;
-            case VtxType::Color3f:
-                return Format::R32G32B32_SFLOAT;
-            case VtxType::Color4f:
-                return Format::R32G32B32A32_SFLOAT;
-                return Format::R32G32B32A32_SFLOAT;
-            case VtxType::Custom:
-            default:
-                return Format::UNDEFINED;
+        switch (type)
+        {
+        case VtxType::Position2f:
+            return Format::R32G32_SFLOAT;
+        case VtxType::Position3f:
+            return Format::R32G32B32_SFLOAT;
+        case VtxType::Position4f:
+            return Format::R32G32B32A32_SFLOAT;
+        case VtxType::Normal3f:
+            return Format::R32G32B32_SFLOAT;
+        case VtxType::Tangent3f:
+            return Format::R32G32B32_SFLOAT;
+        case VtxType::Bitangent3f:
+            return Format::R32G32B32_SFLOAT;
+        case VtxType::TexCoord2f:
+            return Format::R32G32_SFLOAT;
+        case VtxType::Color3f:
+            return Format::R32G32B32_SFLOAT;
+        case VtxType::Color4f:
+            return Format::R32G32B32A32_SFLOAT;
+        case VtxType::VertexCoord2f:
+            return Format::R32G32_SFLOAT;
+        case VtxType::CommandOffset:
+            return Format::R32_UINT;
+        case VtxType::BatchID:
+            return Format::R32_UINT;
+        case VtxType::CommandSize:
+            return Format::R32_UINT;
+        case VtxType::Custom:
+        default:
+            return Format::UNDEFINED;
         }
     }
 
     constexpr const char* GetDefaultSemantic(VtxType type) noexcept {
-        switch (type) {
-            case VtxType::Position2f:
-            case VtxType::Position3f:
-            case VtxType::Position4f:
-                return "pos";
-            case VtxType::Normal3f:
-                return "normal";
-            case VtxType::Tangent3f:
-                return "tangent";
-            case VtxType::Bitangent3f:
-                return "bitangent";
-            case VtxType::TexCoord2f:
-                return "texcoord";
-            case VtxType::Color3f:
-            case VtxType::Color4f:
-                return "color";
-            case VtxType::Custom:
-            default:
-                return "Ccstom";
+        switch (type)
+        {
+        case VtxType::Position2f:
+        case VtxType::Position3f:
+        case VtxType::Position4f:
+            return "pos";
+        case VtxType::Normal3f:
+            return "normal";
+        case VtxType::Tangent3f:
+            return "tangent";
+        case VtxType::Bitangent3f:
+            return "bitangent";
+        case VtxType::TexCoord2f:
+            return "texcoord";
+        case VtxType::Color3f:
+        case VtxType::Color4f:
+            return "color";
+        case VtxType::VertexCoord2f:
+            return "vertexcoord";
+        case VtxType::CommandOffset:
+            return "cmdoffset";
+        case VtxType::CommandSize:
+            return "cmdSize";
+        case VtxType::Custom:
+        default:
+            return "Custom";
         }
     }
 

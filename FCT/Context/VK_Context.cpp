@@ -84,11 +84,14 @@ namespace FCT
         return nullptr;
     }
 
-
-    VK_Context::~VK_Context() {
+    VK_Context::~VK_Context()
+    {
         if (m_device) {
             m_device.freeCommandBuffers(m_commandPool, m_commandBuffers);
             m_device.destroyCommandPool(m_commandPool);
+            if (m_transferCommandPool) {
+                m_device.destroyCommandPool(m_transferCommandPool);
+            }
             m_device.destroy();
         }
     }
@@ -98,30 +101,47 @@ namespace FCT
         m_phyDevice = common->getPhysicalDevice();
         auto queueFamily = m_phyDevice.getQueueFamilyProperties();
 
+        m_transferQueueFamilyIndex = UINT32_MAX;
         for (size_t i = 0; i < queueFamily.size(); ++i) {
-            if (queueFamily[i].queueFlags & (vk::QueueFlagBits::eGraphics)) {
+            if (queueFamily[i].queueFlags & vk::QueueFlagBits::eGraphics) {
                 m_graphicsQueueFamilyIndex = i;
-                break;
+            }
+
+            if (queueFamily[i].queueFlags & vk::QueueFlagBits::eTransfer) {
+                if (!(queueFamily[i].queueFlags & vk::QueueFlagBits::eGraphics) &&
+                    !(queueFamily[i].queueFlags & vk::QueueFlagBits::eCompute)) {
+                    m_transferQueueFamilyIndex = i;
+                }
+                else if (m_transferQueueFamilyIndex == UINT32_MAX) {
+                    m_transferQueueFamilyIndex = i;
+                }
             }
         }
-        vk::DeviceCreateInfo deviceCreateInfo;
-        vk::DeviceQueueCreateInfo queueCreateInfo;
 
+        if (m_transferQueueFamilyIndex == UINT32_MAX) {
+            m_transferQueueFamilyIndex = m_graphicsQueueFamilyIndex;
+        }
 
-        uint32_t maxQueuesAvailable = queueFamily[m_graphicsQueueFamilyIndex].queueCount;
-        std::vector<float> queuePriorities(maxQueuesAvailable, 1.0f);
+        std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
+        std::set<uint32_t> uniqueQueueFamilies = {m_graphicsQueueFamilyIndex, m_transferQueueFamilyIndex};
 
-        queueCreateInfo.setQueueFamilyIndex(m_graphicsQueueFamilyIndex)
-                       .setQueueCount(maxQueuesAvailable)
-                       .setQueuePriorities(queuePriorities);
+        float queuePriority = 1.0f;
+        for (uint32_t queueFamily : uniqueQueueFamilies) {
+            vk::DeviceQueueCreateInfo queueCreateInfo;
+            queueCreateInfo.setQueueFamilyIndex(queueFamily)
+                           .setQueueCount(1)
+                           .setPQueuePriorities(&queuePriority);
+            queueCreateInfos.push_back(queueCreateInfo);
+        }
 
         std::vector<const char*> deviceExtensions = {
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    };
+        };
         vk::PhysicalDeviceFeatures deviceFeatures;
         deviceFeatures.setSamplerAnisotropy(true);
 
-        deviceCreateInfo.setQueueCreateInfos(queueCreateInfo)
+        vk::DeviceCreateInfo deviceCreateInfo;
+        deviceCreateInfo.setQueueCreateInfos(queueCreateInfos)
                         .setPEnabledExtensionNames(deviceExtensions)
                         .setPEnabledFeatures(&deviceFeatures);
 
@@ -129,12 +149,57 @@ namespace FCT
         VULKAN_HPP_DEFAULT_DISPATCHER.init(m_device);
 
         m_graphicsQueue = m_device.getQueue(m_graphicsQueueFamilyIndex, 0);
+        m_transferQueue = m_device.getQueue(m_transferQueueFamilyIndex, 0);
 
         createCommandPoolAndBuffers();
-
+        createTransferCommandPool();
     }
     uint32_t VK_Context::getGraphicsQueueFamily() const {
         return m_graphicsQueueFamilyIndex;
+    }
+    void VK_Context::createTransferCommandPool() {
+        vk::CommandPoolCreateInfo poolInfo;
+        poolInfo.setQueueFamilyIndex(m_transferQueueFamilyIndex)
+                .setFlags(vk::CommandPoolCreateFlagBits::eTransient |
+                          vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
+
+        m_transferCommandPool = m_device.createCommandPool(poolInfo);
+    }
+    vk::CommandBuffer VK_Context::beginSingleTimeTransferCommands() {
+        vk::CommandBufferAllocateInfo allocInfo;
+        allocInfo.setLevel(vk::CommandBufferLevel::ePrimary);
+        allocInfo.setCommandPool(m_transferCommandPool);
+        allocInfo.setCommandBufferCount(1);
+
+        vk::CommandBuffer commandBuffer = m_device.allocateCommandBuffers(allocInfo)[0];
+
+        vk::CommandBufferBeginInfo beginInfo;
+        beginInfo.setFlags(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+        commandBuffer.begin(beginInfo);
+
+        return commandBuffer;
+    }
+
+    void VK_Context::endSingleTimeTransferCommands(vk::CommandBuffer commandBuffer, vk::Fence* outFence) {
+        commandBuffer.end();
+
+        vk::FenceCreateInfo fenceInfo;
+        vk::Fence fence = m_device.createFence(fenceInfo);
+
+        vk::SubmitInfo submitInfo;
+        submitInfo.setCommandBufferCount(1);
+        submitInfo.setPCommandBuffers(&commandBuffer);
+
+        m_transferQueue.submit(1, &submitInfo, fence);
+
+        if (outFence) {
+            *outFence = fence;
+        } else {
+            m_device.waitForFences(1, &fence, VK_TRUE, UINT64_MAX);
+            m_device.destroyFence(fence);
+        m_device.freeCommandBuffers(m_transferCommandPool, 1, &commandBuffer);
+        }
+
     }
 
     vk::CommandBuffer VK_Context::beginSingleTimeCommands()
@@ -157,12 +222,16 @@ namespace FCT
     {
         commandBuffer.end();
 
+        vk::FenceCreateInfo fenceInfo;
+        vk::Fence fence = m_device.createFence(fenceInfo);
+
         vk::SubmitInfo submitInfo;
         submitInfo.setCommandBufferCount(1);
         submitInfo.setPCommandBuffers(&commandBuffer);
 
-        m_graphicsQueue.submit(1, &submitInfo, nullptr);
-        m_graphicsQueue.waitIdle();
+        m_graphicsQueue.submit(1, &submitInfo, fence);
+        m_device.waitForFences(1, &fence, VK_TRUE, UINT64_MAX);
+        m_device.destroyFence(fence);
 
         m_device.freeCommandBuffers(m_commandPool, 1, &commandBuffer);
     }
@@ -242,20 +311,22 @@ namespace FCT
             throw;
         }
     }
-
     void VK_Context::transferDataToImage(vk::Image dstImage, uint32_t width, uint32_t height,
-                                        vk::Format format, const void* data, size_t dataSize)
+                                        vk::Format format, const void* data, size_t dataSize, vk::Fence* outFence, std::function<void()>* cleanUpCallback)
     {
         transferDataToImage(dstImage, width, height, 1, format, 1, 1,
-                           vk::ImageAspectFlagBits::eColor, data, dataSize);
+                           vk::ImageAspectFlagBits::eColor, data, dataSize, outFence, cleanUpCallback);
     }
 
-    void VK_Context::transferDataToImage(vk::Image dstImage, uint32_t width, uint32_t height, uint32_t depth,
-                                        vk::Format format, uint32_t mipLevels, uint32_t arrayLayers,
-                                        vk::ImageAspectFlags aspectMask, const void* data, size_t dataSize)
+   void VK_Context::transferDataToImage(vk::Image dstImage, uint32_t width, uint32_t height, uint32_t depth,
+                                vk::Format format, uint32_t mipLevels, uint32_t arrayLayers,
+                                vk::ImageAspectFlags aspectMask, const void* data, size_t dataSize,
+                                vk::Fence* outFence, std::function<void()>* cleanUpCallback)
     {
+        size_t pixelSize = FormatSize(FromVkFormat(format));
+        size_t fullImageSize = width * height * depth * pixelSize;
         vk::BufferCreateInfo stagingBufferInfo;
-        stagingBufferInfo.setSize(dataSize);
+        stagingBufferInfo.setSize(fullImageSize);
         stagingBufferInfo.setUsage(vk::BufferUsageFlagBits::eTransferSrc);
         stagingBufferInfo.setSharingMode(vk::SharingMode::eExclusive);
 
@@ -279,14 +350,33 @@ namespace FCT
             void* mappedData = m_device.mapMemory(stagingMemory, 0, dataSize);
             memcpy(mappedData, data, dataSize);
             m_device.unmapMemory(stagingMemory);
+            vk::CommandBuffer cmdBuffer = beginSingleTimeTransferCommands();
 
-            vk::CommandBuffer cmdBuffer = beginSingleTimeCommands();
+            bool needsQueueTransfer = m_graphicsQueueFamilyIndex != m_transferQueueFamilyIndex;
+
+            vk::ImageLayout finalLayout;
+            vk::AccessFlags finalAccessMask;
+
+            if (aspectMask & vk::ImageAspectFlagBits::eDepth || aspectMask & vk::ImageAspectFlagBits::eStencil) {
+                finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
+                finalAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+            } else {
+                finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+                finalAccessMask = vk::AccessFlagBits::eShaderRead;
+            }
 
             vk::ImageMemoryBarrier barrier;
             barrier.setOldLayout(vk::ImageLayout::eUndefined);
             barrier.setNewLayout(vk::ImageLayout::eTransferDstOptimal);
-            barrier.setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
-            barrier.setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+
+            if (needsQueueTransfer) {
+                barrier.setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+                barrier.setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+            } else {
+                barrier.setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+                barrier.setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+            }
+
             barrier.setImage(dstImage);
             barrier.setSubresourceRange(vk::ImageSubresourceRange(
                 aspectMask, 0, mipLevels, 0, arrayLayers));
@@ -316,37 +406,142 @@ namespace FCT
                 vk::ImageLayout::eTransferDstOptimal,
                 1, &region);
 
-            vk::ImageLayout finalLayout;
-            vk::AccessFlags finalAccessMask;
-            vk::PipelineStageFlags finalStage;
-
-            if (aspectMask & vk::ImageAspectFlagBits::eDepth || aspectMask & vk::ImageAspectFlagBits::eStencil) {
-                finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-                finalAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-                finalStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
-            } else {
-                finalLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-                finalAccessMask = vk::AccessFlagBits::eShaderRead;
-                finalStage = vk::PipelineStageFlagBits::eFragmentShader;
-            }
-
             barrier.setOldLayout(vk::ImageLayout::eTransferDstOptimal);
-            barrier.setNewLayout(finalLayout);
-            barrier.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
-            barrier.setDstAccessMask(finalAccessMask);
+
+            if (needsQueueTransfer) {
+                barrier.setNewLayout(vk::ImageLayout::eTransferDstOptimal);
+                barrier.setSrcQueueFamilyIndex(m_transferQueueFamilyIndex);
+                barrier.setDstQueueFamilyIndex(m_graphicsQueueFamilyIndex);
+                barrier.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+                barrier.setDstAccessMask(vk::AccessFlagBits::eShaderRead);
+            } else {
+                barrier.setNewLayout(finalLayout);
+                barrier.setSrcQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+                barrier.setDstQueueFamilyIndex(VK_QUEUE_FAMILY_IGNORED);
+                barrier.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+                barrier.setDstAccessMask(finalAccessMask);
+            }
 
             cmdBuffer.pipelineBarrier(
                 vk::PipelineStageFlagBits::eTransfer,
-                finalStage,
+                vk::PipelineStageFlagBits::eTransfer,
                 vk::DependencyFlags(),
                 0, nullptr,
                 0, nullptr,
                 1, &barrier);
 
-            endSingleTimeCommands(cmdBuffer);
+            if (outFence) {
+                vk::Fence fence;
+                endSingleTimeTransferCommands(cmdBuffer, &fence);
 
-            m_device.destroyBuffer(stagingBuffer);
-            m_device.freeMemory(stagingMemory);
+                if (cleanUpCallback) {
+                    vk::Buffer capturedBuffer = stagingBuffer;
+                    vk::DeviceMemory capturedMemory = stagingMemory;
+                    vk::Image capturedImage = dstImage;
+                    bool capturedNeedsQueueTransfer = needsQueueTransfer;
+                    vk::ImageAspectFlags capturedAspectMask = aspectMask;
+                    uint32_t capturedMipLevels = mipLevels;
+                    uint32_t capturedArrayLayers = arrayLayers;
+                    vk::ImageLayout capturedFinalLayout = finalLayout;
+                    vk::AccessFlags capturedFinalAccessMask = finalAccessMask;
+                    vk::Fence capturedFence = fence;
+                    vk::CommandBuffer capturedCmdBuffer = cmdBuffer;
+
+                    *cleanUpCallback = [this, capturedBuffer, capturedMemory, capturedImage,
+                                       capturedNeedsQueueTransfer, capturedAspectMask,
+                                       capturedMipLevels, capturedArrayLayers,
+                                       capturedFinalLayout, capturedFinalAccessMask,
+                                       capturedFence,capturedCmdBuffer]() {
+                        m_device.waitForFences(1, &capturedFence, VK_TRUE, UINT64_MAX);
+                        m_device.destroyFence(capturedFence);
+                        m_device.freeCommandBuffers(m_transferCommandPool, 1, &capturedCmdBuffer);
+
+                        if (capturedNeedsQueueTransfer) {
+                            vk::CommandBuffer graphicsCmdBuffer = beginSingleTimeCommands();
+
+                            vk::ImageMemoryBarrier finalBarrier;
+                            finalBarrier.setOldLayout(vk::ImageLayout::eTransferDstOptimal);
+                            finalBarrier.setNewLayout(capturedFinalLayout);
+                            finalBarrier.setSrcQueueFamilyIndex(m_transferQueueFamilyIndex);
+                            finalBarrier.setDstQueueFamilyIndex(m_graphicsQueueFamilyIndex);
+                            finalBarrier.setImage(capturedImage);
+                            finalBarrier.setSubresourceRange(vk::ImageSubresourceRange(
+                                capturedAspectMask, 0, capturedMipLevels, 0, capturedArrayLayers));
+                            finalBarrier.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+                            finalBarrier.setDstAccessMask(capturedFinalAccessMask);
+
+                            vk::PipelineStageFlags finalStage;
+                            if (capturedAspectMask & vk::ImageAspectFlagBits::eDepth ||
+                                capturedAspectMask & vk::ImageAspectFlagBits::eStencil) {
+                                finalStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
+                                } else {
+                                    finalStage = vk::PipelineStageFlagBits::eAllCommands;
+                                }
+
+                            graphicsCmdBuffer.pipelineBarrier(
+                                vk::PipelineStageFlagBits::eAllCommands,
+                                finalStage,
+                                vk::DependencyFlags(),
+                                0, nullptr,
+                                0, nullptr,
+                                1, &finalBarrier);
+
+                            endSingleTimeCommands(graphicsCmdBuffer);
+                        }
+
+                        if (capturedBuffer) {
+                            m_device.destroyBuffer(capturedBuffer);
+                        }
+                        if (capturedMemory) {
+                            m_device.freeMemory(capturedMemory);
+                        }
+                    };
+
+                    if (outFence) {
+                        *outFence = fence;
+                    }
+                } else {
+                    ferr << "callback is nullptr, resource is leaked in transferDataToImage" << std::endl;
+                }
+            } else {
+                endSingleTimeTransferCommands(cmdBuffer, nullptr);
+
+                if (needsQueueTransfer) {
+                    vk::CommandBuffer graphicsCmdBuffer = beginSingleTimeCommands();
+
+                    vk::ImageMemoryBarrier finalBarrier;
+                    finalBarrier.setOldLayout(vk::ImageLayout::eTransferDstOptimal);
+                    finalBarrier.setNewLayout(finalLayout);
+                    finalBarrier.setSrcQueueFamilyIndex(m_transferQueueFamilyIndex);
+                    finalBarrier.setDstQueueFamilyIndex(m_graphicsQueueFamilyIndex);
+                    finalBarrier.setImage(dstImage);
+                    finalBarrier.setSubresourceRange(vk::ImageSubresourceRange(
+                        aspectMask, 0, mipLevels, 0, arrayLayers));
+                    finalBarrier.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite);
+                    finalBarrier.setDstAccessMask(finalAccessMask);
+
+                    vk::PipelineStageFlags finalStage;
+                    if (aspectMask & vk::ImageAspectFlagBits::eDepth ||
+                        aspectMask & vk::ImageAspectFlagBits::eStencil) {
+                        finalStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
+                        } else {
+                            finalStage = vk::PipelineStageFlagBits::eAllCommands;
+                        }
+
+                    graphicsCmdBuffer.pipelineBarrier(
+                        vk::PipelineStageFlagBits::eAllCommands,
+                        finalStage,
+                        vk::DependencyFlags(),
+                        0, nullptr,
+                        0, nullptr,
+                        1, &finalBarrier);
+
+                    endSingleTimeCommands(graphicsCmdBuffer);
+                }
+
+                m_device.destroyBuffer(stagingBuffer);
+                m_device.freeMemory(stagingMemory);
+            }
         }
         catch (const std::exception& e) {
             ferr << "Failed to transfer data to image: " << e.what() << std::endl;

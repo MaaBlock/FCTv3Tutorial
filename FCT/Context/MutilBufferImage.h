@@ -2,6 +2,7 @@
 // Created by Administrator on 2025/3/30.
 //
 #include "./Image.h"
+#include "Context.h"
 #include "../RHI/DepthStencilView.h"
 #ifndef MUTILBUFFERIMAGE_H
 #define MUTILBUFFERIMAGE_H
@@ -38,6 +39,7 @@ namespace FCT
         {
             m_currentIndex = index % m_images.size();
         }
+        UpdateResult* updateToCurrent(void* data, size_t size) override;
     private:
         size_t m_imageCount = 0;
         ImageUsageFlags m_usage;
@@ -45,6 +47,7 @@ namespace FCT
         std::vector<RHI::Image*> m_images;
         std::vector<RHI::RenderTargetView*> m_rtvs;
         std::vector<RHI::DepthStencilView*> m_dsvs;
+        std::vector<RHI::TextureView*> m_tvs;
     };
 
 }

@@ -236,4 +236,24 @@ namespace FCT
         size_t m_samplerCount;
     };
 }
+namespace std
+{
+    template<>
+    struct hash<FCT::TextureElement>
+    {
+        std::size_t operator()(const FCT::TextureElement& element) const noexcept {
+            std::size_t seed = 0;
+
+            if (element.getName() != nullptr) {
+                boost::hash_combine(seed, std::string(element.getName()));
+            }
+
+            boost::hash_combine(seed, static_cast<std::size_t>(element.getType()));
+            boost::hash_combine(seed, static_cast<uint32_t>(element.getShaderStages()));
+            boost::hash_combine(seed, static_cast<std::size_t>(element.getUpdateFrequency()));
+
+            return seed;
+        }
+    };
+}
 #endif //RESOURCELAYOUT_H

@@ -289,10 +289,14 @@ namespace FCT
                         desc.format = ToVkFormat(image->format());
                         desc.samples = ToVkSampleCount(image->samples());
 
-                        desc.loadOp = vk::AttachmentLoadOp::eLoad;
-
                         desc.storeOp = vk::AttachmentStoreOp::eStore;
-                        desc.initialLayout = vk::ImageLayout::eUndefined;
+                        if (image->getType() == RenderTargetType::WindowTarget) {
+                            desc.loadOp = vk::AttachmentLoadOp::eLoad;
+                            desc.initialLayout = vk::ImageLayout::eColorAttachmentOptimal; // 不能是Undefined
+                        } else {
+                            desc.loadOp = vk::AttachmentLoadOp::eDontCare;
+                            desc.initialLayout = vk::ImageLayout::eUndefined;
+                        }
 
                         if (image->getType() == RenderTargetType::WindowTarget && !m_nextPassGroup.size()) {
                             desc.finalLayout = vk::ImageLayout::ePresentSrcKHR;
@@ -346,7 +350,7 @@ namespace FCT
                             desc.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
                         }
 
-                        desc.initialLayout = vk::ImageLayout::eUndefined;
+                        desc.initialLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
                         desc.finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
                         attachmentIndex = m_attachments.size();

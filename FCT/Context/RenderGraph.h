@@ -124,6 +124,15 @@ namespace FCT
         };
         ExecutionOrder m_executionOrder;
     public:
+        Image* getResourceImage(std::string name)
+        {
+            auto it = m_images.find(name);
+            if (it!= m_images.end())
+            {
+                return it->second;
+            }
+            return nullptr;
+        }
         RenderGraph(Context* ctx);
         void addPass(const std::string& name, Pass* pass);
         void addWindowResource(Window* wnd);
@@ -131,7 +140,8 @@ namespace FCT
         //显式依赖
         void addPassDenpendency(const std::string& from,const std::string& to);
         void bindOutputImage(const std::string& name, std::string image,uint8_t slot = 0);
-        void bindTextureImage(const char* name, std::string image,uint32_t width = 0, uint32_t height = 0,Samples samples = Samples::sample_undefined);
+        void bindTextureImage(std::string name, std::string image, uint32_t width = 0, uint32_t height = 0, Samples samples =
+                                  Samples::sample_undefined);
         void bindDepthStencil(const char* name, std::string image);
         void bindOutput(const char* name, Window* wnd, uint8_t slot = 0);
         void checkAndUpdateResourceSizes();

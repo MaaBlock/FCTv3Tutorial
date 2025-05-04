@@ -67,6 +67,10 @@ namespace FCT {
 
         }
         uint32_t getGraphicsQueueFamily() const;
+        void createTransferCommandPool();
+        vk::CommandBuffer beginSingleTimeTransferCommands();
+        void endSingleTimeTransferCommands(vk::CommandBuffer commandBuffer, vk::Fence* outFence);
+
         vk::Queue getGraphicsQueue()
         {
             return m_graphicsQueue;
@@ -77,20 +81,25 @@ namespace FCT {
         void transferDataToBuffer(vk::Buffer dstBuffer, size_t size, const void* data);
         void transferDataToImage(vk::Image dstImage, uint32_t width, uint32_t height, vk::Format format,
                                  const void* data,
-                                 size_t dataSize);
+                                 size_t dataSize, vk::Fence* outFence = nullptr, std::function<void()>* cleanUpCallback = nullptr);
         void transferDataToImage(vk::Image dstImage, uint32_t width, uint32_t height, uint32_t depth, vk::Format format,
                                  uint32_t mipLevels, uint32_t arrayLayers, vk::ImageAspectFlags aspectMask,
                                  const void* data,
-                                 size_t dataSize);
+                                 size_t dataSize, vk::Fence* outFence = nullptr, std::function<void()>* cleanUpCallback = nullptr);
+
     private:
         void createCommandPoolAndBuffers();
         VK_ContextCommon* m_common;
-        size_t m_graphicsQueueFamilyIndex;
+        uint32_t m_graphicsQueueFamilyIndex;
         vk::Device m_device;
         vk::PhysicalDevice m_phyDevice;
         vk::Queue m_graphicsQueue;
         vk::CommandPool m_commandPool;
         std::vector<vk::CommandBuffer> m_commandBuffers;
+
+        uint32_t m_transferQueueFamilyIndex;
+        vk::Queue m_transferQueue;
+        vk::CommandPool m_transferCommandPool;
     };
 }
 

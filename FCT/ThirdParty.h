@@ -17,6 +17,7 @@
 	#define NOMINMAX
 	#include <Windows.h>
 #endif
+#undef max
 
 #ifdef __ANDROID__
     #define FCT_USE_ANDROID
@@ -139,4 +140,5 @@ namespace FCT {
 #include <filesystem>
 #include <set>
 #include <queue>
+
 #endif // FCT_THIRDPARTY_HEADER

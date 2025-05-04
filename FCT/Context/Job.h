@@ -60,8 +60,10 @@ namespace FCT {
         }
         PassResource* resource;
         TraditionPipelineState* state;
-        std::vector<Mesh<uint16_t>*> meshes16;
-        std::vector<Mesh<uint32_t>*> meshes32;
+        std::vector<StaticMesh<uint16_t>*> meshes16;
+        std::vector<StaticMesh<uint32_t>*> meshes32;
+        std::vector<DynamicMesh<uint32_t>*> meshes32Dynamic;
+        std::vector<DynamicMesh<uint16_t>*> meshes16Dynamic;
         bool needsUpdate;
         bool isCreated;
         TraditionRenderJob()
@@ -71,15 +73,27 @@ namespace FCT {
           , isCreated(false)
         {
         }
-        TraditionRenderJob& addMesh(Mesh<uint16_t>* mesh)
+        TraditionRenderJob& addMesh(StaticMesh<uint16_t>* mesh)
         {
             meshes16.push_back(mesh);
             needsUpdate = true;
             return *this;
         }
-        TraditionRenderJob& addMesh(Mesh<uint32_t>* mesh)
+        TraditionRenderJob& addMesh(StaticMesh<uint32_t>* mesh)
         {
             meshes32.push_back(mesh);
+            needsUpdate = true;
+            return *this;
+        }
+        TraditionRenderJob& addMesh(DynamicMesh<uint32_t>* mesh)
+        {
+            meshes32Dynamic.push_back(mesh);
+            needsUpdate = true;
+            return *this;
+        }
+        TraditionRenderJob& addMesh(DynamicMesh<uint16_t>* mesh)
+        {
+            meshes16Dynamic.push_back(mesh);
             needsUpdate = true;
             return *this;
         }
@@ -101,6 +115,16 @@ namespace FCT {
                 mesh->draw(cmdBuf);
             }
             for (auto& mesh : meshes32)
+            {
+                mesh->bind(cmdBuf);
+                mesh->draw(cmdBuf);
+            }
+            for (auto& mesh : meshes32Dynamic)
+            {
+                mesh->bind(cmdBuf);
+                mesh->draw(cmdBuf);
+            }
+            for (auto& mesh : meshes16Dynamic)
             {
                 mesh->bind(cmdBuf);
                 mesh->draw(cmdBuf);
