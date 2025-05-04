@@ -150,9 +150,25 @@ namespace FCT
 			auto mMesh =  md->findMesh("teapot");
 			return createMesh(mMesh,layout);
 		}
+	protected:
+		struct LogicTaskData
+		{
+			std::function<void()> task;
+		};
+		boost::lockfree::queue<LogicTaskData*,boost::lockfree::capacity<1024>> m_logicTask;
+		void postLogicTask(const std::function<void()>& task)
+		{
+			LogicTaskData* data = FCT_NEW(LogicTaskData);
+			data->task = task;
+			m_logicTask.push(data);
+		}
 	public:
 		void flush()
 		{
+			m_logicTask.consume_all([](LogicTaskData*& data) {
+                data->task();
+				FCT_DELETE(data);
+            });
 			advanceLogicFrame();
 			FCT_WAIT_FOR(m_currentFlush);
             m_currentGraph->swapJobQueue();
@@ -185,6 +201,7 @@ namespace FCT
 		{
 			m_currentGraph->updateFrameIndices();
 			m_currentGraph->checkAndUpdateResourceSizes();
+			m_currentGraph->updateResource();
 			m_ticker();
 		}
 		/*

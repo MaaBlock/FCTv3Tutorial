@@ -12,6 +12,7 @@ namespace FCT
         void addConstBuffer(RHI::ConstBuffer* buffer) override;
         void addSampler(Sampler* sampler, SamplerElement element) override;
         void addTexture(Image* texture, TextureElement element) override;
+        void setTexture(Image* texture, TextureElement element) override;
         void markAllDescriptorSetsDirty();
         void markDescriptorSetDirty(uint32_t frameIdx);
         bool createDescriptorSetsAndLayouts(uint32_t frameIdx, std::vector<vk::DescriptorSetLayout>& outLayouts,

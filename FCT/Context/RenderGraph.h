@@ -167,6 +167,7 @@ namespace FCT
             }
             return nullptr;
         }
+        void updateResource();
         void swapJobQueue();
     };
 

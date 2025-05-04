@@ -36,6 +36,20 @@ namespace FCT
         }
     }
 
+    void VK_PassResource::setTexture(Image* texture, TextureElement element)
+    {
+        if (texture) {
+            if (m_textures.find(element)!= m_textures.end())
+            {
+            } else
+            {
+                markAllDescriptorSetsNeedRecreate();
+            }
+            m_textures[element] = texture;
+            markDescriptorSetDirty(m_ctx->currentFrameIndex());
+        }
+    }
+
     void VK_PassResource::markAllDescriptorSetsDirty()
     {
         uint32_t maxFrames = m_ctx->maxFrameInFlight();
@@ -306,14 +320,20 @@ bool VK_PassResource::createDescriptorSetsAndLayouts(uint32_t frameIdx,
     {
         uint32_t maxFrames = m_ctx->maxFrameInFlight();
         m_needRecreate.resize(maxFrames, true);
+        for (auto frameIdx = 0; frameIdx < maxFrames; ++frameIdx)
+        {
+            m_needRecreate[frameIdx] = true;
+        }
     }
     bool VK_PassResource::recreateDescriptorSetsIfNeeded(uint32_t frameIdx)
     {
-        if (frameIdx >= m_needRecreate.size() || !m_needRecreate[frameIdx]) {
+        if (frameIdx >= m_needRecreate.size() || !m_needRecreate[frameIdx])
+        {
             return false;
         }
         m_descriptorSetLayouts.clear();
         if (createDescriptorSetsAndLayouts(frameIdx, m_descriptorSetLayouts, m_descriptorSets[frameIdx])) {
+            fout << std::hex << m_descriptorSets[frameIdx].data()  << " has been created" << std::endl;
             m_needRecreate[frameIdx] = false;
             m_dirtyFlags[frameIdx] = true;
             return true;

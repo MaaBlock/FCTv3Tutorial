@@ -28,12 +28,10 @@ namespace FCT
                 auto textureIt = m_textureLayouts.find(textureName);
                 auto imageIt = m_images.find(textureName);
 
-                if (textureIt != m_textureLayouts.end() && imageIt != m_images.end()) {
-                    if (!resource->isBound(textureIt->second))
-                    {
-                        resource->addTexture(imageIt->second,textureIt->second);
-                        resource->update();
-                    }
+                if (textureIt != m_textureLayouts.end() && imageIt != m_images.end())
+                {
+                    resource->setTexture(imageIt->second,textureIt->second);
+                    resource->update();
                 }
             }
         };
@@ -696,6 +694,15 @@ namespace FCT
             }
 
             passGroup->endSubmit(cmdBuf);
+        }
+    }
+
+    void RenderGraph::updateResource()
+    {
+        for (const auto& passEntry : m_passVertex) {
+            PassGraphType::vertex_descriptor passVd = passEntry.second;
+            PassGraphVertex& passData = m_passGraph[passVd];
+            passData.pass->updateResource();
         }
     }
 

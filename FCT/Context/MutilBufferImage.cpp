@@ -195,6 +195,7 @@ namespace FCT
 
     RHI::TextureView* MutilBufferImage::currentTextureView()
     {
+        fout << "has gotten " << m_currentIndex << " resource" << std::endl;
         return m_tvs[m_currentIndex];
     }
 
@@ -213,6 +214,8 @@ namespace FCT
         UpdateResult* res = new UpdateResult();
         res->fence = m_ctx->createFence();
         m_images[m_ctx->currentFrameIndex()]->updateData(data,size,res->fence,&res->cleanUpCallback);
+        res->currentFrame = m_ctx->currentFrameIndex();
+
         return res;
     }
 }

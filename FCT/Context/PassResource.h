@@ -34,6 +34,7 @@ namespace FCT
         virtual void bind(RHI::CommandBuffer* cmdBuf,RHI::Pipeline* pipeline) = 0;
         virtual void addConstBuffer(RHI::ConstBuffer* buffer) = 0;
         virtual void addTexture(Image* texture,TextureElement element) = 0;
+        virtual void setTexture(Image* texture,TextureElement element) = 0;
         virtual void addSampler(Sampler* sampler,SamplerElement element) = 0;
         virtual void create() = 0;
         virtual void update() = 0;

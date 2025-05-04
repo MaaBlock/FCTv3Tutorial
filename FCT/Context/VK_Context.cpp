@@ -454,8 +454,10 @@ namespace FCT
                                        capturedFence,capturedCmdBuffer]() {
                         m_device.waitForFences(1, &capturedFence, VK_TRUE, UINT64_MAX);
                         m_device.destroyFence(capturedFence);
-                        m_device.freeCommandBuffers(m_transferCommandPool, 1, &capturedCmdBuffer);
-
+                        postLogicTask([this,capturedCmdBuffer]()
+                        {
+                            m_device.freeCommandBuffers(m_transferCommandPool, 1, &capturedCmdBuffer);
+                        });
                         if (capturedNeedsQueueTransfer) {
                             vk::CommandBuffer graphicsCmdBuffer = beginSingleTimeCommands();
 

@@ -61,6 +61,7 @@ namespace FCT {
         }
         virtual void submit(RHI::CommandBuffer* cmdBuf) = 0;
         virtual void swapJobQueue() = 0;
+        virtual void updateResource() = 0;
         void setTarget(uint32_t index, Image* target)
         {
             m_targets[index] = target;

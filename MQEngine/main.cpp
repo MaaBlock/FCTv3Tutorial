@@ -192,10 +192,6 @@ protected:
             m_maxBounds.y = std::max(m_maxBounds.y, point.y);
         }
     }
-    void end()
-    {
-        m_commandQueue.push_back(VertexCommand_End);
-    }
     void unwrapperArcTo(Vec2 center, float beginAngle, float endAngle, float q) {
         m_commandQueue.push_back(VertexCommand_ArcTo);
         m_commandQueue.push_back(center.x);
@@ -222,6 +218,10 @@ protected:
     }
 
 public:
+    void end()
+    {
+        m_commandQueue.push_back(VertexCommand_End);
+    }
     VertexPath() : m_hasPoints(false) {
         clear();
     }
@@ -348,7 +348,6 @@ public:
 
         m_currentPos = to;
     }
-
     void curveTo(Vec2 control1, Vec2 control2, Vec2 to) {
         Vec2 start = m_currentPos;
 
@@ -510,7 +509,8 @@ protected:
     std::string m_passName;
     std::pair<ConstLayout,ConstElement> m_viewMatrix;
     std::pair<ConstLayout,ConstElement> m_projectionMatrix;
-    PassResource* m_passResource;
+    //PassResource* m_passResource;
+    std::vector<PassResource*> m_passResources;
     std::vector<VertexScreen> m_screens;
     std::map<std::string,  uint32_t> m_screenIndexMap;
     std::vector<VertexScreenInfo> m_infos;
@@ -543,8 +543,15 @@ public:
     VertexContext(Context* ctx,Window* wnd) : m_ctx(ctx) ,m_wnd(wnd)
     {
         m_targetIndex = 0;
+        for (int i = 0;i < m_ctx->maxFrameInFlight();i++)
+        {
+            m_passResources.push_back(m_ctx->createPassResource());
+            m_passResources[i]->bind(wnd);
+        }
+        /*
         m_passResource = m_ctx->createPassResource();
         m_passResource->bind(wnd);
+        */
     }
 
     void updataCommandInfo();
@@ -592,7 +599,11 @@ public:
     }
     void addConstBuffer(RHI::ConstBuffer* constBuffer)
     {
-        m_passResource->addConstBuffer(constBuffer);
+        for (auto& resource : m_passResources)
+        {
+            resource->addConstBuffer(constBuffer);
+        }
+        //m_passResource->addConstBuffer(constBuffer);
     }
     void updataScreenInfo()
     {
@@ -650,7 +661,8 @@ public:
         updataCommandInfo();
         auto job = new TraditionRenderJob();
         job->addMesh(m_mesh)
-            .setPassResource(m_passResource)
+            .setPassResource(m_passResources[m_ctx->currentFrameIndex()])
+            //.setPassResource(m_passResource)
             .setPipelineState(m_pso);
 
         m_ctx->submit(job, m_passName);
@@ -776,7 +788,11 @@ void VertexContext::create()
     m_pso->vertexShader = m_vs;
     m_pso->pixelShader = m_ps;
 
-    m_passResource->create();
+    for (auto& resource : m_passResources)
+    {
+        resource->create();
+    }
+   // m_passResource->create();
 
     m_mesh = new DynamicMesh<uint32_t>(m_ctx,vertexLayout);
     m_mesh->reserveIndices(200);
@@ -816,12 +832,21 @@ void VertexContext::mvpUniformLayout(ConstLayout layout)
     //todo:支持 vp合一矩阵 支持mvp合一 矩阵
 }
 
+/*
+struct VertexScreenInfo {
+    Vec4 origin;
+    Vec4 XDir;
+    Vec4 YDir;
+    Vec4 originVertexCoord;
+    Vec4 VertexCoordSize;
+};
+ */
+
 void VertexContext::generateVertexShader()
 {
     std::string code;
     code += "\n#define vertexOuputTarget " + std::string(ScreenInfoNameInShder);
     code += R"(
-
 
 
 
@@ -1269,6 +1294,7 @@ public:
         ctx->compilePasses();
         imguiCtx->attachPass("imguiPass");
         initDynamicMesh();
+        fout << "初始化 完毕" << endl;
     }
 
     void initDynamicMesh()
@@ -1500,6 +1526,7 @@ ShaderOut main(ShaderIn psIn) {
         path->lineTo(Vec2(300, 100));
         path->lineTo(Vec2(300, 200));
         path->lineTo(Vec2(100, 200));
+        path->lineTo(Vec2(100, 100));
 
         path->endPath();
 
@@ -1507,14 +1534,7 @@ ShaderOut main(ShaderIn psIn) {
         path->setColor(Vec4(1.0f, 0.3f, 0.3f, 0.7f));
         path->circle(Vec2(400, 150), 80);
         path->endPath();
-
-        path->beginPath();
-        path->setColor(Vec4(0.3f, 0.8f, 0.4f, 0.9f));
-        path->moveTo(Vec2(500, 100));
-        path->curveTo(Vec2(600, 50), Vec2(700, 200));
-        path->lineTo(Vec2(500, 200));
-        path->closePath();
-        path->endPath();
+        path->end();
         vertexCtx->clearPath("screen");
         vertexCtx->addPath("screen", path);
 

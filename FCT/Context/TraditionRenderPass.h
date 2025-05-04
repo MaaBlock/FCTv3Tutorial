@@ -48,9 +48,8 @@ public:
         job->addRef();
         m_currentQueue->m_traditionRenderJobs.push_back(job);
     }
-    void submit(RHI::CommandBuffer* cmdBuf) override
+    void updateResource() override
     {
-        m_pass->beginSubmit(cmdBuf);
         std::set<PassResource*> resources;
         for (auto& job : m_submitQueue->m_traditionRenderJobs)
         {
@@ -60,6 +59,10 @@ public:
         {
             m_addResourceCallback(res);
         }
+    }
+    void submit(RHI::CommandBuffer* cmdBuf) override
+    {
+        m_pass->beginSubmit(cmdBuf);
         for (auto& job : m_submitQueue->m_traditionRenderJobs)
         {
             auto pipeline = getOrCreateTraditionPipeline(job->state);
