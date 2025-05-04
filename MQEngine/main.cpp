@@ -525,6 +525,7 @@ ShaderOut main(ShaderIn psIn) {
 
         imguiCtx->submitJob();
         job->release();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
         ctx->flush();
     }
     void submitTick()
@@ -535,6 +536,7 @@ ShaderOut main(ShaderIn psIn) {
         ctx->excutePasses(cmdBuf);
         cmdBuf->end();
         cmdBuf->submit();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
         ctx->swapBuffers();
     }
     void run()

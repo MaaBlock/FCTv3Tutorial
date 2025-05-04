@@ -24,8 +24,14 @@ FCT::GLFW_Window::GLFW_Window(GLFW_UICommon* common, Runtime* rt)
     m_rt = rt;
     m_swapchain = nullptr;
 #ifdef FCT_USE_VULKAN
-    //m_vkSwapchain = nullptr;
+    m_vkSurface = nullptr;
 #endif
+    m_window = nullptr;
+    m_width = 0;
+    m_height = 0;
+    m_title = "FCT";
+    m_ctx = nullptr;
+    m_swapchainNativeHandle = nullptr;
 }
 
 FCT::GLFW_Window::~GLFW_Window()
@@ -224,6 +230,13 @@ void FCT::GLFW_Window::setCursorPos(int x, int y)
 FCT::Image* FCT::GLFW_Window::getImage() const
 {
     return nullptr;
+}
+
+FCT::Vec2 FCT::GLFW_Window::getCursorPos() const
+{
+    double xpos, ypos;
+    glfwGetCursorPos(m_window, &xpos, &ypos);
+    return FCT::Vec2(static_cast<float>(xpos), static_cast<float>(ypos));
 }
 
 /*

@@ -221,6 +221,11 @@ namespace FCT
 			}
 			return result;
 		}
+		Mat4& operator*=(const Mat4 &rhs)
+		{
+			*this = *this * rhs;
+			return *this;
+		}
 		friend std::ostream& operator<<(std::ostream& os, const Mat4& mat);
 	};
 	inline std::ostream& operator<<(std::ostream& os, const Mat4& mat)

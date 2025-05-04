@@ -16,6 +16,9 @@ namespace FCT
     {
         GLFW_VK_ImGuiContext* m_imguiCtx;
         std::queue<ImguiTask> m_tasks;
+        static double m_lastFrameTime;
+        static double m_targetFrameTime;
+        static bool m_enableFrameLimiter;
         ImguiJob(GLFW_VK_ImGuiContext* ctx)
         {
             m_imguiCtx = ctx;
@@ -49,6 +52,8 @@ namespace FCT
             m_currentJob->addUI(task);
         }
         void submitTick(RHI::CommandBuffer* cmdBuffer);
+        void render();
+        void drawData(RHI::CommandBuffer* cmdBuffer);
         void create(RHI::Pass* pass)
         {
             m_passGroup = pass->group();
@@ -94,16 +99,30 @@ namespace FCT
 
     inline void ImguiJob::submit(RHI::CommandBuffer* cmdBuf)
     {
-        m_imguiCtx->newFrame();
-        while (!m_tasks.empty()) {
-            ImguiTask task = m_tasks.front();
-            m_tasks.pop();
+        if (m_enableFrameLimiter)
+        {
+            double currentTime = glfwGetTime();
+            double elapsedTime = currentTime - m_lastFrameTime;
+            if (elapsedTime < m_targetFrameTime)
+            {
+                m_imguiCtx->drawData(cmdBuf);
+                return;
+            } else
+            {
+                m_imguiCtx->newFrame();
+                while (!m_tasks.empty()) {
+                    ImguiTask task = m_tasks.front();
+                    m_tasks.pop();
 
-            if (task) {
-                task();
+                    if (task) {
+                        task();
+                    }
+                }
+                m_imguiCtx->render();
+                m_imguiCtx->drawData(cmdBuf);
             }
+            m_lastFrameTime = currentTime;
         }
-        m_imguiCtx->submitTick(cmdBuf);
     }
 
     inline GLFW_VK_ImGuiContext::GLFW_VK_ImGuiContext(GLFW_Window* wnd, VK_Context* ctx)
@@ -111,6 +130,9 @@ namespace FCT
         m_wnd = wnd;
         m_ctx = ctx;
         m_currentJob = nullptr;
+        ImguiJob::m_lastFrameTime = glfwGetTime();
+        ImguiJob::m_targetFrameTime = 1.0 / 60.0;
+        ImguiJob::m_enableFrameLimiter = true;
     }
 
     inline GLFW_VK_ImGuiContext::~GLFW_VK_ImGuiContext()
@@ -138,6 +160,20 @@ namespace FCT
     {
 
         ImGui::Render();
+        ImDrawData* drawData = ImGui::GetDrawData();
+
+        VkCommandBuffer vkCmdBuffer = static_cast<RHI::VK_CommandBuffer*>(cmdBuffer)->commandBuffer();
+        ImGui_ImplVulkan_RenderDrawData(drawData, vkCmdBuffer);
+    }
+
+    inline void GLFW_VK_ImGuiContext::render()
+    {
+        ImGui::Render();
+    }
+
+    inline void GLFW_VK_ImGuiContext::drawData(RHI::CommandBuffer* cmdBuffer)
+    {
+
         ImDrawData* drawData = ImGui::GetDrawData();
 
         VkCommandBuffer vkCmdBuffer = static_cast<RHI::VK_CommandBuffer*>(cmdBuffer)->commandBuffer();

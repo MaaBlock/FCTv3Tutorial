@@ -44,6 +44,7 @@ endif()
 add_subdirectory(FCT)
 add_subdirectory(FCT_IMGUI)
 add_subdirectory(MQEngine)
+add_subdirectory(Demo)
 add_executable(${CMAKE_PROJECT_NAME}
         main.cpp)
 if (FCT_ANDROID)

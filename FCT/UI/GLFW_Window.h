@@ -30,6 +30,7 @@ namespace FCT
         void setCursorPos(int x, int y) override;
         Image* getImage() const override;
         GLFWwindow* getWindow() const { return m_window; }
+        Vec2 getCursorPos() const override;
         void postUiTask(UITaskFunction task,void* param = nullptr,bool waited = true)
         {
             m_common->postUiTask(task, param, waited);

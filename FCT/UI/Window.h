@@ -53,6 +53,7 @@ namespace FCT {
 		virtual void setCursorPos(int x, int y) = 0;
 		void registerHandler(EventHandler* handler);
 		void unregisterHandler(EventHandler* handler);
+		virtual Vec2 getCursorPos() const = 0;
 		void clearHandler();
 		CallBackEventHandler* getCallBack() const {
 			return m_callbackHandler;

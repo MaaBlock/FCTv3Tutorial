@@ -9,4 +9,7 @@ namespace FCT
         ImGui::CreateContext();
 
     }
+   double ImguiJob::m_lastFrameTime = 0;
+   double ImguiJob::m_targetFrameTime = 0;
+   bool ImguiJob::m_enableFrameLimiter = true;
 }

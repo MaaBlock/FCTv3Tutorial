@@ -14,15 +14,18 @@ namespace FCT
             glfwInit();
             glfwSwapInterval(0);
             inited = true;
+            uint8_t count = 0;
             while (m_running)
             {
-                while (!m_taskQueue.empty() && m_running) {
+                count = 0;
+                while (!m_taskQueue.empty() && m_running && count < 10) {
                     UITaskTrans trans;
                     m_taskQueue.pop(trans);
                     UiTaskData* task = trans.data;
                     task->task(task->param);
                     *task->waiting = false;
                     delete task;
+                    count++;
                 }
                 for (auto it : m_ticker)
                 {
