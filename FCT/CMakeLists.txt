@@ -160,6 +160,12 @@ file(GLOB UI_ANDROID_MODULE_HEADERS
 )
 list(REMOVE_ITEM UI_MODULE_HEADERS ${UI_ANDROID_MODULE_HEADERS})
 
+file(GLOB VERTEXTEXT_MODULE_SOURCES
+        LIST_DIRECTORIES false
+        CONFIGURE_DEPENDS
+        "./VertexAndText/*.cpp"
+)
+
 message(STATUS "DEBUGTOOLS_MODULE_SOURCES: ${DEBUGTOOLS_MODULE_SOURCES}")
 message(STATUS "UI_MODULE_HEADERS: ${UI_MODULE_HEADERS}")
 message(STATUS "RUNTIME_WIN32_MODULE_SOURCES: ${RUNTIME_WIN32_MODULE_SOURCES}")
@@ -184,6 +190,7 @@ add_library(FCT STATIC
     ${RHI_MODULE_SOURCES}
     ${MODELLOADER_MODULE_SOURCES}
     ${MODELLOADER_ASSIMP_MODULE_SOURCES}
+    ${VERTEXTEXT_MODULE_SOURCES}
     headers.cpp
 )
 target_sources(FCT PRIVATE
@@ -241,7 +248,7 @@ else()
     endif()
 endif()
 
-
+find_package(Freetype REQUIRED)
 find_package(assimp CONFIG REQUIRED)
 find_package(unofficial-shaderc CONFIG REQUIRED)
 find_package(spirv_cross_core CONFIG REQUIRED)
@@ -257,6 +264,7 @@ target_link_libraries(FCT PUBLIC
         spirv-cross-reflect
         unofficial::shaderc::shaderc
         assimp::assimp
+        Freetype::Freetype
 )
 
 #target_link_libraries(FCT PUBLIC

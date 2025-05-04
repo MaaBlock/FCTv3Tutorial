@@ -6,6 +6,7 @@
 #include "../Context/VK_ContextCommon.h"
 #include "../ModelLoader/ModelLoader.h"
 #include "../UI/GLFW_UICommon.h"
+#include "../VertexAndText/Freetype_FontCommon.h"
 #ifdef FCT_USE_FREEIMAGE
         #include "../ImageLoader/FreeImage_ImageLoader.h"
 #endif
@@ -18,6 +19,7 @@ namespace FCT
 #ifdef FCT_USE_GLFW
     	GLFW_UICommon* glfwUICommon;
 #endif
+    	Freetype_FontCommon* freetypeFontCommon;
     };
 	/*
 	 *todo:
@@ -40,13 +42,17 @@ namespace FCT
         	//todo:从FCTv2 直接迁移过来 的，应当改为common的模式
 			FreeImage_ImageLoader::Init();
 #endif
+        	g_common->freetypeFontCommon = FCT_NEW(Freetype_FontCommon);
+        	g_common->freetypeFontCommon->init();
         }
         ~Runtime() {
 #ifdef  FCT_USE_VULKAN
             g_common->vkContextCommon->term();
 #endif
+        	g_common->freetypeFontCommon->tern();
+        	FCT_DELETE(g_common->freetypeFontCommon);
 #ifdef  FCT_USE_GLFW
-        	delete g_common->glfwUICommon;
+        	FCT_DELETE(g_common->glfwUICommon);
 #endif
         	term();
         }
@@ -71,6 +77,10 @@ namespace FCT
         Context* createContext();
     	ImageLoader* createImageLoader();
     	ModelLoader* createModelLoader();
+    	Freetype_Font* createFont()
+    	{
+    		return g_common->freetypeFontCommon->create();
+    	}
     	void postUiTask(UITaskFunction task,void* param = nullptr,bool waited = true)
     	{
 
@@ -83,69 +93,4 @@ namespace FCT
     	Runtime(const Runtime&) = delete;
     	Runtime& operator=(const Runtime&) = delete;
     };
-#ifdef FCT_DEPRECATED
-    struct RuntimeCommon {
-
-    };
-    class Runtime {
-    public:
-        Runtime()
-        {
-            init();
-        }
-        ~Runtime()
-        {
-            term();
-        }
-        Window *createWindow(int w, int h, const char *title);
-        Context* createContext();
-    private:
-        RuntimeCommon* m_common;
-        bool m_isTerm;
-        bool m_isRelease;
-        void init();
-        void term();
-    };
-	class Android_WindowShareData;
-	class GL_ContextShareData;
-	class FreeType_FontShareData;
-	class Pipeline;
-	class PhysicsSystem;
-	class Runtime
-	{
-	public:
-		Runtime()
-		{
-			init();
-		}
-		~Runtime()
-		{
-			m_isRelease = true;
-			if (!m_isTern)
-				term();
-		}
-		Runtime(Runtime &) = delete;
-		Runtime &operator=(const Runtime &) = delete;
-		Runtime(Runtime &&) = delete;
-		Runtime &operator=(Runtime &&) = delete;
-		void init();
-		void term();
-		Window *createWindow(int w, int h, const char *title);
-		Context *createContext(IRenderTarget *target);
-		void setOpenGLVesion(int major, int minor);
-		//Font *createFont();
-		ImageLoader *createImageLoader();
-		Pipeline *createVectorRenderPipeline(Context *ctx);
-
-        //PhysicsSystem* createPhysicsSystem();
-	private:
-		bool m_isRelease = false;
-		bool m_isTern = false;
-		/*Android_WindowShareData *g_glfwWindowShareData;
-		GL_ContextShareData *g_glContextShareData;
-		FreeType_FontShareData *g_freeTypeFontShareData;
-		PX_PhysicsShareData* g_phsyShareData;
-	*/};
-	Runtime *CreateRuntime();
-#endif
 }

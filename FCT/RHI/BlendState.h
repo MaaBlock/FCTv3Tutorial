@@ -93,12 +93,12 @@ namespace FCT {
         PipelineResourceType getType() const override { return PipelineResourceType::BlendState; }
 
     protected:
-        bool m_blendEnable = false;
-        BlendFactor m_srcColorBlendFactor = BlendFactor::One;
-        BlendFactor m_dstColorBlendFactor = BlendFactor::Zero;
+        bool m_blendEnable = true;
+        BlendFactor m_srcColorBlendFactor = BlendFactor::SrcAlpha;
+        BlendFactor m_dstColorBlendFactor = BlendFactor::OneMinusSrcAlpha;
         BlendOp m_colorBlendOp = BlendOp::Add;
         BlendFactor m_srcAlphaBlendFactor = BlendFactor::One;
-        BlendFactor m_dstAlphaBlendFactor = BlendFactor::Zero;
+        BlendFactor m_dstAlphaBlendFactor = BlendFactor::OneMinusSrcAlpha;
         BlendOp m_alphaBlendOp = BlendOp::Add;
         uint8_t m_colorWriteMask = 0xF;
         bool m_logicOpEnable = false;

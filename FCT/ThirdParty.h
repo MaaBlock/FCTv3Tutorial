@@ -1,5 +1,6 @@
 #ifndef FCT_THRIDPARTY_HEADER
 #define FCT_THIRDPARTY_HEADER
+#define _USE_MATH_DEFINES
 //#define FCT_USE_GLAD
 #define FCT_USE_GLFW
 #define FCT_USE_PHYSX
@@ -46,9 +47,9 @@
 #endif
 
 #ifdef FCT_USE_FREETYPE
-//#include <ft2build.h>
-//#include FT_FREETYPE_H
-//#include FT_COLOR_H
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include FT_COLOR_H
 #endif
 
 #ifdef FCT_USE_HARFBUZZ

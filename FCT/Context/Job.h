@@ -143,5 +143,28 @@ namespace FCT {
 
         }
     };
+    struct ViewportJob : public SubmitJob
+    {
+        Vec2 viewportLt;
+        Vec2 viewportRb;
+        Vec2 scissorLt;
+        Vec2 scissorRb;
+        ViewportJob(Vec2 viewportLt,Vec2 viewportRb,Vec2 scissorLt,Vec2 scissorRb)
+        {
+            this->viewportLt = viewportLt;
+            this->viewportRb = viewportRb;
+            this->scissorLt = scissorLt;
+            this->scissorRb = scissorRb;
+        }
+        JobType getType() const override
+        {
+            return JobType::Submit;
+        }
+        virtual void submit(RHI::CommandBuffer* cmdBuf)
+        {
+            cmdBuf->viewport(viewportLt, viewportRb);
+            cmdBuf->scissor(scissorLt, scissorRb);
+        }
+    };
 }
 #endif //JOB_H

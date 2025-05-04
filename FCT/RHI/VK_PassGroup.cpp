@@ -294,8 +294,8 @@ namespace FCT
                             desc.loadOp = vk::AttachmentLoadOp::eLoad;
                             desc.initialLayout = vk::ImageLayout::eColorAttachmentOptimal; // 不能是Undefined
                         } else {
-                            desc.loadOp = vk::AttachmentLoadOp::eDontCare;
-                            desc.initialLayout = vk::ImageLayout::eUndefined;
+                            desc.loadOp = vk::AttachmentLoadOp::eLoad;
+                            desc.initialLayout = vk::ImageLayout::eColorAttachmentOptimal;
                         }
 
                         if (image->getType() == RenderTargetType::WindowTarget && !m_nextPassGroup.size()) {
