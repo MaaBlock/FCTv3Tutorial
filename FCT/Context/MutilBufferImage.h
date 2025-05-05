@@ -40,6 +40,10 @@ namespace FCT
             m_currentIndex = index % m_images.size();
         }
         UpdateResult* updateToCurrent(void* data, size_t size) override;
+        uint32_t imageCount() const
+        {
+            return m_imageCount;
+        }
     private:
         size_t m_imageCount = 0;
         ImageUsageFlags m_usage;

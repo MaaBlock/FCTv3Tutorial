@@ -159,6 +159,9 @@ namespace FCT
         bool isPassWritingToResource(const std::string& passName, const std::string& resourceName);
         bool isPassReadingFromResource(const std::string& passName, const std::string& resourceName);
         void execute(RHI::CommandBuffer* cmdBuf);
+        void printExecutionOrder();
+        void printResourceInfo();
+
         Pass* getPassByName(const std::string& name)
         {
             auto it = m_passVertex.find(name);
@@ -167,6 +170,8 @@ namespace FCT
             }
             return nullptr;
         }
+
+        std::string formatToString(Format format);
         void updateResource();
         void swapJobQueue();
     };

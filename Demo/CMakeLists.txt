@@ -13,3 +13,8 @@ add_executable(UnlimitedScaleVertexRenderDemo
 target_link_libraries(UnlimitedScaleVertexRenderDemo
         FCT
         FCT_IMGUI)
+add_executable(RenderGraphDemo
+        RenderGraphDemo.cpp)
+target_link_libraries(RenderGraphDemo
+        FCT
+        FCT_IMGUI)

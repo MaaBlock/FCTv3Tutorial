@@ -135,7 +135,7 @@ namespace FCT
                 m_imageResourceDescs[imageName].width = currentWidth;
                 m_imageResourceDescs[imageName].height = currentHeight;
                 needRecompute = true;
-            }
+                }
         }
 
         for (const auto& entry : m_windowDepthStencilResources) {
@@ -150,7 +150,7 @@ namespace FCT
                 m_imageResourceDescs[imageName].width = currentWidth;
                 m_imageResourceDescs[imageName].height = currentHeight;
                 needRecompute = true;
-            }
+                }
         }
 
         if (needRecompute) {
@@ -177,7 +177,7 @@ namespace FCT
                 if (m_windowImageResources.find(imageName) != m_windowImageResources.end() ||
                     m_windowDepthStencilResources.find(imageName) != m_windowDepthStencilResources.end()) {
                     continue;
-                }
+                    }
 
                 auto imgIt = m_images.find(imageName);
                 if (imgIt != m_images.end()) {
@@ -694,6 +694,171 @@ namespace FCT
             }
 
             passGroup->endSubmit(cmdBuf);
+        }
+    }
+    void RenderGraph::printExecutionOrder()
+    {
+        if (m_executionOrder.passGroups.empty()) {
+            fout << "渲染图尚未编译，无法显示执行顺序" << std::endl;
+            return;
+        }
+
+        fout << "渲染图执行顺序:" << std::endl;
+
+        for (size_t i = 0; i < m_executionOrder.passGroups.size(); ++i) {
+            const auto& group = m_executionOrder.passGroups[i];
+
+            fout << "Group " << i << ":" << std::endl;
+
+            for (auto passVd : group) {
+                PassGraphVertex& passData = m_passGraph[passVd];
+
+                std::string passName = "未知";
+                for (const auto& entry : m_passVertex) {
+                    if (entry.second == passVd) {
+                        passName = entry.first;
+                        break;
+                    }
+                }
+
+                fout << "  - " << passName << std::endl;
+            }
+        }
+    }
+    void RenderGraph::printResourceInfo()
+    {
+        fout << "\n渲染图资源信息:" << std::endl;
+        fout << "总资源数量: " << m_imageResourceDescs.size() << std::endl;
+
+        std::vector<std::string> renderTargets;
+        std::vector<std::string> depthStencils;
+        std::vector<std::string> textures;
+        std::vector<std::string> windowResources;
+
+        for (const auto& entry : m_imageResourceDescs) {
+            const std::string& imageName = entry.first;
+            const ImageResourceDesc& desc = entry.second;
+
+            if (desc.isWnd) {
+                windowResources.push_back(imageName);
+            } else if (desc.usage & ImageUsage::RenderTarget) {
+                renderTargets.push_back(imageName);
+            } else if (desc.usage & ImageUsage::DepthStencil) {
+                depthStencils.push_back(imageName);
+            } else if (desc.usage & ImageUsage::Texture) {
+                textures.push_back(imageName);
+            }
+        }
+
+        if (!windowResources.empty()) {
+            fout << "\n窗口资源:" << std::endl;
+            for (const auto& name : windowResources) {
+                const ImageResourceDesc& desc = m_imageResourceDescs[name];
+                fout << "  - " << name << " (" << desc.width << "x" << desc.height << ")";
+
+                Image* img = m_images[name];
+                if (img) {
+                    fout << " 格式: " << formatToString(img->format());
+                }
+
+                fout << std::endl;
+            }
+        }
+
+        if (!renderTargets.empty()) {
+            fout << "\n渲染目标:" << std::endl;
+            for (const auto& name : renderTargets) {
+                const ImageResourceDesc& desc = m_imageResourceDescs[name];
+                fout << "  - " << name << " (" << desc.width << "x" << desc.height << ")";
+
+                auto imgIt = m_images.find(name);
+                if (imgIt != m_images.end()) {
+                    Image* img = imgIt->second;
+                    fout << " 格式: " << formatToString(img->format());
+
+                    MutilBufferImage* multiImg = dynamic_cast<MutilBufferImage*>(img);
+                    if (multiImg) {
+                        fout << " 多缓冲: 是 (数量: " << multiImg->imageCount() << ")";
+                    }
+                }
+
+                fout << std::endl;
+            }
+        }
+
+        if (!depthStencils.empty()) {
+            fout << "\n深度模板缓冲:" << std::endl;
+            for (const auto& name : depthStencils) {
+                const ImageResourceDesc& desc = m_imageResourceDescs[name];
+                fout << "  - " << name << " (" << desc.width << "x" << desc.height << ")";
+
+                // 输出格式
+                auto imgIt = m_images.find(name);
+                if (imgIt != m_images.end()) {
+                    Image* img = imgIt->second;
+                    fout << " 格式: " << formatToString(img->format());
+                }
+
+                fout << std::endl;
+            }
+        }
+
+        if (!textures.empty()) {
+            fout << "\n纹理:" << std::endl;
+            for (const auto& name : textures) {
+                const ImageResourceDesc& desc = m_imageResourceDescs[name];
+                fout << "  - " << name << " (" << desc.width << "x" << desc.height << ")";
+
+                auto imgIt = m_images.find(name);
+                if (imgIt != m_images.end()) {
+                    Image* img = imgIt->second;
+                    fout << " 格式: " << formatToString(img->format());
+                }
+
+                auto layoutIt = m_textureLayouts.find(name);
+                if (layoutIt != m_textureLayouts.end()) {
+                    const TextureElement& element = layoutIt->second;
+                }
+
+                fout << std::endl;
+            }
+        }
+
+        fout << "\n资源依赖关系:" << std::endl;
+        for (const auto& entry : m_resourceVertices) {
+            const std::string& resourceName = entry.first;
+            ResourceGraphType::vertex_descriptor vd = entry.second;
+
+            ResourceGraphType::out_edge_iterator ei, ei_end;
+            for (boost::tie(ei, ei_end) = boost::out_edges(vd, m_resourceGraph); ei != ei_end; ++ei) {
+                ResourceGraphEdge& edge = m_resourceGraph[*ei];
+                ResourceGraphType::vertex_descriptor targetVd = boost::target(*ei, m_resourceGraph);
+
+                std::string targetName = "未知";
+                for (const auto& targetEntry : m_resourceVertices) {
+                    if (targetEntry.second == targetVd) {
+                        targetName = targetEntry.first;
+                        break;
+                    }
+                }
+
+                std::string edgeType = (edge.type == ResourceGraphEdgeType::ParentChild) ? "父子关系" : "引用关系";
+                fout << "  " << resourceName << " -> " << targetName << " (" << edgeType << ")" << std::endl;
+            }
+        }
+    }
+
+    std::string RenderGraph::formatToString(Format format)
+    {
+        switch (format) {
+        case Format::R8G8B8A8_UNORM: return "R8G8B8A8_UNORM";
+        case Format::R8G8B8A8_SRGB: return "R8G8B8A8_SRGB";
+        case Format::R32G32B32A32_SFLOAT: return "R32G32B32A32_SFLOAT";
+        case Format::R16G16B16A16_SFLOAT: return "R16G16B16A16_SFLOAT";
+        case Format::D32_SFLOAT: return "D32_SFLOAT";
+        case Format::D32_SFLOAT_S8_UINT: return "D32_SFLOAT_S8_UINT";
+        case Format::D24_UNORM_S8_UINT: return "D24_UNORM_S8_UINT";
+        default: return "未知格式";
         }
     }
 

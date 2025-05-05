@@ -281,6 +281,7 @@ namespace FCT
 		RenderGraph* m_defaultGraph;
 		RenderGraph* m_currentGraph;
 	public:
+		RenderGraph* currentGraph() { return m_currentGraph; }
 		Image* getResourceImage(std::string name)
 		{
 			return m_currentGraph->getResourceImage(name);

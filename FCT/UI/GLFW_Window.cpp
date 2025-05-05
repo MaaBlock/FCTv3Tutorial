@@ -203,7 +203,10 @@ void FCT::GLFW_Window::bind(Context* srcCtx)
 
 void FCT::GLFW_Window::swapBuffers()
 {
-    m_swapchain->present();
+    if (isRunning())
+    {
+        m_swapchain->present();
+    }
 	//glfwSwapBuffers(m_window);
 }
 
