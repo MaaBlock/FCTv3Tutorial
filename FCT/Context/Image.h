@@ -68,7 +68,6 @@ namespace FCT {
             if (cleanUpCallback) {
                 cleanUpCallback();
             }
-            std::cout << "has updated  " << (uint32_t)currentFrame << " resource" << std::endl;
             delete this;
         }
         uint8_t currentFrame;

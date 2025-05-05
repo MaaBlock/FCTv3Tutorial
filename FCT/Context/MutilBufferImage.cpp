@@ -195,7 +195,6 @@ namespace FCT
 
     RHI::TextureView* MutilBufferImage::currentTextureView()
     {
-        fout << "has gotten " << m_currentIndex << " resource" << std::endl;
         return m_tvs[m_currentIndex];
     }
 

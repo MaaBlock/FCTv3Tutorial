@@ -3,3 +3,13 @@ add_executable(HighFpsDemo
 
 target_link_libraries(HighFpsDemo
         FCT)
+
+add_executable(VertexRender3DDemo
+        VertexRender3DDemo.cpp)
+target_link_libraries(VertexRender3DDemo
+        FCT)
+add_executable(UnlimitedScaleVertexRenderDemo
+        UnlimitedScaleVertexRenderDemo.cpp)
+target_link_libraries(UnlimitedScaleVertexRenderDemo
+        FCT
+        FCT_IMGUI)

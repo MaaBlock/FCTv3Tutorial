@@ -1,4 +1,4 @@
-
+﻿
 #include "../FCT/FCTAPI.h"
 #include "./AutoReviewport.h"
 using namespace FCT;
@@ -23,7 +23,6 @@ static constexpr ResourceLayout resourceLayout {
     TextureElement{"testTexture"},
     SamplerElement{"testSampler"}
 };
-
 class App
 {
 private:
@@ -33,23 +32,15 @@ private:
     VertexShader* vs;
     PixelShader* ps;
     RHI::ConstBuffer* constBuffer;
-    RHI::ConstBuffer* vertexConstBuffer;
     UniformBuffer* buffer;
-    UniformBuffer* vertexBuffer;
     PassResource* passResource;
-    float rotationAngle;
     Image* texture;
     PSampler sampler;
     AutoReviewport autoReviewport;
-    float rotationAngleY;
-    StaticMesh<uint32_t>* teapotMesh;
     TraditionPipelineState* pso;
-    DynamicMesh<uint32_t>* dynamicMesh;
-    float animationTime;
-    RHI::ConstBuffer* teapotConstBuffer;
-    UniformBuffer* teapotBuffer;
-    PassResource* teapotPassResource;
-    PassResource* meshPassResource;
+
+    StaticMesh<uint32_t>* floorMesh;
+    StaticMesh<uint32_t>* wallMeshes[4];
 
     bool keyState[255] = {};
     Vec3 cameraPosition;
@@ -62,10 +53,79 @@ private:
     int lastMouseY;
     float mouseSensitivity;
     bool mouseControlEnabled;
+
+    float currentViewScale = 1.0f;
+
+    VertexContext* vertexCtx;
+    Freetype_Font* emjFont;
+    Freetype_Font* font;
+    VertexPath* emjPath;
+    VertexPath* goodPath;
+    UniformBuffer* vertexBuffer;
+
+    RHI::ConstBuffer* vertexConstBuffer;
 public:
+    void initVertex()
+    {
+        vertexCtx = new VertexContext(ctx,wnd);
+        vertexCtx->mvpUniformLayout(mvpUniform);
+
+
+        Mat4 proj = Mat4::Perspective(45.0f, 800.0f / 600.0f, 0.1f, 100.0);
+        vertexBuffer = new UniformBuffer(mvpUniform);
+        vertexBuffer->setValue("modelMatrix",Mat4());
+        vertexBuffer->setValue("viewMatrix", Mat4());
+        vertexBuffer->setValue("projectionMatrix", proj);
+
+        vertexConstBuffer = ctx->createConstBuffer();
+        vertexConstBuffer->layout(mvpUniform);
+        vertexConstBuffer->buffer(vertexBuffer);
+        vertexConstBuffer->create();
+        vertexConstBuffer->mapData();
+        vertexConstBuffer->updataData();
+
+        vertexCtx->addConstBuffer(vertexConstBuffer);
+        vertexCtx->attachPass("vertexPass");
+
+        const float roomSize = 9.9f;
+        const float halfSize = roomSize / 2.0f;
+        const float wallHeight = 3.0f;
+
+        vertexCtx->setScreen("frontWallScreen")
+            .setOrigin(Vec3(-halfSize, 0, -halfSize))
+            .setX(Vec3(roomSize, 0, 0))
+            .setY(Vec3(0, wallHeight, 0))
+            .setVertexCoordSize(Vec2(800, 600))
+            .setOriginVertexCoord(Vec2(-400, -300));
+
+        vertexCtx->setScreen("backWallScreen")
+            .setOrigin(Vec3(-halfSize, 0, halfSize))
+            .setX(Vec3(roomSize, 0, 0))
+            .setY(Vec3(0, wallHeight, 0))
+            .setVertexCoordSize(Vec2(800, 600))
+            .setOriginVertexCoord(Vec2(-400, -300));
+    }
     App(Runtime& rt) : rt(rt)
     {
-        cameraPosition = Vec3(0, 15, 30);
+        emjFont = rt.createFont();
+        emjFont->create("C://Windows//Fonts//seguiemj.ttf");
+        auto glyph = emjFont->toGlyptIndex(U'🥹');
+        if (!glyph)
+        {
+            fout << "emj 读取失败" << std::endl;
+        }
+        emjPath = emjFont->translateGlyph(glyph);
+
+        font = rt.createFont();
+        font->create("C:\\Windows\\Fonts\\simsun.ttc");
+        glyph = font->toGlyptIndex(U'好');
+        if (!glyph)
+        {
+            fout << "好 读取失败" << std::endl;
+        }
+        goodPath = font->translateGlyph(glyph);
+
+        cameraPosition = Vec3(0, 1.8, 0);
         cameraTarget = Vec3(0, 0, 0);
         cameraUp = Vec3(0, -1, 0);
         cameraYaw = -90.0f;
@@ -76,15 +136,6 @@ public:
         mouseSensitivity = 0.1f;
         mouseControlEnabled = true;
         wnd = rt.createWindow(1,1,800,600,"test");
-        static_cast<GLFW_Window*>(wnd)->postUiTask([this](void*)
-        {
-            /*
-            if (glfwRawMouseMotionSupported())
-            {
-                glfwSetInputMode(static_cast<GLFWwindow*>(static_cast<GLFW_Window*>(wnd)->getWindow()),
-                             GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-            }*/
-        });
         ctx = rt.createContext();
         std::function<void()> submitTick = std::bind(&App::submitTick,this);
         ctx->submitTicker(submitTick);
@@ -108,6 +159,22 @@ public:
                 mouseControlEnabled = !mouseControlEnabled;
             }
         });
+        wnd->getCallBack()->addLButtonUpCallback([this](Window* wnd, int x, int y)
+        {
+            mouseControlEnabled = !mouseControlEnabled;
+        });
+        wnd->getCallBack()->addMouseWheelCallback([this](Window* wnd, int dealt)
+{
+    static float viewScale = 1.0f;
+    const float scaleStep = 0.1f;
+
+    viewScale += dealt * scaleStep;
+
+    if (viewScale < 0.1f) viewScale = 0.1f;
+
+    currentViewScale = viewScale;
+
+});
         ctx->maxFrameInFlight(5);
         autoReviewport.context(ctx);
 
@@ -132,9 +199,9 @@ public:
         ctx->bindOutput("nomralObject",wnd);
         ctx->bindOutput("vertexPass",wnd);
         ctx->bindOutput("imguiPass",wnd);
+        initVertex();
         init();
         ctx->compilePasses();
-        initDynamicMesh();
         autoReviewport.addPass("vertexPass");
         autoReviewport.addPass("nomralObject");
     }
@@ -196,76 +263,11 @@ public:
 
         Mat4 view = Mat4::LookAt(cameraPosition, cameraTarget, cameraUp);
 
-        teapotBuffer->setValue("viewMatrix", view);
         buffer->setValue("viewMatrix", view);
+        vertexBuffer->setValue("viewMatrix", view);
     }
-    void initDynamicMesh()
+void init()
     {
-        dynamicMesh = new DynamicMesh<uint32_t>(ctx, vertexLayout);
-
-        dynamicMesh->reserveVertices(100);
-        dynamicMesh->reserveIndices(300);
-
-        updateDynamicMesh(0.0f);
-
-        dynamicMesh->create();
-
-        animationTime = 0.0f;
-    }
-    void updateDynamicMesh(float time)
-    {
-        dynamicMesh->clear();
-
-        const int gridSize = 10;
-        const float size = 40.0f;
-        const float halfSize = size * 0.5f;
-
-        const float xOffset = 0.0f;
-        const float zOffset = 0.0f;
-        const float yOffset = -5.0f;
-
-        for (int z = 0; z <= gridSize; z++) {
-            for (int x = 0; x <= gridSize; x++) {
-                float xPos = (float)x / gridSize * size - halfSize + xOffset;
-                float zPos = (float)z / gridSize * size - halfSize + zOffset;
-
-                float y = 5.0f * sin(xPos * 5.0f + time * 3.0f) *
-                          cos(zPos * 5.0f + time * 2.0f) + yOffset;
-
-                float r = 0.7f + 0.3f * sin(xPos + time);
-                float g = 0.7f + 0.3f * cos(zPos + time * 0.7f);
-                float b = 0.7f + 0.3f * sin(time * 0.5f);
-
-                float u = (float)x / gridSize;
-                float v = (float)z / gridSize;
-
-                dynamicMesh->addVertex(Vec3(xPos, y, zPos), Vec4(r, g, b, 1.0f), Vec2(u, v));
-            }
-        }
-
-        for (int z = 0; z < gridSize; z++) {
-            for (int x = 0; x < gridSize; x++) {
-                uint32_t topLeft = z * (gridSize + 1) + x;
-                uint32_t topRight = topLeft + 1;
-                uint32_t bottomLeft = (z + 1) * (gridSize + 1) + x;
-                uint32_t bottomRight = bottomLeft + 1;
-
-                dynamicMesh->addIndex(topLeft);
-                dynamicMesh->addIndex(bottomLeft);
-                dynamicMesh->addIndex(topRight);
-
-                dynamicMesh->addIndex(topRight);
-                dynamicMesh->addIndex(bottomLeft);
-                dynamicMesh->addIndex(bottomRight);
-            }
-        }
-
-        dynamicMesh->update();
-    }
-    void init()
-    {
-        rotationAngle = 0.0f;
-        rotationAngleY = 0.0f;
         vs = ctx->createVertexShader();
         vs->addUniform(mvpUniform);
         vs->pixelLayout(pixelLayout);
@@ -309,27 +311,12 @@ ShaderOut main(ShaderIn psIn) {
         pso->vertexShader = vs;
         pso->pixelShader = ps;
 
-        Mat4 view = Mat4::LookAt(Vec3(0,15,30), Vec3(0,0,0), Vec3(0,-1,0));
+
         Mat4 proj = Mat4::Perspective(45.0f, 800.0f / 600.0f, 0.1f, 100.0);
-
-        teapotBuffer = new UniformBuffer(mvpUniform);
-        teapotBuffer->setValue("modelMatrix", Mat4::Scale(0.01,0.01,0.01));
-        teapotBuffer->setValue("viewMatrix", view);
-        teapotBuffer->setValue("projectionMatrix", proj);
-
-        teapotConstBuffer = ctx->createConstBuffer();
-        teapotConstBuffer->layout(mvpUniform);
-        teapotConstBuffer->buffer(teapotBuffer);
-        teapotConstBuffer->create();
-        teapotConstBuffer->mapData();
-
-        teapotPassResource = ctx->createPassResource();
-        teapotPassResource->addConstBuffer(teapotConstBuffer);
-        teapotPassResource->bind(wnd);
 
         buffer = new UniformBuffer(mvpUniform);
         buffer->setValue("modelMatrix", Mat4());
-        buffer->setValue("viewMatrix", view);
+        buffer->setValue("viewMatrix", Mat4::LookAt(cameraPosition, cameraTarget, cameraUp));
         buffer->setValue("projectionMatrix", proj);
 
         constBuffer = ctx->createConstBuffer();
@@ -338,9 +325,11 @@ ShaderOut main(ShaderIn psIn) {
         constBuffer->create();
         constBuffer->mapData();
 
-        meshPassResource = ctx->createPassResource();
-        meshPassResource->addConstBuffer(constBuffer);
-        meshPassResource->bind(wnd);
+        cameraPosition = Vec3(0, 1.7f, 0);
+        updateCamera();
+        passResource = ctx->createPassResource();
+        passResource->addConstBuffer(constBuffer);
+        passResource->bind(wnd);
 
         ctx->allocBaseCommandBuffers(wnd);
 
@@ -350,17 +339,91 @@ ShaderOut main(ShaderIn psIn) {
 
         texture = ctx->loadTexture("../../img.png");
 
-        teapotPassResource->addTexture(texture, resourceLayout.findTexture("testTexture"));
-        teapotPassResource->addSampler(sampler, resourceLayout.findSampler("testSampler"));
-        teapotPassResource->create();
+        passResource->addTexture(texture, resourceLayout.findTexture("testTexture"));
+        passResource->addSampler(sampler, resourceLayout.findSampler("testSampler"));
+        passResource->create();
 
-        meshPassResource->addTexture(texture, resourceLayout.findTexture("testTexture"));
-        meshPassResource->addSampler(sampler, resourceLayout.findSampler("testSampler"));
-        meshPassResource->create();
-
-        teapotMesh = ctx->loadMesh("../../teapot.obj", "teapot", vertexLayout);
+        createRoom();
     }
 
+    void createRoom()
+    {
+        const float roomSize = 10.0f;
+        const float halfSize = roomSize / 2.0f;
+        const float wallHeight = 3.0f;
+
+        floorMesh = new StaticMesh<uint32_t>(ctx, vertexLayout);
+
+        floorMesh->addVertex(Vec3(-halfSize, 0, -halfSize), Vec4(0.8f, 0.8f, 0.8f, 1.0f), Vec2(0, 0));
+        floorMesh->addVertex(Vec3(halfSize, 0, -halfSize), Vec4(0.8f, 0.8f, 0.8f, 1.0f), Vec2(1, 0));
+        floorMesh->addVertex(Vec3(halfSize, 0, halfSize), Vec4(0.8f, 0.8f, 0.8f, 1.0f), Vec2(1, 1));
+        floorMesh->addVertex(Vec3(-halfSize, 0, halfSize), Vec4(0.8f, 0.8f, 0.8f, 1.0f), Vec2(0, 1));
+
+        std::vector<uint32_t> floorIndices = {
+            0, 1, 2,
+            0, 2, 3
+        };
+        floorMesh->setIndices(floorIndices);
+
+        floorMesh->create();
+
+        floorMesh->create();
+
+        Vec4 wallColors[4] = {
+            Vec4(1.0f, 0.8f, 0.8f, 1.0f),
+            Vec4(0.8f, 1.0f, 0.8f, 1.0f),
+            Vec4(0.8f, 0.8f, 1.0f, 1.0f),
+            Vec4(1.0f, 1.0f, 0.8f, 1.0f)
+        };
+
+        struct WallDef {
+            Vec3 p1, p2, p3, p4;
+        };
+
+        WallDef wallDefs[4] = {
+            {
+                Vec3(-halfSize, 0, -halfSize),
+                Vec3(halfSize, 0, -halfSize),
+                Vec3(halfSize, wallHeight, -halfSize),
+                Vec3(-halfSize, wallHeight, -halfSize)
+            },
+            {
+                Vec3(halfSize, 0, -halfSize),
+                Vec3(halfSize, 0, halfSize),
+                Vec3(halfSize, wallHeight, halfSize),
+                Vec3(halfSize, wallHeight, -halfSize)
+            },
+            {
+                Vec3(halfSize, 0, halfSize),
+                Vec3(-halfSize, 0, halfSize),
+                Vec3(-halfSize, wallHeight, halfSize),
+                Vec3(halfSize, wallHeight, halfSize)
+            },
+            {
+                Vec3(-halfSize, 0, halfSize),
+                Vec3(-halfSize, 0, -halfSize),
+                Vec3(-halfSize, wallHeight, -halfSize),
+                Vec3(-halfSize, wallHeight, halfSize)
+            }
+        };
+
+        for (int i = 0; i < 4; i++) {
+            wallMeshes[i] = new StaticMesh<uint32_t>(ctx, vertexLayout);
+
+            wallMeshes[i]->addVertex(wallDefs[i].p1, wallColors[i], Vec2(0, 0));
+            wallMeshes[i]->addVertex(wallDefs[i].p2, wallColors[i], Vec2(1, 0));
+            wallMeshes[i]->addVertex(wallDefs[i].p3, wallColors[i], Vec2(1, 1));
+            wallMeshes[i]->addVertex(wallDefs[i].p4, wallColors[i], Vec2(0, 1));
+
+            std::vector<uint32_t> wallIndices = {
+                0, 1, 2,
+                0, 2, 3
+            };
+            wallMeshes[i]->setIndices(wallIndices);
+
+            wallMeshes[i]->create();
+        }
+    }
     ~App()
     {
         if (buffer) {
@@ -369,7 +432,6 @@ ShaderOut main(ShaderIn psIn) {
         wnd->release();
         ctx->release();
     }
-
     void logicTick()
     {
         static auto lastFrameTime = std::chrono::high_resolution_clock::now();
@@ -382,40 +444,35 @@ ShaderOut main(ShaderIn psIn) {
 
         std::stringstream ss;
         ss << "FCT Demo - Instant FPS: " << std::fixed << std::setprecision(1) << instantFPS;
-        float rotationV = 90.0f; //90度/s
-        rotationAngle += deltaTime * rotationV;
-        rotationAngleY += deltaTime * rotationV * 0.7f;
-
-        animationTime += deltaTime;
 
         autoReviewport.submit();
-        updateDynamicMesh(animationTime);
-
-        Mat4 rotation;
-        rotation.rotateX(rotationAngle);
-        rotation.rotateY(rotationAngleY);
-        rotation *= Mat4::Scale(0.25,0.25,0.25);
-        teapotBuffer->setValue("modelMatrix", rotation);
-        teapotConstBuffer->updataData();
 
         constBuffer->updataData();
+        vertexConstBuffer->updataData();
 
         wnd->title(ss.str());
 
-        auto teapotJob = new TraditionRenderJob();
-        teapotJob->addMesh(teapotMesh)
-            .setPassResource(teapotPassResource)
+        auto floorJob = new TraditionRenderJob();
+        floorJob->addMesh(floorMesh)
+            .setPassResource(passResource)
             .setPipelineState(pso);
-        ctx->submit(teapotJob, "nomralObject");
-        teapotJob->release();
+        ctx->submit(floorJob, "nomralObject");
+        floorJob->release();
 
-        auto meshJob = new TraditionRenderJob();
-        meshJob->addMesh(dynamicMesh)
-            .setPassResource(meshPassResource)
-            .setPipelineState(pso);
-        ctx->submit(meshJob, "nomralObject");
-        meshJob->release();
+        for (int i = 0; i < 4; i++) {
+            auto wallJob = new TraditionRenderJob();
+            wallJob->addMesh(wallMeshes[i])
+                .setPassResource(passResource)
+                .setPipelineState(pso);
+            ctx->submit(wallJob, "nomralObject");
+            wallJob->release();
+        }
+        vertexCtx->clearPath("frontWallScreen");
+        vertexCtx->addPath("frontWallScreen", emjPath);
+        vertexCtx->clearPath("backWallScreen");
+        vertexCtx->addPath("backWallScreen", goodPath);
 
+        vertexCtx->submit();
         std::this_thread::yield();
         ctx->flush();
     }

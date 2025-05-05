@@ -45,6 +45,10 @@ namespace FCT
                 uint32_t commandOffset = m_commandBuffer.size();
                 uint32_t commandSize = commands.size();
 
+                //m_commandBuffer.push_back(VertexCommand_SetTransform);
+                //for (int i = 0; i < 16; i++) {
+                //    m_commandBuffer.push_back(path->transform.m[i]);
+                //}
                 m_commandBuffer.insert(m_commandBuffer.end(), commands.begin(), commands.end());
 
                 Vec4 bounds = path->getBoundingRect();
@@ -184,8 +188,8 @@ ShaderOut main(ShaderIn vsIn) {
     float2 vertexCoord = vsIn.vertexcoord;
 
     float3 worldPos = origin.xyz +
-                     XDir.xyz * (originVertexCoord.x + vertexCoord.x / VertexCoordSize.x) +
-                     YDir.xyz * (originVertexCoord.y + vertexCoord.y / VertexCoordSize.y);
+                     XDir.xyz * (vertexCoord.x - originVertexCoord.x) / VertexCoordSize.x +
+                     YDir.xyz * (vertexCoord.y - originVertexCoord.y) / VertexCoordSize.y;
 
     float4 position = float4(worldPos, 1.0);
 )";

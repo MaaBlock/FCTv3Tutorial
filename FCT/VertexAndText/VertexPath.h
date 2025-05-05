@@ -55,11 +55,13 @@ protected:
     }
 
 public:
+    Mat3 transform;
     void end()
     {
         m_commandQueue.push_back(VertexCommand_End);
     }
     VertexPath() : m_hasPoints(false) {
+        transform = Mat3();
         clear();
     }
 

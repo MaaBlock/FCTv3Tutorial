@@ -122,6 +122,19 @@ namespace FCT
                 m_imguiCtx->drawData(cmdBuf);
             }
             m_lastFrameTime = currentTime;
+        } else
+        {
+            m_imguiCtx->newFrame();
+            while (!m_tasks.empty()) {
+                ImguiTask task = m_tasks.front();
+                m_tasks.pop();
+
+                if (task) {
+                    task();
+                }
+            }
+            m_imguiCtx->render();
+            m_imguiCtx->drawData(cmdBuf);
         }
     }
 
@@ -132,7 +145,7 @@ namespace FCT
         m_currentJob = nullptr;
         ImguiJob::m_lastFrameTime = glfwGetTime();
         ImguiJob::m_targetFrameTime = 1.0 / 60.0;
-        ImguiJob::m_enableFrameLimiter = true;
+        ImguiJob::m_enableFrameLimiter = false;
     }
 
     inline GLFW_VK_ImGuiContext::~GLFW_VK_ImGuiContext()
