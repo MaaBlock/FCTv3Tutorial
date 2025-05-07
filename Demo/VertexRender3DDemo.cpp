@@ -108,7 +108,7 @@ public:
     App(Runtime& rt) : rt(rt)
     {
         emjFont = rt.createFont();
-        emjFont->create("C://Windows//Fonts//seguiemj.ttf");
+        emjFont->create("./res/seguiemj.ttf");
         auto glyph = emjFont->toGlyptIndex(U'🥹');
         if (!glyph)
         {
@@ -337,7 +337,7 @@ ShaderOut main(ShaderIn psIn) {
         sampler->setAnisotropic();
         sampler->create();
 
-        texture = ctx->loadTexture("../../img.png");
+        texture = ctx->loadTexture("./res/img.png");
 
         passResource->addTexture(texture, resourceLayout.findTexture("testTexture"));
         passResource->addSampler(sampler, resourceLayout.findSampler("testSampler"));
@@ -459,14 +459,14 @@ ShaderOut main(ShaderIn psIn) {
         ctx->submit(floorJob, "nomralObject");
         floorJob->release();
 
+        auto wallJob = new TraditionRenderJob();
         for (int i = 0; i < 4; i++) {
-            auto wallJob = new TraditionRenderJob();
             wallJob->addMesh(wallMeshes[i])
                 .setPassResource(passResource)
                 .setPipelineState(pso);
-            ctx->submit(wallJob, "nomralObject");
-            wallJob->release();
         }
+        ctx->submit(wallJob, "nomralObject");
+        wallJob->release();
         vertexCtx->clearPath("frontWallScreen");
         vertexCtx->addPath("frontWallScreen", emjPath);
         vertexCtx->clearPath("backWallScreen");

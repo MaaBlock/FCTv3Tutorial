@@ -174,7 +174,6 @@ public:
     ctx->bindOutputImage("GBufferPass", "normal", 1);
     ctx->bindOutputImage("GBufferPass", "position", 2);
     ctx->bindOutputImage("GBufferPass", "depth", 3);
-
     ctx->bindOutputImage("ShadowMapPass", "shadowMap", 0);
     ctx->bindOutputImage("AmbientOcclusionPass", "ao", 0);
     ctx->bindOutputImage("AtmosphericScatteringPass", "scattering", 0);
@@ -188,39 +187,51 @@ public:
     ctx->bindOutputImage("PostEffectsPass", "postEffects", 0);
     ctx->bindOutputImage("UIRenderPass", "ui", 0);
     ctx->bindOutputImage("DebugInfoPass", "debugInfo", 0);
-    ctx->bindOutputImage("FinalCompositePass", "final", 0);
+    ctx->bindOutput("FinalCompositePass", wnd, 0);
 
-    ctx->addPassDenpendency("ShadowMapPass", "GBufferPass");
-    ctx->addPassDenpendency("GBufferPass", "AmbientOcclusionPass");
-    ctx->addPassDenpendency("GBufferPass", "AtmosphericScatteringPass");
+    ctx->bindTextureImage("AmbientOcclusionPass", "albedo");
+    ctx->bindTextureImage("AmbientOcclusionPass", "normal");
+    ctx->bindTextureImage("AmbientOcclusionPass", "position");
+    ctx->bindTextureImage("AmbientOcclusionPass", "depth");
 
-    ctx->addPassDenpendency("AmbientOcclusionPass", "LightingPass");
-    ctx->addPassDenpendency("GBufferPass", "LightingPass");
-    ctx->addPassDenpendency("ShadowMapPass", "LightingPass");
-    ctx->addPassDenpendency("AtmosphericScatteringPass", "LightingPass");
+    ctx->bindTextureImage("AtmosphericScatteringPass", "position");
+    ctx->bindTextureImage("AtmosphericScatteringPass", "depth");
 
-    ctx->addPassDenpendency("LightingPass", "VolumetricLightingPass");
-    ctx->addPassDenpendency("ShadowMapPass", "VolumetricLightingPass");
+    ctx->bindTextureImage("LightingPass", "albedo");
+    ctx->bindTextureImage("LightingPass", "normal");
+    ctx->bindTextureImage("LightingPass", "position");
+    ctx->bindTextureImage("LightingPass", "ao");
+    ctx->bindTextureImage("LightingPass", "shadowMap");
+    ctx->bindTextureImage("LightingPass", "scattering");
 
-    ctx->addPassDenpendency("LightingPass", "ReflectionPass");
-    ctx->addPassDenpendency("GBufferPass", "ReflectionPass");
+    ctx->bindTextureImage("VolumetricLightingPass", "lighting");
+    ctx->bindTextureImage("VolumetricLightingPass", "shadowMap");
+    ctx->bindTextureImage("VolumetricLightingPass", "position");
 
-    ctx->addPassDenpendency("ReflectionPass", "BloomPass");
-    ctx->addPassDenpendency("VolumetricLightingPass", "BloomPass");
+    ctx->bindTextureImage("ReflectionPass", "lighting");
+    ctx->bindTextureImage("ReflectionPass", "normal");
+    ctx->bindTextureImage("ReflectionPass", "position");
 
-    ctx->addPassDenpendency("BloomPass", "TonemappingPass");
-    ctx->addPassDenpendency("ReflectionPass", "TonemappingPass");
+    ctx->bindTextureImage("BloomPass", "reflection");
+    ctx->bindTextureImage("BloomPass", "volumetricLighting");
 
-    ctx->addPassDenpendency("TonemappingPass", "MotionBlurPass");
-    ctx->addPassDenpendency("GBufferPass", "MotionBlurPass");
+    ctx->bindTextureImage("TonemappingPass", "bloom");
+    ctx->bindTextureImage("TonemappingPass", "reflection");
 
-    ctx->addPassDenpendency("MotionBlurPass", "AntiAliasingPass");
-    ctx->addPassDenpendency("AntiAliasingPass", "PostEffectsPass");
-    ctx->addPassDenpendency("PostEffectsPass", "UIRenderPass");
-    ctx->addPassDenpendency("UIRenderPass", "DebugInfoPass");
-    ctx->addPassDenpendency("DebugInfoPass", "FinalCompositePass");
+    ctx->bindTextureImage("MotionBlurPass", "tonemapped");
+    ctx->bindTextureImage("MotionBlurPass", "position");
+    ctx->bindTextureImage("MotionBlurPass", "depth");
+    ctx->bindTextureImage("AntiAliasingPass", "motionBlur");
 
-    ctx->addPassDenpendency("FinalCompositePass", "vertexPass");
+    ctx->bindTextureImage("PostEffectsPass", "antiAliased");
+
+    ctx->bindTextureImage("UIRenderPass", "postEffects");
+
+    ctx->bindTextureImage("DebugInfoPass", "ui");
+
+    ctx->bindTextureImage("FinalCompositePass", "debugInfo");
+
+    ctx->addPassDenpendency("FinalCompositePass", "nomralObject");
     ctx->addPassDenpendency("vertexPass", "imguiPass");
     ctx->addPassDenpendency("nomralObject", "vertexPass");
 
@@ -457,7 +468,7 @@ ShaderOut main(ShaderIn psIn) {
         sampler->setAnisotropic();
         sampler->create();
 
-        texture = ctx->loadTexture("../../img.png");
+        texture = ctx->loadTexture("./res/img.png");
 
         passResource->addTexture(texture, resourceLayout.findTexture("testTexture"));
         passResource->addSampler(sampler, resourceLayout.findSampler("testSampler"));

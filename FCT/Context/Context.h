@@ -69,6 +69,8 @@ namespace FCT
 		void allocPresentCompleteFences(uint32_t additionalCount);
 		void allocRenderFinshSemaphores(uint32_t additionalCount);
 		uint32_t allocBaseCommandBuffers();
+		void allocBaseCommandBuffers(uint32_t index);
+		void freeCommandBuffers(uint32_t index);
 		RHI::Fence* getPresentCompleteFence(uint32_t index);
 		RHI::Semaphore* getRenderFinishedSemaphore(uint32_t index);
 		RHI::Semaphore* getImageAvailableSemaphore();
@@ -243,6 +245,7 @@ namespace FCT
 	public:
 		RHI::CommandBuffer* getCmdBuf(Window* wnd,uint32_t index);
 		uint32_t allocBaseCommandBuffers(Window* wnd);
+		void freeCommandBuffers(Window* wnd, uint32_t index);
 		void maxFrameInFlight(uint32_t maxFrameInFlight);
 		uint32_t maxFrameInFlight() const { return m_maxFrameInFlight; }
 		void initFrameManager();
@@ -403,6 +406,20 @@ namespace FCT {
         cmdBuf->fence(fence);
         return cmdBufIndex;
     }
+
+	inline void FrameResource::allocBaseCommandBuffers(uint32_t index)
+	{
+		freeCommandBuffers(index);
+
+	}
+
+	inline void FrameResource::freeCommandBuffers(uint32_t index)
+	{
+		if (index < cmdBufs.size())
+		{
+			FCT_SAFE_RELEASE(cmdBufs[index]);
+		}
+	}
     inline RHI::Fence* FrameResource::getPresentCompleteFence(uint32_t index)
     {
         if (index < presentCompleteFences.size()) {
@@ -487,6 +504,10 @@ namespace FCT {
 			}
 		}
 		return UINT32_MAX;
+	}
+	inline void Context::freeCommandBuffers(Window* wnd, uint32_t index)
+	{
+
 	}
 	inline void Context::maxFrameInFlight(uint32_t maxFrameInFlight)
 	{

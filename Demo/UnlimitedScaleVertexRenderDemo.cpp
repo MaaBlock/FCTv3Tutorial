@@ -113,7 +113,7 @@ public:
             keyState[i] = false;
         }
         emjFont = rt.createFont();
-        emjFont->create("C://Windows//Fonts//seguiemj.ttf");
+        emjFont->create("./res/seguiemj.ttf");
         auto glyph = emjFont->toGlyptIndex(U'🥹');
         if (!glyph)
         {
@@ -336,7 +336,7 @@ ShaderOut main(ShaderIn psIn) {
         sampler->setAnisotropic();
         sampler->create();
 
-        texture = ctx->loadTexture("../../img.png");
+        texture = ctx->loadTexture("./res/img.png");
 
         passResource->addTexture(texture, resourceLayout.findTexture("testTexture"));
         passResource->addSampler(sampler, resourceLayout.findSampler("testSampler"));

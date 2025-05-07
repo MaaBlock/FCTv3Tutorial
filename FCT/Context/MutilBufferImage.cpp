@@ -212,9 +212,7 @@ namespace FCT
     {
         UpdateResult* res = new UpdateResult();
         res->fence = m_ctx->createFence();
-        m_images[m_ctx->currentSubmitFrameIndex()]->updateData(data,size,res->fence,&res->cleanUpCallback);
-        res->currentFrame = m_ctx->currentFrameIndex();
-
+        m_images[m_ctx->currentFrameIndex()]->updateData(data,size,res->fence,&res->cleanUpCallback);
         return res;
     }
 }

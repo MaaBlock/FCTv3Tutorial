@@ -14,6 +14,7 @@ namespace FCT {
         m_currentFlush = true;
     }
 
+
     Image* Context::loadTexture(const std::string& filename)
     {
         auto data = m_imageLoader->load(filename);
@@ -56,6 +57,7 @@ namespace FCT {
         //std::swap(m_pushQueue,m_submitQueue);
 
     }
+
 
     Context::Context(Runtime* runtime) {
         m_defaultGraph = new RenderGraph(this);

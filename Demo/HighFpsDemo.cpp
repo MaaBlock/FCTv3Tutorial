@@ -379,7 +379,7 @@ ShaderOut main(ShaderIn psIn) {
         sampler->setAnisotropic();
         sampler->create();
 
-        texture = ctx->loadTexture("../../img.png");
+        texture = ctx->loadTexture("./res/img.png");
 
         teapotPassResource->addTexture(texture, resourceLayout.findTexture("testTexture"));
         teapotPassResource->addSampler(sampler, resourceLayout.findSampler("testSampler"));
@@ -389,7 +389,7 @@ ShaderOut main(ShaderIn psIn) {
         meshPassResource->addSampler(sampler, resourceLayout.findSampler("testSampler"));
         meshPassResource->create();
 
-        teapotMesh = ctx->loadMesh("../../teapot.obj", "teapot", vertexLayout);
+        teapotMesh = ctx->loadMesh("./res/teapot.obj", "teapot", vertexLayout);
     }
 
     ~App()
@@ -428,8 +428,8 @@ ShaderOut main(ShaderIn psIn) {
         rotation.rotateY(rotationAngleY);
         rotation *= Mat4::Scale(0.25,0.25,0.25);
         teapotBuffer->setValue("modelMatrix", rotation);
-        teapotConstBuffer->updataData();
 
+        teapotConstBuffer->updataData();
         constBuffer->updataData();
 
         wnd->title(ss.str());
