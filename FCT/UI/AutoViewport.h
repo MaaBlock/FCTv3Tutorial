@@ -5,7 +5,6 @@
 #ifndef FCT_AUTOVIEWPORT_H
 #define FCT_AUTOVIEWPORT_H
 #include "../Context/Job.h"
-#include "../Context/Context.h"
 namespace FCT
 {
 
