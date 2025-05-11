@@ -66,6 +66,7 @@
 //#include "MutilThreadBase/TlsPtr.h"
 #include "./Context/Context.h"
 #include "./Context/Context.hpp"
+#include "./Context/Primitives.h"
 //#include "Context/Image.h"
 //#include "UI/Window.h"
 #include "./UI/AutoViewport.h"

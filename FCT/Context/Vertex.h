@@ -19,6 +19,7 @@ namespace FCT
         CommandOffset,
         CommandSize,
         BatchID,
+        FaceId,
         Custom
     };
     /*
@@ -78,6 +79,7 @@ namespace FCT
             return ModelVertexAttribute::TexCoord1;
 
         //None
+        case VtxType::FaceId:
         case VtxType::BatchID:
         case VtxType::CommandOffset:
         case VtxType::CommandSize:
@@ -121,6 +123,8 @@ namespace FCT
             return Format::R32_UINT;
         case VtxType::BatchID:
             return Format::R32_UINT;
+        case VtxType::FaceId:
+            return Format::R32_UINT;
         case VtxType::CommandSize:
             return Format::R32_UINT;
         case VtxType::Custom:
@@ -153,6 +157,8 @@ namespace FCT
             return "cmdoffset";
         case VtxType::CommandSize:
             return "cmdSize";
+        case VtxType::FaceId:
+            return "faceId";
         case VtxType::Custom:
         default:
             return "Custom";

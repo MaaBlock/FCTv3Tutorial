@@ -408,7 +408,17 @@ ShaderOut main(ShaderIn ps_input) {
     while(i < edge) {
         float command = fetchCommand(i);
         i++;
+        switch (int(command)) {
+         case int(VertexCommand_BeginPath):
+            isPathStarted = true;
+            pathCrossings = float2(0.0, 0.0);
+            pathOperation = fetchCommand(i);
+            i += 1;
+            break;
+        case int(VertexCommand_LineTo):
 
+            break;
+        }
         if (command == VertexCommand_End) break;
         if (command == VertexCommand_BeginPath) {
             isPathStarted = true;

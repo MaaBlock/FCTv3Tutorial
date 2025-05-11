@@ -2,6 +2,7 @@
 #include "../FCT/headers.h"
 #include "../FCT_IMGUI/headers.h"
 #include "../FCT_IMGUI/FCTAPI.h"
+
 using namespace FCT;
 using namespace std;
 static constexpr VertexLayout vertexLayout {
