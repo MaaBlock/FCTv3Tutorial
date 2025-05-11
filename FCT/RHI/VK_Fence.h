@@ -28,6 +28,7 @@ namespace FCT
             {
                 return &m_fence;
             }
+            void destroy() override;
         private:
             VK_Context* m_ctx;
             vk::Fence m_fence;

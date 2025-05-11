@@ -615,6 +615,16 @@ namespace FCT
         return new VK_PassResource(this);
     }
 
+    FencePool* VK_Context::createFencePool()
+    {
+        return new VK_FencePool(this);
+    }
+
+    SemaphorePool* VK_Context::createSemaphorePool()
+    {
+        return new VK_SemaphorePool(this);
+    }
+
     uint32_t VK_Context::findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties)
     {
         vk::PhysicalDeviceMemoryProperties memProperties = getPhysicalDevice().getMemoryProperties();

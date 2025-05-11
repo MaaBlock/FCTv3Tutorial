@@ -8,13 +8,14 @@ namespace FCT
 {
     namespace RHI
     {
-        class Fence : public RefCount
+        class Fence : public RefCount,public DeletableTrait<Fence>
         {
         public:
-            Fence()
+            Fence() : RefCount(0)
             {
                 m_signaled = false;
             }
+            virtual ~Fence() {}
             void initSignal(bool signal = true)
             {
                 m_signaled = signal;
@@ -26,6 +27,12 @@ namespace FCT
             {
                 initSignal(true);
                 create();
+            }
+            virtual void destroy() = 0;
+            void deleteThis() override {
+                if (!this->applyDeleter(this)) {
+                    FCT_DELETE(this);
+                }
             }
         protected:
             bool m_signaled;

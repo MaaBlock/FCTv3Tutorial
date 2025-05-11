@@ -220,8 +220,6 @@ public:
         fout << "Hello, FCT!" << endl;
         wnd = rt.createWindow(1,1,800,600,"test");
         ctx = rt.createContext();
-        std::function<void()> submitTick = std::bind(&App::submitTick,this);
-        ctx->submitTicker(submitTick);
         ctx->create();
         wnd->enableDepthBuffer(Format::D32_SFLOAT_S8_UINT);
         wnd->bind(ctx);
@@ -433,8 +431,6 @@ ShaderOut main(ShaderIn psIn) {
         passResource->addConstBuffer(constBuffer);
         passResource->bind(wnd);
 
-        ctx->allocBaseCommandBuffers(wnd);
-
         sampler = ctx->createSampler();
         sampler->setAnisotropic();
         sampler->create();
@@ -527,17 +523,6 @@ ShaderOut main(ShaderIn psIn) {
         job->release();
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         ctx->flush();
-    }
-    void submitTick()
-    {
-        auto cmdBuf = ctx->getCmdBuf(wnd, 0);
-        cmdBuf->reset();
-        cmdBuf->begin();
-        ctx->excutePasses(cmdBuf);
-        cmdBuf->end();
-        cmdBuf->submit();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        ctx->swapBuffers();
     }
     void run()
     {

@@ -1,0 +1,6 @@
+2025/5/10
+修改了默认ticker
+所以
+todo:
+1.删除默认ticker
+2.删除allocCommandBuffer

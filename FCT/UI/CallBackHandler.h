@@ -5,9 +5,9 @@
 #include <unordered_map>
 
 namespace FCT {
+    using ResizeCallBack = std::function<void(Window* wnd, int width, int height)>;
     class CallBackEventHandler : public EventHandler {
     public:
-        using ResizeCallBack = std::function<void(Window* wnd, int width, int height)>;
         using LButtonDownCallBack = std::function<void(Window* wnd, int x, int y)>;
         using LButtonUpCallBack = std::function<void(Window* wnd, int x, int y)>;
         using RButtonDownCallBack = std::function<void(Window* wnd, int x, int y)>;

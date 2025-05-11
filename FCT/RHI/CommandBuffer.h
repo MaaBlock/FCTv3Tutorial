@@ -37,6 +37,21 @@ namespace FCT
                 level(CommandBufferLevel::Primary);
                 m_fence = nullptr;
             }
+            ~CommandBuffer()
+            {
+                for (auto& desc : m_waitSemaphores)
+                {
+                    desc.semaphore->release();
+                }
+                for (auto& semaphore : m_signalSemaphores)
+                {
+                    semaphore->release();
+                }
+                if (m_fence)
+                {
+                    m_fence->release();
+                }
+            }
             void level(CommandBufferLevel level)
             {
                 m_level = level;
@@ -52,22 +67,35 @@ namespace FCT
             virtual void end() = 0;
             virtual void submit() = 0;
             Fence* fence() const { return m_fence; }
-            void fence(Fence* fence) { m_fence = fence; }
+            void fence(Fence* fence)
+            {
+                FCT_SAFE_RELEASE(m_fence);
+                m_fence = fence;
+                FCT_SAFE_ADDREF(m_fence);
+            }
             std::vector<WaitSemaphoreDescription>& waitSemaphores() { return m_waitSemaphores; }
             std::vector<Semaphore*>& signalSemaphores() { return m_signalSemaphores; }
-            void clearWaitSemaphores() { m_waitSemaphores.clear(); }
+            void clearWaitSemaphores()
+            {
+                for (auto& desc : m_waitSemaphores)
+                {
+                    desc.semaphore->release();
+                }
+                m_waitSemaphores.clear();
+            }
             void addWaitSemaphore(Semaphore* semaphore,PipelineStages stage = PipelineStage::colorAttachmentOutput)
             {
                 WaitSemaphoreDescription desc;
                 desc.semaphore = semaphore;
                 desc.stages = stage;
+                semaphore->addRef();
                 m_waitSemaphores.push_back(desc);
-            }/*
-            void addFence(RHI::Fence* fence)
+            }
+            void addSignalSemaphore(Semaphore* semaphore)
             {
-                m_submitFence.push_back(fence);
-            }*/
-            void addSignalSemaphore(Semaphore* semaphore) { m_signalSemaphores.push_back(semaphore); }
+                semaphore->addRef();
+                m_signalSemaphores.push_back(semaphore);
+            }
         protected:
             CommandBufferLevel m_level;
             Fence* m_fence;
