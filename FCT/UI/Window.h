@@ -155,7 +155,7 @@ namespace FCT {
             m_window->m_title = title;
         }
     };
-    inline FCT::Window::Window() {
+    inline Window::Window() {
     	m_needEnableDepthBuffer = false;
         m_behavior = new SetParamWindowBehavior(this);
         m_callbackHandler = new CallBackEventHandler();

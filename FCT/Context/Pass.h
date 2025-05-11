@@ -1,20 +1,23 @@
 //
 // Created by Administrator on 2025/3/16.
 //
+#ifndef FCT_PASS_H
+#define FCT_PASS_H
 #include "../ThirdParty.h"
 #include "./Job.h"
 #include "../RHI/Pass.h"
 #include "./PassResource.h"
 #include "../RHI/CommandBuffer.h"
-#ifndef FCT_PASS_H
-#define FCT_PASS_H
+#include "../UI/Window.h"
 namespace FCT {
     namespace RHI
     {
         class RasterizationPipeline;
     }
     class Context;
-
+    /**
+     * @brief 用于给RenderGraph给PassResource添加RenderGraph的资源
+     */
     using RenderGraphPassResourceAddCallback = std::function<void(PassResource*)>;
     class Pass : public RefCount
     {

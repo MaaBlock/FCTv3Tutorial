@@ -4,6 +4,7 @@
 
 #ifndef INPUTSTATEEVENTHANNDLER_H
 #define INPUTSTATEEVENTHANNDLER_H
+#include "./Window.h"
 #include "./EventHandler.h"
 #include "./CallBackHandler.h"
 namespace FCT
