@@ -19,6 +19,7 @@ namespace FCT
 
         void VK_Fence::create()
         {
+            addRef();
             vk::FenceCreateInfo createInfo{};
             createInfo.flags |= m_signaled ? vk::FenceCreateFlagBits::eSignaled : vk::FenceCreateFlags(0);
             m_fence = m_ctx->device().createFence(createInfo);
@@ -27,6 +28,15 @@ namespace FCT
         void VK_Fence::waitFor()
         {
             m_ctx->device().waitForFences(1, &m_fence, VK_TRUE, UINT64_MAX);
+        }
+
+        void VK_Fence::destroy()
+        {
+            if (m_fence)
+            {
+                m_ctx->device().destroyFence(m_fence, nullptr);
+                m_fence = nullptr;
+            }
         }
     }
 }

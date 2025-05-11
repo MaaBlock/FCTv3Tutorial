@@ -1,7 +1,8 @@
 #pragma once
 #include "../ThirdParty.h"
 #include "../ToolDefine.h"
-#include "../MutilThreadBase/RefCount.h"
+#include "../Bases.h"
+#include "../Memory/ObjectPool.h"
 #include "../MutilThreadBase/Computation.h"
 #include "./DataTypes.h"
 #include "../RHI/VertexShader.h"
@@ -34,6 +35,8 @@
 #include "./Mesh.h"
 #include "MutilBufferImage.h"
 #include "./RenderGraph.h"
+#include "FencePool.h"
+#include "SemaphorePool.h"
 
 namespace FCT
 {
@@ -50,6 +53,8 @@ namespace FCT
 	class PixelShader;
 	class DrawCall;
 	class Window;
+	class SemaphorePool;
+	class FencePool;
 	using SumitTicker = std::function<void()>;
 	using TickerToken = uint32_t;
 	struct FrameResource
@@ -59,6 +64,10 @@ namespace FCT
 		 *提供获取指定序号的renderFinishedSemaphores和cmdB uf
 		 */
 		RHI::Semaphore* imageAvailableSemaphore;
+		//ObjectPool<RHI::Semaphore> renderFinishedSemaphoresPool;
+		SemaphorePool* renderFinishedSemaphoresPool;
+		FencePool* presentCompleteFencePool;
+
 		std::vector<RHI::Semaphore*> renderFinishedSemaphores;
 		std::vector<RHI::Fence*> presentCompleteFences;
 		RHI::CommandPool* cmdPool;
@@ -66,16 +75,16 @@ namespace FCT
 		Context* ctx;
 		void init(Context* ctx);
 		void allocCommandBuffers(uint32_t additionalCount);
-		void allocPresentCompleteFences(uint32_t additionalCount);
-		void allocRenderFinshSemaphores(uint32_t additionalCount);
+
+		RHI::Fence* allocPresentCompleteFence();
+		RHI::Semaphore* allocRenderFinishedSemaphore();
 		uint32_t allocBaseCommandBuffers();
 		void allocBaseCommandBuffers(uint32_t index);
 		void freeCommandBuffers(uint32_t index);
-		RHI::Fence* getPresentCompleteFence(uint32_t index);
-		RHI::Semaphore* getRenderFinishedSemaphore(uint32_t index);
 		RHI::Semaphore* getImageAvailableSemaphore();
 		RHI::CommandPool* getCmdPool();
 		RHI::CommandBuffer* getCmdBuf(uint32_t index);
+		//注：不应该频繁的 分配  和 删除  fence/ 信号量/命令队列
 	};
 	/*Context作用
 	 *1.作为Context接口
@@ -117,6 +126,8 @@ namespace FCT
 		virtual PassResource* createPassResource() = 0;
 		virtual RHI::TextureView* createTextureView() = 0;
 		virtual Sampler* createSampler() = 0;
+		virtual SemaphorePool* createSemaphorePool() = 0;
+		virtual FencePool* createFencePool() = 0;
 	protected:
 		ModelLoader* m_modelLoader;
 	public:
@@ -187,9 +198,15 @@ namespace FCT
 			}
 		}
 		void swapBuffers();
-
 		void defaultTick()
 		{
+			auto cmdBuf = getCmdBuf(m_bindWindows[0], 0);
+			cmdBuf->reset();
+			cmdBuf->begin();
+			excutePasses(cmdBuf);
+			cmdBuf->end();
+			cmdBuf->submit();
+			std::this_thread::yield();
 			swapBuffers();
 		}
 		virtual RHI::RenderTargetView* createRenderTargetView() = 0;
@@ -354,6 +371,24 @@ namespace FCT {
 		cmdPool = ctx->createCommandPool();
 		cmdPool->create();
 
+		renderFinishedSemaphoresPool = ctx->createSemaphorePool();
+		renderFinishedSemaphoresPool->setDestroyCallback([this](RHI::Semaphore* semaphore)
+		{
+			auto ret = std::find(renderFinishedSemaphores.begin(),renderFinishedSemaphores.end(),semaphore);
+			if (ret != renderFinishedSemaphores.end())
+			{
+				*ret = nullptr;
+			}
+		});
+		presentCompleteFencePool = ctx->createFencePool();
+		presentCompleteFencePool->setDestroyCallback([this](RHI::Fence* fence)
+		{
+			auto ret = std::find(presentCompleteFences.begin(),presentCompleteFences.end(),fence);
+			if (ret != presentCompleteFences.end())
+			{
+				*ret = nullptr;
+			}
+		});
 		imageAvailableSemaphore = ctx->createSemaphore();
 		imageAvailableSemaphore->create();
 	}
@@ -368,42 +403,33 @@ namespace FCT {
 			cmdBufs[i]->create();
 		}
 	}
-    inline void FrameResource::allocPresentCompleteFences(uint32_t additionalCount)
-    {
-        uint32_t currentCount = presentCompleteFences.size();
 
-        presentCompleteFences.resize(currentCount + additionalCount);
-
-        for (uint32_t i = currentCount; i < presentCompleteFences.size(); i++) {
-            presentCompleteFences[i] = ctx->createFence();
-            presentCompleteFences[i]->createSignaled();
-        }
-    }
-    inline void FrameResource::allocRenderFinshSemaphores(uint32_t additionalCount)
-    {
-        uint32_t currentCount = renderFinishedSemaphores.size();
-
-        renderFinishedSemaphores.resize(currentCount + additionalCount);
-
-        for (uint32_t i = currentCount; i < renderFinishedSemaphores.size(); i++) {
-            renderFinishedSemaphores[i] = ctx->createSemaphore();
-            renderFinishedSemaphores[i]->create();
-        }
-    }
+	inline RHI::Fence* FrameResource::allocPresentCompleteFence()
+	{
+		auto ret = presentCompleteFencePool->alloc();
+		ret->createSignaled();
+		presentCompleteFences.push_back(ret);
+		return ret;
+	}
+	inline RHI::Semaphore* FrameResource::allocRenderFinishedSemaphore()
+	{
+		auto ret = renderFinishedSemaphoresPool->alloc();
+        ret->create();
+		renderFinishedSemaphores.push_back(ret);
+        return ret;
+	}
     inline uint32_t FrameResource::allocBaseCommandBuffers()
     {
         size_t cmdBufIndex = cmdBufs.size();
-        size_t fenceIndex = presentCompleteFences.size();
-        size_t semaphoreIndex = renderFinishedSemaphores.size();
-        allocCommandBuffers(1);
-        allocRenderFinshSemaphores(1);
-        allocPresentCompleteFences(1);
+		allocCommandBuffers(1);
         auto cmdBuf = cmdBufs[cmdBufIndex];
-        auto fence = presentCompleteFences[fenceIndex];
-        auto semaphore = renderFinishedSemaphores[semaphoreIndex];
+        auto fence = allocPresentCompleteFence();
+        auto semaphore = allocRenderFinishedSemaphore();
         cmdBuf->addWaitSemaphore(imageAvailableSemaphore);
         cmdBuf->addSignalSemaphore(semaphore);
         cmdBuf->fence(fence);
+		fence->release();
+		semaphore->release();
         return cmdBufIndex;
     }
 
@@ -420,20 +446,6 @@ namespace FCT {
 			FCT_SAFE_RELEASE(cmdBufs[index]);
 		}
 	}
-    inline RHI::Fence* FrameResource::getPresentCompleteFence(uint32_t index)
-    {
-        if (index < presentCompleteFences.size()) {
-            return presentCompleteFences[index];
-        }
-        return nullptr;
-    }
-    inline RHI::Semaphore* FrameResource::getRenderFinishedSemaphore(uint32_t index)
-    {
-        if (index < renderFinishedSemaphores.size()) {
-            return renderFinishedSemaphores[index];
-        }
-        return nullptr;
-    }
     inline RHI::Semaphore* FrameResource::getImageAvailableSemaphore()
     {
         return imageAvailableSemaphore;
@@ -451,13 +463,17 @@ namespace FCT {
     }
 	inline void Context::swapBuffers()
 	{
+		char const* const test = "test";
 		//FrameBufferManager Flush
 		for (auto &[wnd, frameResources] : m_frameResources)
 		{
 			wnd->clearRenderFinshSemaphores();
 			for (auto semaphore : frameResources[m_frameIndex].renderFinishedSemaphores)
 			{
-				wnd->addRenderFinshSemaphore(semaphore);
+				if (semaphore)
+				{
+					wnd->addRenderFinshSemaphore(semaphore);
+				}
 			}
 		}
 		m_frameIndex = (m_frameIndex + 1) % m_maxFrameInFlight;
@@ -466,7 +482,10 @@ namespace FCT {
 			wnd->clearRenderFinshFences();
 			for (auto fence : frameResources[m_frameIndex].presentCompleteFences)
 			{
-				wnd->addRenderFinshFence(fence);
+				if (fence)
+				{
+					wnd->addRenderFinshFence(fence);
+				}
 			}
 			wnd->setPresentFinshSemaphore(frameResources[m_frameIndex].imageAvailableSemaphore);
 		}
@@ -507,7 +526,10 @@ namespace FCT {
 	}
 	inline void Context::freeCommandBuffers(Window* wnd, uint32_t index)
 	{
-
+		auto it = m_frameResources.find(wnd);
+        if (it!= m_frameResources.end()) {
+            m_frameResources[wnd][m_frameIndex].freeCommandBuffers(index);
+        }
 	}
 	inline void Context::maxFrameInFlight(uint32_t maxFrameInFlight)
 	{
@@ -534,6 +556,7 @@ namespace FCT {
 		m_frameResources[wnd] = std::move(frameResources);
 		m_descriptorPools[wnd] = createDescriptorPool();
 		m_descriptorPools[wnd]->create();
+		allocBaseCommandBuffers(wnd);
 	}
 
 	inline RHI::DescriptorPool* Context::getDescriptorPool(Window* wnd)

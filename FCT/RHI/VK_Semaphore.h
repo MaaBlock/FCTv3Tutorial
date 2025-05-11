@@ -21,6 +21,7 @@ namespace FCT
             {
                 return &m_semaphore;
             }
+            void destroy() override;
         private:
             VK_Context* m_ctx;
             vk::Semaphore m_semaphore;

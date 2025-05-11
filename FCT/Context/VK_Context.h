@@ -44,6 +44,8 @@ namespace FCT {
         RHI::VertexBuffer* createVertexBuffer() override;
         RHI::IndexBuffer* createIndexBuffer() override;
         PassResource* createPassResource() override;
+        FencePool* createFencePool() override;
+        SemaphorePool* createSemaphorePool() override;
         //void create(IRenderTarget* target) override;
         uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties);
         void create();

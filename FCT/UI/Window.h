@@ -8,6 +8,8 @@
 #include "../RHI/Semaphore.h"
 #include "../RHI/Swapcain.h"
 #include "../DebugTools/OutStream.h"
+#include "./AutoViewport.h"
+#include "./InputStateEventHanndler.h"
 
 namespace FCT {
 	namespace RHI
@@ -112,8 +114,19 @@ namespace FCT {
 		{
 			return m_swapchain->getSampleCount();
 		}
+		void enableAutoViewport(Vec2 viewportSize)
+		{
+			m_autoViewport = AutoViewport(Vec2(getWidth(),getHeight()),viewportSize);
+			m_enableAutoViewport = true;
+		}
+		void disableAutoViewport()
+		{
+			m_enableAutoViewport = false;
+		}
 	private:
 	protected:
+		bool m_enableAutoViewport;
+		AutoViewport m_autoViewport;
 		CallBackEventHandler* m_callbackHandler;
 		std::vector<EventHandler*> m_handlers;
         int m_x,m_y, m_width, m_height;

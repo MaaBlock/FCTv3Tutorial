@@ -46,6 +46,8 @@
 #include "./RHI/VK_DepthStencilView.h"
 #include "./RHI/VK_DepthStencilState.h"
 //#include "./Context/VK_Image.h"
+# include "./Context/VK_SemaphorePool.h"
+# include "./Context/VK_FencePool.h"
 #endif
 //#include "./Runtime/FCT_Runtime.h"
 #ifdef FCT_ANDROID

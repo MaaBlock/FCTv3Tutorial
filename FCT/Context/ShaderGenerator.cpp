@@ -552,7 +552,6 @@ namespace FCT
             binary.addConstBufferLocation(layout, set, binding);
 
             ss << "[[vk::binding(" << binding << ", " << set << ")]] ";
-            // ss << "[[vk::set(" << set << ")]] ";
             ss << "cbuffer " << layout.getName() << " : register(b" << binding << ", space" << set << ") {\n";
 
             for (size_t i = 0; i < layout.getElementCount(); i++) {
