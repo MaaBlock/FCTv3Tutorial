@@ -1,10 +1,6 @@
-//
-// Created by Administrator on 2025/3/5.
-//
-#include "../ThirdParty.h"
-
 #ifndef FCT_FORMAT_H
 #define FCT_FORMAT_H
+#include "../ThirdParty.h"
 namespace FCT {
     enum class Format {
         UNDEFINED,

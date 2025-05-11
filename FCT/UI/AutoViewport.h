@@ -7,6 +7,7 @@
 namespace FCT
 {
     class Context;
+    class Window;
     class AutoViewport
     {
     public:
@@ -18,6 +19,7 @@ namespace FCT
         void submit();
         void addPass(const std::string& name);
         bool wndPosToViewportPos(Vec2 wndPos,Vec2& viewportPos) const;
+        void enableForWndAllPass(Window* wnd);
     private:
         bool m_needReviewport;
         float m_dstViewportWidth, m_dstViewPortHeight;

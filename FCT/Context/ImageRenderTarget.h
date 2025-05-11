@@ -1,12 +1,9 @@
-// Created by Administrator on 2025/3/27.
-//
-//
+#ifndef IMAGERENDERTARGET_H
+#define IMAGERENDERTARGET_H
 #include "../MutilThreadBase/RefCount.h"
 #include "../RHI/Image.h"
 #include "./IRenderTarget.h"
-#ifndef IMAGERENDERTARGET_H
 #include "../RHI/RenderTargetView.h"
-#define IMAGERENDERTARGET_H
 
 namespace FCT
 {

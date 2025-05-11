@@ -47,7 +47,6 @@ namespace FCT
         GLFWwindow* m_window;
         Runtime* m_rt;
         GLFW_UICommon* m_common;
-        Context* m_ctx;
         void recreateSwapchain(int width, int height);
 #ifdef FCT_USE_VULKAN
         VkSurfaceKHR m_vkSurface;

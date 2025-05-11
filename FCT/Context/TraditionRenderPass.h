@@ -63,15 +63,15 @@ public:
     void submit(RHI::CommandBuffer* cmdBuf) override
     {
         m_pass->beginSubmit(cmdBuf);
+        for (auto& job : m_submitQueue->m_submitJobs)
+        {
+            job->submit(cmdBuf);
+        }
         for (auto& job : m_submitQueue->m_traditionRenderJobs)
         {
             auto pipeline = getOrCreateTraditionPipeline(job->state);
             cmdBuf->bindPipieline(pipeline);
             job->resource->bind(cmdBuf,pipeline);
-            job->submit(cmdBuf);
-        }
-        for (auto& job : m_submitQueue->m_submitJobs)
-        {
             job->submit(cmdBuf);
         }
         m_pass->endSubmit();

@@ -1,10 +1,11 @@
 //
 // Created by Administrator on 2025/4/11.
 //
-#include "./ResourceLayout.h"
-#include "./ShaderGenerate.h"
 #ifndef FCT_SHADERGENERATOR_H
 #define FCT_SHADERGENERATOR_H
+#include "./ResourceLayout.h"
+#include "./ShaderGenerate.h"
+#include "../DebugTools/OutStream.h"
 namespace FCT
 {
     /*

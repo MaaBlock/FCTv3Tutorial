@@ -5,7 +5,6 @@
 #include "Context.h"
 
 namespace FCT {
-
     void Context::nextFrame() {
         m_nextFrame = true;
     }

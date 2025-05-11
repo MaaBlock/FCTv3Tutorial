@@ -8,6 +8,7 @@ namespace FCT
 
     void RenderGraph::addPass(const std::string& name, Pass* pass)
     {
+        pass->addRef();
         PassGraphVertex v;
         v.name = name;
         v.pass = pass;
@@ -846,6 +847,99 @@ namespace FCT
                 fout << "  " << resourceName << " -> " << targetName << " (" << edgeType << ")" << std::endl;
             }
         }
+    }
+
+        std::vector<std::string> RenderGraph::getPassTargetToWnd(Window* wnd)
+    {
+        std::vector<std::string> result;
+
+        if (m_windowBackBufferNames.find(wnd) == m_windowBackBufferNames.end()) {
+            return result;
+        }
+
+        std::string wndBackBufferName = m_windowBackBufferNames[wnd];
+
+        std::unordered_set<std::string> wndRelatedResources;
+        wndRelatedResources.insert(wndBackBufferName);
+
+        if (m_windowDepthStencilNames.find(wnd) != m_windowDepthStencilNames.end()) {
+            wndRelatedResources.insert(m_windowDepthStencilNames[wnd]);
+        }
+
+        if (m_resourceVertices.find(wndBackBufferName) != m_resourceVertices.end()) {
+            std::queue<std::string> bfsQueue;
+            bfsQueue.push(wndBackBufferName);
+
+            while (!bfsQueue.empty()) {
+                std::string currentResource = bfsQueue.front();
+                bfsQueue.pop();
+
+                ResourceGraphType::vertex_descriptor currentVertex = m_resourceVertices[currentResource];
+
+                ResourceGraphType::out_edge_iterator ei, ei_end;
+                for (boost::tie(ei, ei_end) = boost::out_edges(currentVertex, m_resourceGraph); ei != ei_end; ++ei) {
+                    ResourceGraphEdge& edge = m_resourceGraph[*ei];
+                    if (edge.type == ResourceGraphEdgeType::ParentChild) {
+                        ResourceGraphType::vertex_descriptor targetVertex = boost::target(*ei, m_resourceGraph);
+
+                        for (const auto& entry : m_resourceVertices) {
+                            if (entry.second == targetVertex) {
+                                if (wndRelatedResources.find(entry.first) == wndRelatedResources.end()) {
+                                    wndRelatedResources.insert(entry.first);
+                                    bfsQueue.push(entry.first);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                ResourceGraphType::in_edge_iterator in_ei, in_ei_end;
+                for (boost::tie(in_ei, in_ei_end) = boost::in_edges(currentVertex, m_resourceGraph); in_ei != in_ei_end; ++in_ei) {
+                    ResourceGraphEdge& edge = m_resourceGraph[*in_ei];
+                    if (edge.type == ResourceGraphEdgeType::ParentChild) {
+                        ResourceGraphType::vertex_descriptor sourceVertex = boost::source(*in_ei, m_resourceGraph);
+
+                        for (const auto& entry : m_resourceVertices) {
+                            if (entry.second == sourceVertex) {
+                                if (wndRelatedResources.find(entry.first) == wndRelatedResources.end()) {
+                                    wndRelatedResources.insert(entry.first);
+                                    bfsQueue.push(entry.first);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (const auto& passEntry : m_passVertex) {
+            const std::string& passName = passEntry.first;
+            PassGraphType::vertex_descriptor passVd = passEntry.second;
+            PassGraphVertex& passData = m_passGraph[passVd];
+
+            bool passOutputsToWnd = false;
+
+            for (uint8_t slot = 0; slot < 8; ++slot) {
+                const std::string& targetName = passData.target[slot];
+                if (!targetName.empty() && wndRelatedResources.find(targetName) != wndRelatedResources.end()) {
+                    passOutputsToWnd = true;
+                    break;
+                }
+            }
+
+            if (!passOutputsToWnd && !passData.depthStencil.empty() &&
+                wndRelatedResources.find(passData.depthStencil) != wndRelatedResources.end()) {
+                passOutputsToWnd = true;
+            }
+
+            if (passOutputsToWnd) {
+                result.push_back(passName);
+            }
+        }
+
+        return result;
     }
 
     std::string RenderGraph::formatToString(Format format)

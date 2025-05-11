@@ -1,11 +1,8 @@
-//
-// Created by Administrator on 2025/4/5.
-//
+#ifndef FCT_VERTEX_H
+#define FCT_VERTEX_H
 #include "./Format.h"
 #include "./DataTypes.h"
 #include "../Base/string.h"
-#ifndef VERTEX_H
-#define VERTEX_H
 namespace FCT
 {
      enum class VtxType {

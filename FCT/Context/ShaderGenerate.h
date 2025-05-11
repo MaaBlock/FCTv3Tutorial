@@ -1,11 +1,11 @@
 //
 // Created by Administrator on 2025/4/7.
 //
+#ifndef SHADERGENERATE_H
+#define SHADERGENERATE_H
 #include "../ThirdParty.h"
 #include "./Vertex.h"
 #include "Uniform.h"
-#ifndef SHADERGENERATE_H
-#define SHADERGENERATE_H
 /*
  *
  *对于PixelLayout

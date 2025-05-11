@@ -76,6 +76,15 @@ namespace FCT
         viewportPos = srcViewportPos * Vec2(m_dstViewportWidth, m_dstViewPortHeight);
         return srcViewportPos.x >= 0.0f && srcViewportPos.x <= 1.0f && srcViewportPos.y >= 0.0f && srcViewportPos.y <= 1.0f;
     }
+
+    void AutoViewport::enableForWndAllPass(Window* wnd)
+    {
+        auto passes = m_ctx->getPassTargetToWnd(wnd);
+        for (const auto& pass : passes)
+        {
+            addPass(pass);
+        }
+    }
 }
 
 

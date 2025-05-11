@@ -1,4 +1,5 @@
-#pragma once
+#ifndef FCT_RUNTIME_H
+#define FCT_RUNTIME_H
 #include "../ThirdParty.h"
 #include "../UI/Window.h"
 #include "../UI/Android_WindowShareData.h"
@@ -94,3 +95,4 @@ namespace FCT
     	Runtime& operator=(const Runtime&) = delete;
     };
 }
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef FCT_WINDOW_H
+#define FCT_WINDOW_H
 #include "../MutilThreadBase/RefCount.h"
 #include "../Context/DataTypes.h"
 #include "../Context/IRenderTarget.h"
@@ -10,6 +11,7 @@
 #include "../DebugTools/OutStream.h"
 #include "./AutoViewport.h"
 #include "./InputStateEventHanndler.h"
+#include "../Context/Context.h"
 
 namespace FCT {
 	namespace RHI
@@ -117,11 +119,27 @@ namespace FCT {
 		void enableAutoViewport(Vec2 viewportSize)
 		{
 			m_autoViewport = AutoViewport(Vec2(getWidth(),getHeight()),viewportSize);
+			m_callbackHandler->addResizeCallback([this](Window* wnd, int width, int height)
+			{
+				m_autoViewport.resize(width,height);
+			});
+			m_ctx->addBeginFrameTicker([this]()
+			{
+				m_autoViewport.submit();
+			});
 			m_enableAutoViewport = true;
 		}
 		void disableAutoViewport()
 		{
 			m_enableAutoViewport = false;
+		}
+		void enableAutoViewportForAllCurrentTargetToWndPass()
+		{
+			if (m_enableAutoViewport)
+			{
+				m_autoViewport.ctx(m_ctx);
+				m_autoViewport.enableForWndAllPass(this);
+			}
 		}
 	private:
 	protected:
@@ -134,6 +152,7 @@ namespace FCT {
         RHI::Swapchain* m_swapchain;
 		bool m_needEnableDepthBuffer;
 		Format m_depthBufferFormat;
+        Context* m_ctx;
 	private:
 
 	};
@@ -170,3 +189,4 @@ namespace FCT {
         registerHandler(m_callbackHandler);
     }
 }
+#endif

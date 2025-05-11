@@ -1,6 +1,4 @@
-#include "Window.h"
-
-#include "../RHI/Swapcain.h"
+#include "../FCTAPI.h"
 
 void FCT::Window::registerHandler(EventHandler* handler)
 {

@@ -103,76 +103,6 @@ static StaticMesh<IndexType>* createCube(Context* ctx, float size = 1.0f) {
 
     return mesh;
 }
-class AutoReviewport
-{
-public:
-    AutoReviewport()
-    {
-        needReviewport = false;
-        windowWidth = 800.0f;
-        windowHeight = 600.0f;
-        viewportWidth = 800.0f;
-        viewportHeight = 600.0f;
-        viewportOffsetX = 0.0f;
-        viewportOffsetY = 0.0f;
-    }
-    void context(Context* ctx)
-    {
-        this->ctx = ctx;
-    }
-    void resize(int width, int height)
-    {
-        windowWidth = static_cast<float>(width);
-        windowHeight = static_cast<float>(height);
-        needReviewport = true;
-    }
-    void computeViewport()
-    {
-        float targetAspect = 4.0f / 3.0f;
-        float windowAspect = windowWidth / windowHeight;
-
-        if (windowAspect > targetAspect) {
-            viewportHeight = windowHeight;
-            viewportWidth = windowHeight * targetAspect;
-            viewportOffsetX = (windowWidth - viewportWidth) / 2.0f;
-            viewportOffsetY = 0.0f;
-        } else {
-            viewportWidth = windowWidth;
-            viewportHeight = windowWidth / targetAspect;
-            viewportOffsetX = 0.0f;
-            viewportOffsetY = (windowHeight - viewportHeight) / 2.0f;
-        }
-    }
-    void submit()
-    {
-        if (needReviewport) {
-            computeViewport();
-            needReviewport = false;
-        }
-        ViewportJob* job = new ViewportJob(
-                Vec2(viewportOffsetX, viewportOffsetY), Vec2(viewportOffsetX + viewportWidth, viewportOffsetY + viewportHeight),
-        Vec2(viewportOffsetX, viewportOffsetY), Vec2(viewportOffsetX + viewportWidth, viewportOffsetY + viewportHeight)
-        );
-        for (const auto& name : passes)
-        {
-            ctx->submit(job, name);
-        }
-        job->release();
-    }
-    void addPass(const std::string& name)
-    {
-        passes.push_back(name);
-    }
-private:
-    bool needReviewport;
-    float windowWidth, windowHeight;
-    float viewportWidth, viewportHeight;
-    float viewportOffsetX, viewportOffsetY;
-
-    Context* ctx;
-    std::vector<std::string> passes;
-};
-
 
 class App
 {
@@ -196,7 +126,6 @@ private:
     float rotationAngle;
     Image* texture;
     PSampler sampler;
-    AutoReviewport autoReviewport;
     float rotationAngleY;
     StaticMesh<uint32_t>* teapotMesh;
     GLFW_VK_ImGuiContext* imguiCtx;
@@ -223,12 +152,8 @@ public:
         ctx->create();
         wnd->enableDepthBuffer(Format::D32_SFLOAT_S8_UINT);
         wnd->bind(ctx);
-        wnd->getCallBack()->addResizeCallback([this](Window* wnd,int width, int height)
-        {
-            autoReviewport.resize(width, height);
-        });
+        wnd->enableAutoViewport(Vec2(800,600));
         ctx->maxFrameInFlight(5);
-        autoReviewport.context(ctx);
         InitImgui();
         ImGui::StyleColorsLight();
 
@@ -268,8 +193,7 @@ public:
         imguiCtx->attachPass("imguiPass");
         initDynamicMesh();
         fout << "初始化 完毕" << endl;
-        autoReviewport.addPass("vertexPass");
-        autoReviewport.addPass("nomralObject");
+        wnd->enableAutoViewportForAllCurrentTargetToWndPass();
     }
 
     void initDynamicMesh()
@@ -469,7 +393,6 @@ ShaderOut main(ShaderIn psIn) {
 
         animationTime += deltaTime;
 
-        autoReviewport.submit();
         updateDynamicMesh(animationTime);
 
         Mat4 ratation;

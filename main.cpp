@@ -187,6 +187,7 @@ public:
         ctx->submitTicker(submitTick);
         ctx->create();
         wnd->enableDepthBuffer(Format::D32_SFLOAT_S8_UINT);
+        wnd->enableAutoViewport(Vec2(800,600));
         wnd->bind(ctx);
         wnd->getCallBack()->addResizeCallback([this](Window* wnd,int width, int height)
         {

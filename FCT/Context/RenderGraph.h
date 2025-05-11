@@ -8,6 +8,9 @@
 
 namespace FCT
 {
+    struct Job;
+    class Pass;
+
     enum class RenderGraphVertexType {
         Pass,
         Resource
@@ -161,6 +164,7 @@ namespace FCT
         void execute(RHI::CommandBuffer* cmdBuf);
         void printExecutionOrder();
         void printResourceInfo();
+        std::vector<std::string> getPassTargetToWnd(Window* wnd);
 
         Pass* getPassByName(const std::string& name)
         {
