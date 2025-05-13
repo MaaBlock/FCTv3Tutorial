@@ -231,6 +231,7 @@ namespace FCT
                 auto res = screenInfoImage->updateToCurrent(screenData.data(), screenData.size() * sizeof(float));
                 auto job = new VertexSubmitJob([res]()
                 {
+                    ScopeTimer waitForUploadToGpuTimer("waitForUploadToGpu");
                     res->waitFor();
                 });
                 m_ctx->submit(job,m_uploadPassName);
@@ -244,6 +245,7 @@ namespace FCT
         {
             updataScreenInfo();
             submitPath();
+
             updataCommandInfo();
             auto job = new TraditionRenderJob();
             job->addMesh(m_mesh)

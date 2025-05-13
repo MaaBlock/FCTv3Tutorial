@@ -9,6 +9,7 @@
 #include "./predefine.h"
 #include "./MutilThreadBase/SharePtr.h"
 #include "./DebugTools/MemoryCheak.h"
+#include "./DebugTools/ScopeTimer.h"
 #include "./Base/Flags.h"
 #include "./Bases.h"
 #include "./Memory/ObjectPool.h"

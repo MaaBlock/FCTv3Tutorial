@@ -410,23 +410,15 @@ ShaderOut main(ShaderIn ps_input) {
         i++;
         switch (int(command)) {
          case int(VertexCommand_BeginPath):
+{
             isPathStarted = true;
             pathCrossings = float2(0.0, 0.0);
             pathOperation = fetchCommand(i);
             i += 1;
+}
             break;
-        case int(VertexCommand_LineTo):
-
-            break;
-        }
-        if (command == VertexCommand_End) break;
-        if (command == VertexCommand_BeginPath) {
-            isPathStarted = true;
-            pathCrossings = float2(0.0, 0.0);
-            pathOperation = fetchCommand(i);
-            i += 1;
-        }
-        else if (command == VertexCommand_EndPath) {
+        case int(VertexCommand_EndPath):
+{
             isPathStarted = false;
             if (length(pathCrossings) > 0.0) {
                 fillColor = currentColor;
@@ -452,14 +444,18 @@ ShaderOut main(ShaderIn ps_input) {
             }
             pathCrossings = float2(0, 0);
             pathOperation = 0.0;
-        }
-        if (command == VertexCommand_MoveTo) {
+}
+            break;
+        case int(VertexCommand_MoveTo):
+{
             lastPos.x = fetchCommand(i);
             lastPos.y = fetchCommand(i+1);
             lastPos = applyTransform(lastPos, transform);
             i += 2;
-        }
-        else if (command == VertexCommand_LineTo) {
+}
+            break;
+        case int(VertexCommand_LineTo):
+{
             float2 to;
             to.x = fetchCommand(i);
             to.y = fetchCommand(i+1);
@@ -470,15 +466,19 @@ ShaderOut main(ShaderIn ps_input) {
             float2 v1 = to - ps_input.vertexcoord;
             pathCrossings += transformSign * LineTest(v0, v1, pixelsPerUnit);
             lastPos = to;
-        }
-        else if (command == VertexCommand_SetColor) {
+}
+            break;
+        case int(VertexCommand_SetColor):
+{
             currentColor.r = fetchCommand(i);
             currentColor.g = fetchCommand(i+1);
             currentColor.b = fetchCommand(i+2);
             currentColor.a = fetchCommand(i+3);
             i += 4;
-        }
-        else if (command == VertexCommand_ArcTo) {
+}
+            break;
+        case int(VertexCommand_ArcTo):
+{
             float2 bp = lastPos;
             float2 c;
             c.x = fetchCommand(i);
@@ -492,8 +492,10 @@ ShaderOut main(ShaderIn ps_input) {
             pathCrossings += transformSign * ArcTest(ps_input.vertexcoord, bp, ep, c, b, e, r, q, pixelsPerUnit);
             lastPos = ep;
             i += 5;
-        }
-        else if (command == VertexCommand_BezierCurveTo) {
+}
+            break;
+        case int(VertexCommand_BezierCurveTo):
+{
             float2 control = float2(fetchCommand(i),
                                 fetchCommand(i+1));
             float2 end = float2(fetchCommand(i+2),
@@ -507,8 +509,10 @@ ShaderOut main(ShaderIn ps_input) {
             float2 v2 = end - ps_input.vertexcoord;
             pathCrossings += transformSign * CurveTest(v0, v1, v2, pixelsPerUnit);
             lastPos = end;
-        }
-        else if (command == VertexCommand_SetTransform) {
+}
+            break;
+        case int(VertexCommand_SetTransform):
+{
             transform = float3x3(
                 fetchCommand(i), fetchCommand(i+1), fetchCommand(i+2),
                 fetchCommand(i+3), fetchCommand(i+4), fetchCommand(i+5),
@@ -518,7 +522,10 @@ ShaderOut main(ShaderIn ps_input) {
 
             float det = determinant(transform);
 			transformSign = NoZeroSign(det);
+}
+            break;
         }
+        if (command == VertexCommand_End) break;
     }
 
     float weightX = 1.0 - abs(crossings.x * 2.0 - 1.0);

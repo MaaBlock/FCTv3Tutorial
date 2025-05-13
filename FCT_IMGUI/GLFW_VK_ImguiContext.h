@@ -99,6 +99,7 @@ namespace FCT
 
     inline void ImguiJob::submit(RHI::CommandBuffer* cmdBuf)
     {
+        ScopeTimer ImguiJobTimer("ImguiJob");
         if (m_enableFrameLimiter)
         {
             double currentTime = glfwGetTime();

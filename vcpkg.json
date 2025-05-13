@@ -9,6 +9,9 @@
     "spirv-cross",
     "shaderc",
     "assimp",
+    "zlib",
+    "minizip",
+    "glm",
     {
       "name" : "imgui",
       "features" : [ "docking-experimental", "glfw-binding", "vulkan-binding" ],

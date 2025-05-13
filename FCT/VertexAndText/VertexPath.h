@@ -30,6 +30,7 @@ protected:
     };
 
     void updateBounds(const Vec2& point) {
+        m_dirty = true;
         if (!m_hasPoints) {
             m_minBounds = point;
             m_maxBounds = point;
@@ -53,8 +54,12 @@ protected:
         updateBounds(Vec2(center.x - 2 * radius, center.y - 2 * radius));
         updateBounds(Vec2(center.x + 2 * radius, center.y + 2 * radius));
     }
-
+    bool m_dirty;
 public:
+    void clearDirty()
+    {
+        m_dirty = false;
+    }
     Mat3 transform;
     void end()
     {

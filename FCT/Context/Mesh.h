@@ -273,7 +273,6 @@ namespace FCT
         size_t getVertexCapacity() const { return m_vertexCapacity; }
 
         size_t getIndexCapacity() const { return m_indexCapacity; }
-
     private:
         void resizeVertexBuffer(size_t newCapacity)
         {

@@ -678,6 +678,7 @@ namespace FCT
 
     void RenderGraph::execute(RHI::CommandBuffer* cmdBuf)
     {
+        ScopeTimer GraphExecuteTimer("GraphExecute");
         for (size_t i = 0; i < m_executionOrder.passGroups.size(); ++i) {
             if (i >= m_passGroups.size()) {
                 ferr << "PassGroup 索引超出范围: " << i << std::endl;

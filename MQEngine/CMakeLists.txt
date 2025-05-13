@@ -5,4 +5,5 @@ add_executable(MQEngineTutorial
 
 target_link_libraries(MQEngineTutorial
         FCT
-        FCT_IMGUI)
+        FCT_IMGUI
+        FCT_CEGUI)

@@ -381,72 +381,79 @@ ShaderOut main(ShaderIn psIn) {
 
     void logicTick()
     {
-        static auto lastFrameTime = std::chrono::high_resolution_clock::now();
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        float deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastFrameTime).count() / 1000000.0f;
-        float instantFPS = 1.0f / deltaTime;
-        lastFrameTime = currentTime;
-        std::stringstream ss;
-        ss << "FCT Demo - Instant FPS: " << std::fixed << std::setprecision(1) << instantFPS;
-        float rotationV = 90.0f; //90度/s
-        rotationAngle += deltaTime * rotationV;
-        rotationAngleY += deltaTime * rotationV * 0.7f;
-
-        animationTime += deltaTime;
-
-        updateDynamicMesh(animationTime);
-
-        Mat4 ratation;
-        ratation.rotateX(rotationAngle);
-        ratation.rotateY(rotationAngleY);
-        buffer->setValue("modelMatrix", ratation);
-        constBuffer->updataData();
-        vertexConstBuffer->updataData();
-        wnd->title(ss.str());
-        auto job = new TraditionRenderJob();
-        job->addMesh(teapotMesh)
-            .addMesh(cubeMesh)
-            .addMesh(dynamicMesh)
-            .setPassResource(passResource)
-            .setPipelineState(pso);
-        ctx->submit(job,"nomralObject");
-        imguiCtx->addUi([]()
+        ScopeTimer logicTickTimer("logicTick");
         {
-            ImGui::Begin("FCT Debug");
-            ImGui::Text("Hello, FCT!");
-            ImGui::End();
-        });
-        VertexPath* path = new VertexPath();
+            ScopeTimer logicTickMainTimer("logicTickMain");
+            static auto lastFrameTime = std::chrono::high_resolution_clock::now();
+            auto currentTime = std::chrono::high_resolution_clock::now();
+            float deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastFrameTime).count() / 1000000.0f;
+            float instantFPS = 1.0f / deltaTime;
+            lastFrameTime = currentTime;
+            std::stringstream ss;
+            ss << "FCT Demo - Instant FPS: " << std::fixed << std::setprecision(1) << instantFPS;
+            float rotationV = 90.0f; //90度/s
+            rotationAngle += deltaTime * rotationV;
+            rotationAngleY += deltaTime * rotationV * 0.7f;
 
-        path->setColor(Vec4(0.2f, 0.6f, 1.0f, 0.8f));
+            animationTime += deltaTime;
 
-        path->beginPath();
+            updateDynamicMesh(animationTime);
 
-        path->moveTo(Vec2(100, 100));
-        path->lineTo(Vec2(300, 100));
-        path->lineTo(Vec2(300, 200));
-        //path->lineTo(Vec2(100, 200));
-        path->lineTo(Vec2(100, 100));
+            Mat4 ratation;
+            ratation.rotateX(rotationAngle);
+            ratation.rotateY(rotationAngleY);
+            buffer->setValue("modelMatrix", ratation);
+            constBuffer->updataData();
+            vertexConstBuffer->updataData();
+            wnd->title(ss.str());
+            auto job = new TraditionRenderJob();
+            job->addMesh(teapotMesh)
+                .addMesh(cubeMesh)
+                .addMesh(dynamicMesh)
+                .setPassResource(passResource)
+                .setPipelineState(pso);
+            ctx->submit(job,"nomralObject");
+            imguiCtx->addUi([]()
+            {
+                ImGui::Begin("FCT Debug");
+                ImGui::Text("Hello, FCT!");
+                ImGui::End();
+            });
+            VertexPath* path = new VertexPath();
 
-        path->endPath();
+            path->setColor(Vec4(0.2f, 0.6f, 1.0f, 0.8f));
 
-        path->beginPath();
-        path->setColor(Vec4(1.0f, 0.3f, 0.3f, 1.0f));
-        path->circle(Vec2(400, 150), 80);
-        path->endPath();
-        path->end();
-        vertexCtx->clearPath("screen");
-        vertexCtx->addPath("screen", path);
-        vertexCtx->addPath("screen", emjPath);
+            path->beginPath();
 
-        path->release();
+            path->moveTo(Vec2(100, 100));
+            path->lineTo(Vec2(300, 100));
+            path->lineTo(Vec2(300, 200));
+            //path->lineTo(Vec2(100, 200));
+            path->lineTo(Vec2(100, 100));
 
-        vertexCtx->submit();
+            path->endPath();
 
-        imguiCtx->submitJob();
-        job->release();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        ctx->flush();
+            path->beginPath();
+            path->setColor(Vec4(1.0f, 0.3f, 0.3f, 1.0f));
+            path->circle(Vec2(400, 150), 80);
+            path->endPath();
+            path->end();
+            vertexCtx->clearPath("screen");
+            vertexCtx->addPath("screen", path);
+            vertexCtx->addPath("screen", emjPath);
+
+            path->release();
+
+            vertexCtx->submit();
+
+            imguiCtx->submitJob();
+            job->release();
+        }
+        {
+            ScopeTimer logicWaitForTimer("logicWaitFor");
+            ctx->flush();
+        }
+        ScopeTimer::printAll();
     }
     void run()
     {

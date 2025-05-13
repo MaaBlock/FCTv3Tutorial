@@ -216,14 +216,20 @@ namespace FCT
 		void swapBuffers();
 		void defaultTick()
 		{
-			auto cmdBuf = getCmdBuf(m_bindWindows[0], 0);
-			cmdBuf->reset();
-			cmdBuf->begin();
-			excutePasses(cmdBuf);
-			cmdBuf->end();
-			cmdBuf->submit();
+			{
+				ScopeTimer submitCmdAndWaitUploadTimer("submitCmdAndWaitUpload");
+				auto cmdBuf = getCmdBuf(m_bindWindows[0], 0);
+				cmdBuf->reset();
+				cmdBuf->begin();
+				excutePasses(cmdBuf);
+				cmdBuf->end();
+				cmdBuf->submit();
+			}
 			std::this_thread::yield();
-			swapBuffers();
+			{
+				ScopeTimer waitGpuTimer("waitGpu");
+				swapBuffers();
+			}
 		}
 		virtual RHI::RenderTargetView* createRenderTargetView() = 0;
 		void addBindWindow(Window* wnd)

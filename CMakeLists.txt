@@ -7,6 +7,8 @@ endif()
 
 set(CMAKE_CXX_STANDARD 20)
 
+find_package(ZLIB REQUIRED)
+
 message(STATUS "${CMAKE_TOOLCHAIN_FILE}")
 
 if(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android" OR DEFINED CMAKE_ANDROID_API OR DEFINED ANDROID_PLATFORM)
@@ -43,6 +45,7 @@ else()
 endif()
 add_subdirectory(FCT)
 add_subdirectory(FCT_IMGUI)
+add_subdirectory(FCT_CEGUI)
 add_subdirectory(MQEngine)
 add_subdirectory(Demo)
 add_executable(${CMAKE_PROJECT_NAME}
