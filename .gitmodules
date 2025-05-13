@@ -1,3 +1,6 @@
 [submodule "FCT_IMGUI/imgui"]
 	path = FCT_IMGUI/imgui
 	url = https://github.com/MaaBlock/imgui
+[submodule "FCT_CEGUI/cegui"]
+	path = FCT_CEGUI/cegui
+	url = https://github.com/MaaBlock/cegui
