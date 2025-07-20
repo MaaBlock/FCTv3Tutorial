@@ -1,8 +1,8 @@
 ﻿
-#include "../FCT/headers.h"
-#include "../FCT_IMGUI/headers.h"
-#include "../FCT_IMGUI/FCTAPI.h"
-#include "../FCT_CEGUI/headers.h"
+#include <FCT.h>
+#include <FCT_IMGUI/headers.h>
+#include <FCT_IMGUI/FCTAPI.h>
+#include <FCT_CEGUI/headers.h>
 
 using namespace FCT;
 using namespace std;
