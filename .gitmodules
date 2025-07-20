@@ -4,3 +4,6 @@
 [submodule "FCT_CEGUI/cegui"]
 	path = FCT_CEGUI/cegui
 	url = https://github.com/MaaBlock/cegui
+[submodule "FCT"]
+	path = FCT
+	url = https://github.com/MaaBlock/FCT
