@@ -25,6 +25,7 @@ namespace FCT {
         RHI::InputLayout* createInputLayout() override;
         DrawCall *createDrawCall(PrimitiveType primitiveType, uint32_t startVertex,
                                  uint32_t vertexCount) override;
+        BlendState* createBlendState() override;
         MutilBufferImage* createMutilBufferImage() override
         {
             return new MutilBufferImage(this);

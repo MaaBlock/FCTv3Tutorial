@@ -61,6 +61,11 @@ namespace FCT
         return nullptr;
     }
 
+    BlendState* VK_Context::createBlendState()
+    {
+        return FCT_NEW(VK_BlendState, this);
+    }
+
     RHI::TextureView* VK_Context::createTextureView()
     {
         return new RHI::VK_TextureView(this);

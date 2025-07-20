@@ -38,6 +38,7 @@
 #include "SemaphorePool.h"
 namespace FCT
 {
+	class BlendState;
 	class Pass;
 
 	namespace RHI
@@ -123,6 +124,7 @@ namespace FCT
 		virtual RHI::IndexBuffer* createIndexBuffer() = 0;
 		virtual RHI::DescriptorPool* createDescriptorPool() = 0;
 		virtual RHI::DepthStencilView* createDepthStencilView() = 0;
+		virtual BlendState* createBlendState() = 0;
 		virtual PassResource* createPassResource() = 0;
 		virtual RHI::TextureView* createTextureView() = 0;
 		virtual Sampler* createSampler() = 0;

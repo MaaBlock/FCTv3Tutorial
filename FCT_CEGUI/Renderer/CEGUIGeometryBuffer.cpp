@@ -50,7 +50,7 @@ namespace FCT {
         m_mesh->create();
     }
 
-    void CEGUIGeometryBuffer::uploadMesh()
+    void CEGUIGeometryBuffer::uploadMesh() const
     {
         m_geometryDirty = false;
 

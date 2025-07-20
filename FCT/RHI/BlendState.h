@@ -91,7 +91,65 @@ namespace FCT {
         void logicOp(LogicOp op) { m_logicOp = op; }
 
         PipelineResourceType getType() const override { return PipelineResourceType::BlendState; }
+        void configForAlphaBlend() {
+            m_blendEnable = true;
+            m_srcColorBlendFactor = BlendFactor::SrcAlpha;
+            m_dstColorBlendFactor = BlendFactor::OneMinusSrcAlpha;
+            m_colorBlendOp = BlendOp::Add;
+            m_srcAlphaBlendFactor = BlendFactor::One;
+            m_dstAlphaBlendFactor = BlendFactor::OneMinusSrcAlpha;
+            m_alphaBlendOp = BlendOp::Add;
+            m_colorWriteMask = 0xF;
+            m_logicOpEnable = false;
+        }
 
+        void configForPreMultipliedAlphaBlend() {
+            m_blendEnable = true;
+            m_srcColorBlendFactor = BlendFactor::One;
+            m_dstColorBlendFactor = BlendFactor::OneMinusSrcAlpha;
+            m_colorBlendOp = BlendOp::Add;
+            m_srcAlphaBlendFactor = BlendFactor::One;
+            m_dstAlphaBlendFactor = BlendFactor::OneMinusSrcAlpha;
+            m_alphaBlendOp = BlendOp::Add;
+            m_colorWriteMask = 0xF;
+            m_logicOpEnable = false;
+        }
+
+        void configForAdditiveBlend() {
+            m_blendEnable = true;
+            m_srcColorBlendFactor = BlendFactor::SrcAlpha;
+            m_dstColorBlendFactor = BlendFactor::One;
+            m_colorBlendOp = BlendOp::Add;
+            m_srcAlphaBlendFactor = BlendFactor::Zero;
+            m_dstAlphaBlendFactor = BlendFactor::One;
+            m_alphaBlendOp = BlendOp::Add;
+            m_colorWriteMask = 0xF;
+            m_logicOpEnable = false;
+        }
+
+        void configForMultiplicativeBlend() {
+            m_blendEnable = true;
+            m_srcColorBlendFactor = BlendFactor::DstColor;
+            m_dstColorBlendFactor = BlendFactor::Zero;
+            m_colorBlendOp = BlendOp::Add;
+            m_srcAlphaBlendFactor = BlendFactor::DstAlpha;
+            m_dstAlphaBlendFactor = BlendFactor::Zero;
+            m_alphaBlendOp = BlendOp::Add;
+            m_colorWriteMask = 0xF;
+            m_logicOpEnable = false;
+        }
+
+        void configForNoBlend() {
+            m_blendEnable = false;
+            m_srcColorBlendFactor = BlendFactor::One;
+            m_dstColorBlendFactor = BlendFactor::Zero;
+            m_colorBlendOp = BlendOp::Add;
+            m_srcAlphaBlendFactor = BlendFactor::One;
+            m_dstAlphaBlendFactor = BlendFactor::Zero;
+            m_alphaBlendOp = BlendOp::Add;
+            m_colorWriteMask = 0xF;
+            m_logicOpEnable = false;
+        }
     protected:
         bool m_blendEnable = true;
         BlendFactor m_srcColorBlendFactor = BlendFactor::SrcAlpha;
