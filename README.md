@@ -10,3 +10,4 @@
 ```
 git clone --recursive https://github.com/MaaBlock/FCTv3.git
 ```
+此仓库接近废弃
